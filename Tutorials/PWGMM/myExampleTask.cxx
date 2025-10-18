@@ -20,7 +20,7 @@ using namespace o2;
 using namespace o2::framework;
 
 struct myExampleTask {
-  // Histogram registry: an object to hold your histograms
+  // Histogram registry: an object to hold your histogram
   HistogramRegistry histos{"histos", {}, OutputObjHandlingPolicy::AnalysisObject};
 
   void init(InitContext const&)

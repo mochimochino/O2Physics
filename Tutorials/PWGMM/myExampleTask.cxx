@@ -39,6 +39,7 @@ struct myExampleTask {
   {
     for (auto& track : tracks) {
       histos.fill(HIST("etaHistogram"), track.eta());
+      histos.fill(HIST("ptHistogram"), track.pt());
     }
   }
 };

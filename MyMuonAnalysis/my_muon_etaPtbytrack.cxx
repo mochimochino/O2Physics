@@ -45,7 +45,7 @@ struct my_muon_etaPtbytrack {
         std::string namePt = "ptHistogram_Type" + std::to_string(type);
         std::string titlePt = "pT (Type" + std::to_string(type) + ")";
 
-        std::string nameEtaPt = "EtaPtHistogram_Type" + std::to_string(type);
+        std::string nameEtaPt = "etaPtHistogram_Type" + std::to_string(type);
         std::string titleEtaPt = "Eta vs pT (Type" + std::to_string(type) + ")";
 
 
@@ -64,23 +64,40 @@ struct my_muon_etaPtbytrack {
   void process(aod::FwdTracks const& fwdtracks)
   {
     for (auto& fwdtrack : fwdtracks) {
-      histos.fill(HIST("etaHistogram"), fwdtrack.eta());
-      histos.fill(HIST("ptHistogram"), fwdtrack.pt());
-      histos.fill(HIST("etaPtHistogram"), fwdtrack.pt(), fwdtrack.eta());
       
-      // type
-      int type = fwdtrack.trackType();
+      const float eta = fwdtrack.eta();
+      const float pt = fwdtrack.pt();
+      const int type = fwdtrack.trackType();
 
-      if (type == 0 || type == 2 || type == 3 || type == 4) {
-
-          std::string nameEta   = "etaHistogram_Type" + std::to_string(type);
-          std::string namePt    = "ptHistogram_Type" + std::to_string(type);
-          std::string nameEtaPt = "etaPtHistogram_Type" + std::to_string(type);
-
-          histos.fill(HIST("nameEta"), fwdtrack.eta());
-          histos.fill(HIST("namePt"), fwdtrack.pt());
-          histos.fill(HIST("nameEtaPt"), fwdtrack.pt(), fwdtrack.eta());
-        }
+      histos.fill(HIST("etaHistogram"), eta);
+      histos.fill(HIST("ptHistogram"), pt);
+      histos.fill(HIST("etaPtHistogram"), pt, eta);
+      
+      switch (type) {
+        case 0:
+            histos.fill(HIST("etaHistogram_Type0"), eta);
+            histos.fill(HIST("ptHistogram_Type0"), pt);
+            histos.fill(HIST("etaPtHistogram_Type0"), pt, eta);
+            break;
+        case 2:
+            histos.fill(HIST("etaHistogram_Type2"), eta);
+            histos.fill(HIST("ptHistogram_Type2"), pt);
+            histos.fill(HIST("etaPtHistogram_Type2"), pt, eta);
+            break;
+        case 3:
+            histos.fill(HIST("etaHistogram_Type3"), eta);
+            histos.fill(HIST("ptHistogram_Type3"), pt);
+            histos.fill(HIST("etaPtHistogram_Type3"), pt, eta);
+            break;
+        case 4:
+            histos.fill(HIST("etaHistogram_Type4"), eta);
+            histos.fill(HIST("ptHistogram_Type4"), pt);
+            histos.fill(HIST("etaPtHistogram_Type4"), pt, eta);
+            break;
+        default:
+            
+            break;
+      }
     }
   }
 };

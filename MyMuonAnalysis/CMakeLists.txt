@@ -1,6 +1,10 @@
 # From Tutorial PWGMM cmakelists
 # Changed to my muon tasks
 
+o2physics_add_dpl_workflow(my-mc-fwd-allgen
+                  SOURCES fwd_particles_allgen.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-allgen
                   SOURCES my_mc_allgen.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
@@ -23,6 +27,10 @@ o2physics_add_dpl_workflow(my-muon-mcgen
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-reco
                   SOURCES my_muon_recoMc.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)
+o2physics_add_dpl_workflow(my-muon-tracking-efficiency
+                  SOURCES my_muon_tracking_efficiency.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-res-track

@@ -78,7 +78,7 @@ struct mc_muon_resto_track {
       histos.fill(HIST("phiRes_vs_pt"), ptGen, resPhi);
 
       switch (type) {
-        case 0:
+        case 0: //global MUON (MFT+MCH+MID)
           histos.fill(HIST("pt_resolution_Type0"), resPt);
           histos.fill(HIST("eta_resolution_Type0"), resEta);
           histos.fill(HIST("phi_resolution_Type0"), resPhi);
@@ -87,7 +87,7 @@ struct mc_muon_resto_track {
           histos.fill(HIST("phiRes_vs_pt_Type0"), ptGen, resPhi);
           break;
 
-        case 2:
+        case 2: // MFT+MCH track
           histos.fill(HIST("pt_resolution_Type2"), resPt);
           histos.fill(HIST("eta_resolution_Type2"), resEta);
           histos.fill(HIST("phi_resolution_Type2"), resPhi);
@@ -96,7 +96,7 @@ struct mc_muon_resto_track {
           histos.fill(HIST("phiRes_vs_pt_Type2"), ptGen, resPhi);
           break;
 
-        case 3:
+        case 3: //standalone MUON (MCH+MID)
           histos.fill(HIST("pt_resolution_Type3"), resPt);
           histos.fill(HIST("eta_resolution_Type3"), resEta);
           histos.fill(HIST("phi_resolution_Type3"), resPhi);
@@ -105,7 +105,7 @@ struct mc_muon_resto_track {
           histos.fill(HIST("phiRes_vs_pt_Type3"), ptGen, resPhi);
           break;
 
-        case 4:
+        case 4: //standalone MCH track
           histos.fill(HIST("pt_resolution_Type4"), resPt);
           histos.fill(HIST("eta_resolution_Type4"), resEta);
           histos.fill(HIST("phi_resolution_Type4"), resPhi);

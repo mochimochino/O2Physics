@@ -76,6 +76,7 @@ add_subdirectory(PWGUD)
 add_subdirectory(Tools)
 add_subdirectory(Tutorials)
 add_subdirectory(EventFiltering)
+add_subdirectory(MyMuonAnalysis)
 
 add_subdirectory(Scripts)
 

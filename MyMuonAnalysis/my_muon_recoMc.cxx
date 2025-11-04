@@ -37,7 +37,7 @@ struct mc_muon_recoMc {
       if (mcId < 0 || mcId >= static_cast<int>(mcParticles.size())) continue;
 
       auto mc = mcParticles.iteratorAt(mcId);
-      if (std::abs(mc.pdgCode()) != 13) continue; // muon only
+      if (std::abs(mc.pdgCode()) != 13) continue; // muon only 13
 
       float ptReco = trk.pt();
       float ptGen = mc.pt();

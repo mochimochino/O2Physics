@@ -25,4 +25,7 @@ o2physics_add_dpl_workflow(my-mc-reco
                   SOURCES my_muon_recoMc.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME Analysis)
-                  
+o2physics_add_dpl_workflow(my-mc-res-track
+                  SOURCES my_muon_resto_track.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)

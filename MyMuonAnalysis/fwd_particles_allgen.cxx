@@ -247,18 +247,18 @@ struct mc_muon_resto_track {
           break;
 
         case 3: //standalone MUON (MCH+MID)
-          //histos.fill(HIST("pt_resolution_Type3"), resPt);
-          //histos.fill(HIST("eta_resolution_Type3"), resEta);
-          //histos.fill(HIST("phi_resolution_Type3"), resPhi);
-          //histos.fill(HIST("ptRes_vs_pt_Type3"), ptGen, resPt);
-          //histos.fill(HIST("etaRes_vs_pt_Type3"), ptGen, resEta);
-          //histos.fill(HIST("phiRes_vs_pt_Type3"), ptGen, resPhi);
-          //histos.fill(HIST("pt_gen_Type3"), ptGen);
-          //histos.fill(HIST("pt_reco_Type3"), ptReco);
-          //histos.fill(HIST("eta_gen_Type3"), etaGen);
-          //histos.fill(HIST("eta_reco_Type3"), etaReco);
-          //histos.fill(HIST("phi_gen_Type3"), phiGen);
-          //histos.fill(HIST("phi_reco_Type3"), phiReco);
+          histos.fill(HIST("pt_resolution_Type3"), resPt);
+          histos.fill(HIST("eta_resolution_Type3"), resEta);
+          histos.fill(HIST("phi_resolution_Type3"), resPhi);
+          histos.fill(HIST("ptRes_vs_pt_Type3"), ptGen, resPt);
+          histos.fill(HIST("etaRes_vs_pt_Type3"), ptGen, resEta);
+          histos.fill(HIST("phiRes_vs_pt_Type3"), ptGen, resPhi);
+          histos.fill(HIST("pt_gen_Type3"), ptGen);
+          histos.fill(HIST("pt_reco_Type3"), ptReco);
+          histos.fill(HIST("eta_gen_Type3"), etaGen);
+          histos.fill(HIST("eta_reco_Type3"), etaReco);
+          histos.fill(HIST("phi_gen_Type3"), phiGen);
+          histos.fill(HIST("phi_reco_Type3"), phiReco);
           break;
 
         case 4: //standalone MCH track

@@ -48,17 +48,17 @@ void efficiency()
     gPad->Update();
     TGraphAsymmErrors* graph_Type0 = effPt_Type0->GetPaintedGraph();
     if (graph_Type0) {
-        graph_Type0->GetYaxis()->SetRangeUser(0.0, 1.2);
+        graph_Type0->GetYaxis()->SetRangeUser(0.0, 1.5);
     }
 
     effPt_Type3->SetMarkerStyle(22);
     effPt_Type3->SetMarkerColor(kBlue);
     effPt_Type3->SetLineColor(kBlue);
-    effPt_Type3->Draw("P SAME");
+    //effPt_Type3->Draw("P SAME");
 
-    TLegend* leg = new TLegend(0.6, 0.2, 0.88, 0.4);
+    TLegend* leg = new TLegend(0.75, 0.75, 0.90, 0.90);
     leg->AddEntry(effPt_Type0, "Type 0 (MFT+MCH+MID)", "ep");
-    leg->AddEntry(effPt_Type3, "Type 3 (MCH+MID)", "ep");
+    //leg->AddEntry(effPt_Type3, "Type 3 (MCH+MID)", "ep");
     leg->Draw();
 
     c1->SaveAs("tracking_efficiency_pt.png");

@@ -50,10 +50,33 @@ struct mc_muon_resto_track {
         histos.add("phi_gen", "Generated phi (Matched to Reco)", kTH1F, {axisPhi});
         histos.add("phi_reco", "Reconstructed phi (Matched to Gen)", kTH1F, {axisPhi});
 
+        histos.add("pt_gen_all", "Generated pT (All Findable)", kTH1F, {axisPt});
+        histos.add("eta_gen_all", "Generated eta (All Findable)", kTH1F, {axisEta});
+        histos.add("phi_gen_all", "Generated phi (All Findable)", kTH1F, {axisPhi});
+
         histos.add("pt_gen_all_findable", "Generated pT (All Findable Muons)", kTH1F, {axisPt});
         histos.add("eta_gen_all_findable", "Generated eta (All Findable Muons)", kTH1F, {axisEta});
         histos.add("phi_gen_all_findable", "Generated phi (All Findable Muons)", kTH1F, {axisPhi});
 
+        histos.add("pt_gen_all_pion_findable", "Generated pT (All Findable Pions)", kTH1F, {axisPt});
+        histos.add("eta_gen_all_pion_findable", "Generated eta (All Findable Pions)", kTH1F, {axisEta});
+        histos.add("phi_gen_all_pion_findable", "Generated phi (All Findable Pions)", kTH1F, {axisPhi});
+
+        histos.add("pt_gen_all_electron_findable", "Generated pT (All Findable Electrons)", kTH1F, {axisPt});
+        histos.add("eta_gen_all_electron_findable", "Generated eta (All Findable Electrons)", kTH1F, {axisEta});
+        histos.add("phi_gen_all_electron_findable", "Generated phi (All Findable Electrons)", kTH1F, {axisPhi});
+
+        histos.add("pt_gen_all_kaon_findable", "Generated pT (All Findable Kaons)", kTH1F, {axisPt});
+        histos.add("eta_gen_all_kaon_findable", "Generated eta (All Findable Kaons)", kTH1F, {axisEta});
+        histos.add("phi_gen_all_kaon_findable", "Generated phi (All Findable Kaons)", kTH1F, {axisPhi});
+
+        histos.add("pt_gen_all_proton_findable", "Generated pT (All Findable Protons)", kTH1F, {axisPt});
+        histos.add("eta_gen_all_proton_findable", "Generated eta (All Findable Protons)", kTH1F, {axisEta});
+        histos.add("phi_gen_all_proton_findable", "Generated phi (All Findable Protons)", kTH1F, {axisPhi});
+
+        histos.add("pt_gen_all_other_findable", "Generated pT (All Other Findable Particles)", kTH1F, {axisPt});
+        histos.add("eta_gen_all_other_findable", "Generated eta (All Other Findable Particles)", kTH1F, {axisEta});
+        histos.add("phi_gen_all_other_findable", "Generated phi (All Other Findable Particles)", kTH1F, {axisPhi});
 
         for (int type : trackTypes) {
         std::string t = std::to_string(type);
@@ -192,7 +215,25 @@ struct mc_muon_resto_track {
           break;
       }
     }
+    //all particles
+    for (size_t i = 0; i < mcParticles.size(); ++i) {
+        auto mc = mcParticles.iteratorAt(i);
+        
+        float ptGen = mc.pt();
+        float etaGen = mc.eta();
+        float phiGen = normPhi(mc.phi());
 
+        if (ptGen < minPt || ptGen > maxPt) continue;
+        if (etaGen < minEta || etaGen > maxEta) continue;
+        // if (phiGen < minPhi || phiGen > maxPhi) continue;
+
+
+        histos.fill(HIST("pt_gen_all"), ptGen);
+        histos.fill(HIST("eta_gen_all"), etaGen);
+        histos.fill(HIST("phi_gen_all"), phiGen);
+    }
+
+    //muon
     for (size_t i = 0; i < mcParticles.size(); ++i) {
         auto mc = mcParticles.iteratorAt(i);
 
@@ -212,6 +253,25 @@ struct mc_muon_resto_track {
         histos.fill(HIST("phi_gen_all_findable"), phiGen);
     }
 
+    //pion
+    for (size_t i = 0; i < mcParticles.size(); ++i) {
+        auto mc = mcParticles.iteratorAt(i);
+
+        if (std::abs(mc.pdgCode()) != 211) continue;  //pion +
+        
+        float ptGen = mc.pt();
+        float etaGen = mc.eta();
+        float phiGen = normPhi(mc.phi());
+
+        if (ptGen < minPt || ptGen > maxPt) continue;
+        if (etaGen < minEta || etaGen > maxEta) continue;
+        // if (phiGen < minPhi || phiGen > maxPhi) continue;
+
+
+        histos.fill(HIST("pt_gen_all_pion_findable"), ptGen);
+        histos.fill(HIST("eta_gen_all_pion_findable"), etaGen);
+        histos.fill(HIST("phi_gen_all_pion_findable"), phiGen);
+    }
   }
 };
 

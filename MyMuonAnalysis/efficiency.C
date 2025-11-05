@@ -6,7 +6,7 @@
 #include "TGraphAsymmErrors.h"
 #include "TStyle.h"
 #include "TAxis.h"
-
+// my_muon_tracking_efficiency
 
 void efficiency()
 {
@@ -19,21 +19,21 @@ void efficiency()
     TH1F* hDenPt = (TH1F*)f->Get("my_muon_tracking_efficiency/hPt_Gen");
 
     TH1F* hNumPt_Type0 = (TH1F*)f->Get("my_muon_tracking_efficiency/hPt_Reco_Matched_Type0");
-    TH1F* hNumPt_Type2 = (TH1F*)f->Get("my_muon_tracking_efficiency/hPt_Reco_Matched_Type2");
+    TH1F* hNumPt_Type3 = (TH1F*)f->Get("my_muon_tracking_efficiency/hPt_Reco_Matched_Type3");
 
-    if (!hDenPt || !hNumPt_Type0 || !hNumPt_Type2) {
+    if (!hDenPt || !hNumPt_Type0 || !hNumPt_Type3) {
         printf("Error: Cannot find histograms in file.\n");
         if (!hDenPt) printf("... hPt_Gen not found.\n");
         if (!hNumPt_Type0) printf("... hPt_Reco_Matched_Type0 not found.\n");
-        if (!hNumPt_Type2) printf("... hPt_Reco_Matched_Type2 not found.\n");
+        if (!hNumPt_Type3) printf("... hPt_Reco_Matched_Type3 not found.\n");
         return;
     }
 
     TEfficiency* effPt_Type0 = new TEfficiency(*hNumPt_Type0, *hDenPt);
     effPt_Type0->SetName("effPt_Type0");
 
-    TEfficiency* effPt_Type2 = new TEfficiency(*hNumPt_Type2, *hDenPt);
-    effPt_Type2->SetName("effPt_Type2");
+    TEfficiency* effPt_Type3 = new TEfficiency(*hNumPt_Type3, *hDenPt);
+    effPt_Type3->SetName("effPt_Type3");
 
     TCanvas* c1 = new TCanvas("c1", "Tracking Efficiency vs pT", 800, 600);
     c1->cd();
@@ -51,14 +51,14 @@ void efficiency()
         graph_Type0->GetYaxis()->SetRangeUser(0.0, 1.2);
     }
 
-    effPt_Type2->SetMarkerStyle(22);
-    effPt_Type2->SetMarkerColor(kBlue);
-    effPt_Type2->SetLineColor(kBlue);
-    effPt_Type2->Draw("P SAME");
+    effPt_Type3->SetMarkerStyle(22);
+    effPt_Type3->SetMarkerColor(kBlue);
+    effPt_Type3->SetLineColor(kBlue);
+    effPt_Type3->Draw("P SAME");
 
     TLegend* leg = new TLegend(0.6, 0.2, 0.88, 0.4);
     leg->AddEntry(effPt_Type0, "Type 0 (MFT+MCH+MID)", "ep");
-    leg->AddEntry(effPt_Type2, "Type 2 (MFT+MCH)", "ep");
+    leg->AddEntry(effPt_Type3, "Type 3 (MCH+MID)", "ep");
     leg->Draw();
 
     c1->SaveAs("tracking_efficiency_pt.png");

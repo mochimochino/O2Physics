@@ -78,6 +78,15 @@ struct mc_muon_resto_track {
         histos.add("eta_gen_all_other_findable", "Generated eta (All Other Findable Particles)", kTH1F, {axisEta});
         histos.add("phi_gen_all_other_findable", "Generated phi (All Other Findable Particles)", kTH1F, {axisPhi});
 
+        AxisSpec axisParentCat{6, 0.5, 6.5, "Parent Category"};
+        histos.add("muon_parent_category", "Category of Muon Parent (from Reco Muon)", kTH1F, {axisParentCat});
+        histos.add("pt_reco_primary", "Reco pT (Parent: Primary)", kTH1F, {axisPt});
+        histos.add("pt_reco_pion", "Reco pT (Parent: Pion)", kTH1F, {axisPt});
+        histos.add("pt_reco_kaon", "Reco pT (Parent: Kaon)", kTH1F, {axisPt});
+        histos.add("pt_reco_charm", "Reco pT (Parent: Charm)", kTH1F, {axisPt});
+        histos.add("pt_reco_beauty", "Reco pT (Parent: Beauty)", kTH1F, {axisPt});
+        histos.add("pt_reco_other", "Reco pT (Parent: Other)", kTH1F, {axisPt});
+
         for (int type : trackTypes) {
         std::string t = std::to_string(type);
 
@@ -127,13 +136,69 @@ struct mc_muon_resto_track {
       if (etaGen < minEta || etaGen > maxEta) continue;
       //if (phiGen < minPhi || phiGen > maxPhi) continue;
 
+      int parentCategory = 6;
+      auto motherIds = mc.mothersIds(); // (複数形) を呼び出し、リスト(span)を取得
+      int motherId = -1;                // デフォルトは -1 (親なし)
+      if (!motherIds.empty()) {         // リストが空でなければ
+          motherId = motherIds[0];      // 最初の親のIDを取得
+      }
+
+      if (motherId < 0) {
+          parentCategory = 1; // 1 = Primary
+      } else {
+          auto mother = mcParticles.iteratorAt(motherId);
+          int motherPdg = std::abs(mother.pdgCode());
+
+          bool isPion = (motherPdg == 211); // pi+/-
+          // K+/- (321), K_L (130), K_S (310)
+          bool isKaon = (motherPdg == 321 || motherPdg == 130 || motherPdg == 310); 
+          // Charm (D meson: 4xx, Lambda_c: 4xxx etc)
+          bool isCharm = (motherPdg / 100 % 10 == 4) || (motherPdg / 1000 % 10 == 4);
+          // Beauty (B meson: 5xx, Lambda_b: 5xxx etc)
+          bool isBeauty = (motherPdg / 100 % 10 == 5) || (motherPdg / 1000 % 10 == 5);
+
+          if (isPion) {
+              parentCategory = 2; // 2 = Pion
+          } else if (isKaon) {
+              parentCategory = 3; // 3 = Kaon
+          } else if (isCharm) {
+              parentCategory = 4; // 4 = Charm
+          } else if (isBeauty) {
+              parentCategory = 5; // 5 = Beauty
+          }
+      }
+
+      histos.fill(HIST("muon_parent_category"), (float)parentCategory);
+
+      switch (parentCategory) {
+        case 1: // Primary
+          histos.fill(HIST("pt_reco_primary"), ptReco);
+          break;
+        case 2: // Pion
+          histos.fill(HIST("pt_reco_pion"), ptReco);
+          break;
+        case 3: // Kaon
+          histos.fill(HIST("pt_reco_kaon"), ptReco);
+          break;
+        case 4: // Charm
+          histos.fill(HIST("pt_reco_charm"), ptReco);
+          break;
+        case 5: // Beauty
+          histos.fill(HIST("pt_reco_beauty"), ptReco);
+          break;
+        case 6: // Other
+        default:
+          histos.fill(HIST("pt_reco_other"), ptReco);
+          break;
+      }
+      
       float resPt = (ptReco - ptGen) / ptGen;
       float resEta = etaReco - etaGen;
       float rawDPhi = phiReco - phiGen;
       float resPhi = normPhi(rawDPhi);
 
       int type = trk.trackType();
-    
+      
       histos.fill(HIST("pt_resolution"), resPt);
       histos.fill(HIST("eta_resolution"), resEta);
       histos.fill(HIST("phi_resolution"), resPhi);
@@ -215,7 +280,6 @@ struct mc_muon_resto_track {
           break;
       }
     }
-    //all particles
     for (size_t i = 0; i < mcParticles.size(); ++i) {
         auto mc = mcParticles.iteratorAt(i);
         
@@ -226,51 +290,38 @@ struct mc_muon_resto_track {
         if (ptGen < minPt || ptGen > maxPt) continue;
         if (etaGen < minEta || etaGen > maxEta) continue;
         // if (phiGen < minPhi || phiGen > maxPhi) continue;
-
 
         histos.fill(HIST("pt_gen_all"), ptGen);
         histos.fill(HIST("eta_gen_all"), etaGen);
         histos.fill(HIST("phi_gen_all"), phiGen);
-    }
 
-    //muon
-    for (size_t i = 0; i < mcParticles.size(); ++i) {
-        auto mc = mcParticles.iteratorAt(i);
+        int pdgCode = std::abs(mc.pdgCode());
 
-        if (std::abs(mc.pdgCode()) != 13) continue; 
-        
-        float ptGen = mc.pt();
-        float etaGen = mc.eta();
-        float phiGen = normPhi(mc.phi());
-
-        if (ptGen < minPt || ptGen > maxPt) continue;
-        if (etaGen < minEta || etaGen > maxEta) continue;
-        // if (phiGen < minPhi || phiGen > maxPhi) continue;
-
-
-        histos.fill(HIST("pt_gen_all_findable"), ptGen);
-        histos.fill(HIST("eta_gen_all_findable"), etaGen);
-        histos.fill(HIST("phi_gen_all_findable"), phiGen);
-    }
-
-    //pion
-    for (size_t i = 0; i < mcParticles.size(); ++i) {
-        auto mc = mcParticles.iteratorAt(i);
-
-        if (std::abs(mc.pdgCode()) != 211) continue;  //pion +
-        
-        float ptGen = mc.pt();
-        float etaGen = mc.eta();
-        float phiGen = normPhi(mc.phi());
-
-        if (ptGen < minPt || ptGen > maxPt) continue;
-        if (etaGen < minEta || etaGen > maxEta) continue;
-        // if (phiGen < minPhi || phiGen > maxPhi) continue;
-
-
-        histos.fill(HIST("pt_gen_all_pion_findable"), ptGen);
-        histos.fill(HIST("eta_gen_all_pion_findable"), etaGen);
-        histos.fill(HIST("phi_gen_all_pion_findable"), phiGen);
+        if (pdgCode == 13) { // Muon
+            histos.fill(HIST("pt_gen_all_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_findable"), phiGen);
+        } else if (pdgCode == 211) { // Pion
+            histos.fill(HIST("pt_gen_all_pion_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_pion_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_pion_findable"), phiGen);
+        } else if (pdgCode == 11) { // Electron
+            histos.fill(HIST("pt_gen_all_electron_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_electron_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_electron_findable"), phiGen);
+        } else if (pdgCode == 321) { // Kaon
+            histos.fill(HIST("pt_gen_all_kaon_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_kaon_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_kaon_findable"), phiGen);
+        } else if (pdgCode == 2212) { // Proton
+            histos.fill(HIST("pt_gen_all_proton_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_proton_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_proton_findable"), phiGen);
+        } else {
+            histos.fill(HIST("pt_gen_all_other_findable"), ptGen);
+            histos.fill(HIST("eta_gen_all_other_findable"), etaGen);
+            histos.fill(HIST("phi_gen_all_other_findable"), phiGen);
+        }
     }
   }
 };

@@ -75,13 +75,10 @@ struct my_muon_tracking_efficiency {
     std::set<int> countedMcIds;
     for (auto& trk : tracks) {
         int mcId = trk.mcParticleId();
-        // Check if the track is associated with a valid MC particle
         if (mcId < 0 || mcId >= static_cast<int>(mcParticles.size())) continue;
 
         auto mc = mcParticles.iteratorAt(mcId);
 
-        // --- Apply "Findable" Cuts (MUST be the same as Loop 1) ---
-        // 1. Muon only
         if (std::abs(mc.pdgCode()) != 13) continue;
 
         // 2. Acceptance cuts
@@ -93,9 +90,7 @@ struct my_muon_tracking_efficiency {
         if (etaGen < minEta || etaGen > maxEta) continue;
         // if (phiGen < minPhi || phiGen > maxPhi) continue;
 
-        // --- Fill Numerator Histograms ---
-        // This is a "found" track, matched to a "findable" MC muon.
-        // We fill with the *generated* value to get efficiency vs. gen pt/eta/phi.
+
         histos.fill(HIST("hPt_Reco_Matched_All"), ptGen);
         histos.fill(HIST("hEta_Reco_Matched_All"), etaGen);
         histos.fill(HIST("hPhi_Reco_Matched_All"), phiGen);
@@ -124,7 +119,6 @@ struct my_muon_tracking_efficiency {
             histos.fill(HIST("hPhi_Reco_Matched_Type4"), phiGen);
             break;
         default:
-            // This type is not in our list {0, 2, 3, 4}, so we ignore it.
             break;
         }
     }

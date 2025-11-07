@@ -10,11 +10,7 @@ o2physics_add_dpl_workflow(my-mc-allgen
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-muon-task
-                  SOURCES my_muonPt.cxx
-                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
-                  COMPONENT_NAME Analysis)
-o2physics_add_dpl_workflow(my-muon-eta-task-types
-                  SOURCES my_muon_etaPtbytrack.cxx
+                  SOURCES my_muonPt.cxx MuonTrackCut.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-muon-eta-phi-task-types
@@ -25,6 +21,10 @@ o2physics_add_dpl_workflow(my-muon-mcgen
                   SOURCES my_muon_mcgen.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
                   COMPONENT_NAME Analysis)
+#o2physics_add_dpl_workflow(my-muon-cut
+#                  SOURCES my_muon_o2cut.cxx
+#                  PUBLIC_LINK_LIBRARIES O2::Framework O2::DCAFitter O2::GlobalTracking O2Physics::AnalysisCore KFParticle::KFParticle O2Physics::MLCore
+#                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-reco
                   SOURCES my_muon_recoMc.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
@@ -35,5 +35,5 @@ o2physics_add_dpl_workflow(my-muon-tracking-efficiency
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-res-track
                   SOURCES my_muon_resto_track.cxx
-                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore 
                   COMPONENT_NAME Analysis)

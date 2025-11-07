@@ -1,7 +1,9 @@
 // FWD Muon Pt Histogram
-
+// Using MymuonCut
 #include "Framework/runDataProcessing.h"
 #include "Framework/AnalysisTask.h"
+
+#include "MymuonCut.h"
 
 using namespace o2;
 using namespace o2::framework;
@@ -35,6 +37,9 @@ struct my_muonPt {
   void process(aod::FwdTracks const& fwdtracks)
   {
     for (auto& fwdtrack : fwdtracks) {
+      if (!isGoodMuonTrack(fwdtrack)) {
+        continue;
+      }
       histos.fill(HIST("etaHistogram"), fwdtrack.eta());
       histos.fill(HIST("ptHistogram"), fwdtrack.pt());
       histos.fill(HIST("etaPtHistogram"), fwdtrack.pt(), fwdtrack.eta());

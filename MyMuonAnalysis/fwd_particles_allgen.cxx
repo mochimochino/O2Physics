@@ -137,10 +137,10 @@ struct mc_muon_resto_track {
       //if (phiGen < minPhi || phiGen > maxPhi) continue;
 
       int parentCategory = 6;
-      auto motherIds = mc.mothersIds(); // (複数形) を呼び出し、リスト(span)を取得
-      int motherId = -1;                // デフォルトは -1 (親なし)
-      if (!motherIds.empty()) {         // リストが空でなければ
-          motherId = motherIds[0];      // 最初の親のIDを取得
+      auto motherIds = mc.mothersIds();
+      int motherId = -1;
+      if (!motherIds.empty()) {
+          motherId = motherIds[0];  
       }
 
       if (motherId < 0) {

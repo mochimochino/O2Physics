@@ -23,7 +23,7 @@ o2physics_add_dpl_workflow(my-muon-mcgen
                   COMPONENT_NAME Analysis)
 #o2physics_add_dpl_workflow(my-muon-cut
 #                  SOURCES my_muon_o2cut.cxx
-#                  PUBLIC_LINK_LIBRARIES O2::Framework O2::DCAFitter O2::GlobalTracking O2Physics::AnalysisCore KFParticle::KFParticle O2Physics::MLCore
+#                  PUBLIC_LINK_LIBRARIES O2::Framework O2::DCAFitter O2::GlobalTracking O2Physics::AnalysisCore KFParticle::KFParticle O2Physics::MLCore PWGDQ::PWGDQ
 #                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-reco
                   SOURCES my_muon_recoMc.cxx

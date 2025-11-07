@@ -3,6 +3,8 @@
 #include "Framework/runDataProcessing.h"
 #include "Framework/AnalysisTask.h"
 
+//#include "PWGDQ/Core/CutsLibrary.h"
+
 #include "MymuonCut.h"
 
 using namespace o2;
@@ -20,16 +22,22 @@ struct my_muonPt {
   Configurable<float> minPt{"minPt", 0, "min pT in pT histo"};
   Configurable<float> maxPt{"maxPt", 10, "max pT in pT histo"};
 
+  Configurable<int> nBinsPDca{"nBinsPDca", 200, "N bins in PDca histo"};
+  Configurable<float> minPDca{"minPDca", 0.0, "min PDca in PDca histo"};
+  Configurable<float> maxPDca{"maxPDca", 1000.0, "max PDca in PDca histo"};
+
   void init(InitContext const&)
   {
     // define axes you want to use
     const AxisSpec axisEta{nBinsEta, minEta, maxEta, "#eta"};
     const AxisSpec axisPt{nBinsPt, minPt, maxPt, "p_{T}"};
+    const AxisSpec axisPDca{nBinsPDca, minPDca, maxPDca, "PDca muon"};
 
     // create histograms
     histos.add("etaHistogram", "etaHistogram", kTH1F, {axisEta}, true);
     histos.add("ptHistogram", "ptHistogram", kTH1F, {axisPt}, true);
     histos.add("etaPtHistogram", "#eta vs pT", kTH2F, {axisPt, axisEta});
+    histos.add("PDcamuonHistogram", "PDca muon Histogram", kTH1F, {axisPDca}, true);
   }
 
 // have to change to fwd tracks
@@ -43,6 +51,7 @@ struct my_muonPt {
       histos.fill(HIST("etaHistogram"), fwdtrack.eta());
       histos.fill(HIST("ptHistogram"), fwdtrack.pt());
       histos.fill(HIST("etaPtHistogram"), fwdtrack.pt(), fwdtrack.eta());
+      histos.fill(HIST("PDcamuonHistogram"), fwdtrack.pDca());
     }
   }
 };

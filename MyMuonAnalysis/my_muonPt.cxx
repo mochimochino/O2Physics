@@ -26,18 +26,27 @@ struct my_muonPt {
   Configurable<float> minPDca{"minPDca", 0.0, "min PDca in PDca histo"};
   Configurable<float> maxPDca{"maxPDca", 1000.0, "max PDca in PDca histo"};
 
+// add PWGDQ info
+  Configurable<int> nBinsRAtAbsorberEnd{"nBinsRAtAbsorberEnd", 200, "N bins in RAtAbsorberEnd histo"};
+  Configurable<float> minRAtAbsorberEnd{"minRAtAbsorberEnd", 0.0, "min RAtAbsorberEnd"};
+  Configurable<float> maxRAtAbsorberEnd{"maxRAtAbsorberEnd", 100.0, "max RAtAbsorberEnd"};
+
+
   void init(InitContext const&)
   {
     // define axes you want to use
     const AxisSpec axisEta{nBinsEta, minEta, maxEta, "#eta"};
     const AxisSpec axisPt{nBinsPt, minPt, maxPt, "p_{T}"};
     const AxisSpec axisPDca{nBinsPDca, minPDca, maxPDca, "PDca muon"};
+    const AxisSpec axisRAtAbsorberEnd{nBinsRAtAbsorberEnd, minRAtAbsorberEnd, maxRAtAbsorberEnd, "R at Absorber End"};
+
 
     // create histograms
     histos.add("etaHistogram", "etaHistogram", kTH1F, {axisEta}, true);
     histos.add("ptHistogram", "ptHistogram", kTH1F, {axisPt}, true);
     histos.add("etaPtHistogram", "#eta vs pT", kTH2F, {axisPt, axisEta});
     histos.add("PDcamuonHistogram", "PDca muon Histogram", kTH1F, {axisPDca}, true);
+    histos.add("RAtAbsorberEndHistogram", "R at Absorber End", kTH1F, {axisRAtAbsorberEnd}, true);
   }
 
 // have to change to fwd tracks
@@ -52,6 +61,7 @@ struct my_muonPt {
       histos.fill(HIST("ptHistogram"), fwdtrack.pt());
       histos.fill(HIST("etaPtHistogram"), fwdtrack.pt(), fwdtrack.eta());
       histos.fill(HIST("PDcamuonHistogram"), fwdtrack.pDca());
+      histos.fill(HIST("RAtAbsorberEndHistogram"), fwdtrack.rAtAbsorberEnd());
     }
   }
 };

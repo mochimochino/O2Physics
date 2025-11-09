@@ -16,21 +16,34 @@ bool isGoodMuonTrack(const o2::aod::FwdTrack& track)
     if (track.trackType() != 0 && track.trackType() != 3) {
         return false; // Type cut
     }
-    // Add more criteria as needed
 
     return true; // Track passes all cuts
 }
 
-bool matchedQualityCuts(const o2::aod::FwdTrack& track)
+bool matchedQualityCuts(const o2::aod::FwdTrack& track) //from PWGDQ/Core/CutsLibrary.cxx
 {
-    // Example matched quality criteria
-    if (track.chi2() > 3.0) {
-        return false; // Match Chi2 cut
+    if (track.eta() < -4.0 || track.eta() > -2.5) {
+        return false; // Match eta cut
     }
-
-    // Add more criteria as needed
-
-    return true; // Track passes all matched quality cuts
+    if (track.rAtAbsorberEnd() < 17.6 || track.rAtAbsorberEnd() > 89.5) {
+        return false; // Match rAtAbsorberEnd cut
+    }
+    if (track.pDca() > 594.0 && track.rAtAbsorberEnd() < 26.5) {
+        return false; // Match pDca cut
+    }
+    if (track.pDca() > 324.0 && track.rAtAbsorberEnd() >= 26.5) {
+        return false; // Match pDca cut
+    }
+    if (track.chi2() > 1e6) {
+        return false; // Match chi2 cut
+    }
+    if (track.chi2MatchMCHMID() > 1e6) {
+        return false; // Match chi2MatchMCHMID cut
+    }
+    if (track.chi2MatchMCHMFT() > 1e6) {
+        return false; // Match chi2MatchMCHMFT cut
+    }
+    return true;
 }
    // cut->AddCut(VarManager::kEta, -4.0, -2.5);
     //cut->AddCut(VarManager::kMuonRAtAbsorberEnd, 17.6, 89.5);

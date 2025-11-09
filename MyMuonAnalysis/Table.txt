@@ -1,0 +1,1964 @@
+General
+Root of data model for tables pointing to a bunch crossing
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::bc::RunNumber 		runNumber 	int 	Run number
+o2::aod::bc::GlobalBC 		globalBC 	uint64_t 	Bunch crossing number (globally unique in this run)
+o2::aod::bc::TriggerMask 		triggerMask 	uint64_t 	CTP trigger mask
+Root of data model for tables pointing to a bunch crossing, version 1
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::BCs = o2::aod::BCs_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::bc::RunNumber 		runNumber 	int 	Run number
+o2::aod::bc::GlobalBC 		globalBC 	uint64_t 	Bunch crossing number (globally unique in this run)
+o2::aod::bc::TriggerMask 		triggerMask 	uint64_t 	CTP trigger mask
+o2::aod::bc::InputMask 		inputMask 	uint64_t 	CTP input mask
+Table which holds the timestamp of a BC
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::BCsWithTimestamps = soa::Join<o2::aod::BCs, o2::aod::Timestamps>
+    o2::aod::BCsWithRun2Info = soa::Join<o2::aod::BCs, o2::aod::Run2BCInfos, o2::aod::Timestamps>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::BCsInfo = soa::Join<o2::aod::BCs, o2::aod::Timestamps, o2::aod::BcSels>
+    o2::aod::pid_tpc_tof_utils::BCsInfo = soa::Join<o2::aod::BCs, o2::aod::Timestamps, o2::aod::BcSels>
+
+Name 		Getter 	Type 	Comment
+o2::aod::timestamp::Timestamp 		timestamp 	uint64_t 	Timestamp of a BC in ms (epoch style)
+Time and vertex information of collision
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::‌collision::BCId 	I 	bcId 	int32 	Most probably BC to where this collision has occured
+o2::aod::‌collision::PosX 		posX 	float 	X Vertex position in cm
+o2::aod::‌collision::PosY 		posY 	float 	Y Vertex position in cm
+o2::aod::‌collision::PosZ 		posZ 	float 	Z Vertex position in cm
+o2::aod::‌collision::CovXX 		covXX 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovXY 		covXY 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovXZ 		covXZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovYY 		covYY 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovYZ 		covYZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovZZ 		covZZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::Flags 		flags 	uint16_t 	Run 2: see CollisionFlagsRun2 | Run 3: see Vertex::Flags
+o2::aod::‌collision::Chi2 		chi2 	float 	Chi2 of vertex fit
+o2::aod::‌collision::NumContrib 		numContrib 	uint16_t 	Number of tracks used for the vertex
+o2::aod::‌collision::CollisionTime 		collisionTime 	float 	Collision time in ns relative to BC stored in bc()
+o2::aod::‌collision::CollisionTimeRes 		collisionTimeRes 	float 	Resolution of collision time
+Time and vertex information of collision
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Collisions = o2::aod::Collisions_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::‌collision::BCId 	I 	bcId 	int32 	Most probably BC to where this collision has occured
+o2::aod::‌collision::PosX 		posX 	float 	X Vertex position in cm
+o2::aod::‌collision::PosY 		posY 	float 	Y Vertex position in cm
+o2::aod::‌collision::PosZ 		posZ 	float 	Z Vertex position in cm
+o2::aod::‌collision::CovXX 		covXX 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovXY 		covXY 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovYY 		covYY 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovXZ 		covXZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovYZ 		covYZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::CovZZ 		covZZ 	float 	Vertex covariance matrix
+o2::aod::‌collision::Flags 		flags 	uint16_t 	Run 2: see CollisionFlagsRun2 | Run 3: see Vertex::Flags
+o2::aod::‌collision::Chi2 		chi2 	float 	Chi2 of vertex fit
+o2::aod::‌collision::NumContrib 		numContrib 	uint16_t 	Number of tracks used for the vertex
+o2::aod::‌collision::CollisionTime 		collisionTime 	float 	Collision time in ns relative to BC stored in bc()
+o2::aod::‌collision::CollisionTimeRes 		collisionTimeRes 	float 	Resolution of collision time
+
+Tracks
+Track parameters at collision vertex
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracks 
+
+Is used in:
+
+    o2::aod::Track = o2::aod::Tracks::iterator
+    o2::aod::FullTracks = soa::Join<o2::aod::Tracks, o2::aod::TracksExtra>
+    o2::aod::FullTrack = soa::Join<o2::aod::Tracks, o2::aod::TracksExtra>::iterator
+    o2::aod::TracksWCov = soa::Join<o2::aod::Tracks, o2::aod::TracksCov>
+    o2::aod::TracksWDca = soa::Join<o2::aod::Tracks, o2::aod::TracksDCA>
+    o2::aod::TracksWExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksExtra>
+    o2::aod::TracksWCovDca = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksDCA>
+    o2::aod::TracksWCovExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksExtra>
+    o2::aod::TracksWDcaExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksDCA, o2::aod::TracksExtra>
+    o2::aod::TracksWCovDcaExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksDCA, o2::aod::TracksExtra>
+    o2::aod::TracksWMc = soa::Join<o2::aod::Tracks, o2::aod::McTrackLabels>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::TracksWPid = soa::Join<o2::aod::Tracks, o2::aod::TracksPidPi, o2::aod::PidTpcTofFullPi, o2::aod::TracksPidKa, o2::aod::PidTpcTofFullKa>
+    o2::analysis::TracksWExt = soa::Join<o2::aod::Tracks, o2::aod::TracksExtra, o2::analysis::aod::TrackSelection, o2::aod::TrackSelectionExtension, o2::analysis::aod::TracksPidPi, o2::analysis::aod::PidTpcTofFullPi, o2::analysis::aod::TracksPidKa, o2::analysis::aod::PidTpcTofFullKa, o2::analysis::aod::pidTPCFullPi>
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::track::CollisionId 	I 	collisionId 	int32 	Collision to which this track belongs
+o2::aod::track::TrackType 		trackType 	uint8_t 	Type of track. See enum TrackTypeEnum. This cannot be used to decide which detector has contributed to this track. Use hasITS, hasTPC, etc.
+o2::aod::track::X 		x 	float 	
+o2::aod::track::Alpha 		alpha 	float 	
+o2::aod::track::Y 		y 	float 	
+o2::aod::track::Z 		z 	float 	
+o2::aod::track::Snp 		snp 	float 	
+o2::aod::track::Tgl 		tgl 	float 	
+o2::aod::track::Signed1Pt 		signed1Pt 	float 	(sign of charge)/Pt in c/GeV. Use pt() and sign() instead
+o2::aod::track::IsWithinBeamPipe 	D 	isWithinBeamPipe 	bool 	Is the track within the beam pipe (= successfully propagated to a collision vertex)
+o2::aod::track::Px 	D 	px 	float 	Momentum in x-direction in GeV/c
+o2::aod::track::Py 	D 	py 	float 	Momentum in y-direction in GeV/c
+o2::aod::track::Pz 	D 	pz 	float 	Momentum in z-direction in GeV/c
+o2::aod::track::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::track::Energy 	D 	energy 	float 	Track energy, computed under the mass assumption given as input
+o2::aod::track::Rapidity 	D 	rapidity 	float 	Track rapidity, computed under the mass assumption given as input
+o2::aod::track::Sign 	D 	sign 	short 	Charge: positive: 1, negative: -1
+o2::aod::0 	GI 		? 	
+o2::aod::track::Pt 	E 	pt 	float 	Transverse momentum of the track in GeV/c
+o2::aod::track::P 	E 	p 	float 	Momentum in Gev/c
+o2::aod::track::Eta 	E 	eta 	float 	Pseudorapidity
+o2::aod::track::Phi 	E 	phi 	float 	Phi of the track, in radians within [0, 2pi)
+Track parameters at inner most update (e.g. ITS) as it comes from the tracking
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksIU 
+
+Is used in:
+
+    o2::aod::TrackIU = o2::aod::TracksIU::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::track::CollisionId 	I 	collisionId 	int32 	Collision to which this track belongs
+o2::aod::track::TrackType 		trackType 	uint8_t 	Type of track. See enum TrackTypeEnum. This cannot be used to decide which detector has contributed to this track. Use hasITS, hasTPC, etc.
+o2::aod::track::X 		x 	float 	
+o2::aod::track::Alpha 		alpha 	float 	
+o2::aod::track::Y 		y 	float 	
+o2::aod::track::Z 		z 	float 	
+o2::aod::track::Snp 		snp 	float 	
+o2::aod::track::Tgl 		tgl 	float 	
+o2::aod::track::Signed1Pt 		signed1Pt 	float 	(sign of charge)/Pt in c/GeV. Use pt() and sign() instead
+o2::aod::track::IsWithinBeamPipe 	D 	isWithinBeamPipe 	bool 	Is the track within the beam pipe (= successfully propagated to a collision vertex)
+o2::aod::track::Px 	D 	px 	float 	Momentum in x-direction in GeV/c
+o2::aod::track::Py 	D 	py 	float 	Momentum in y-direction in GeV/c
+o2::aod::track::Pz 	D 	pz 	float 	Momentum in z-direction in GeV/c
+o2::aod::track::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::track::Energy 	D 	energy 	float 	Track energy, computed under the mass assumption given as input
+o2::aod::track::Rapidity 	D 	rapidity 	float 	Track rapidity, computed under the mass assumption given as input
+o2::aod::track::Sign 	D 	sign 	short 	Charge: positive: 1, negative: -1
+o2::aod::0 	GI 		? 	
+o2::aod::track::Pt 	E 	pt 	float 	Transverse momentum of the track in GeV/c
+o2::aod::track::P 	E 	p 	float 	Momentum in Gev/c
+o2::aod::track::Eta 	E 	eta 	float 	Pseudorapidity
+o2::aod::track::Phi 	E 	phi 	float 	Phi of the track, in radians within [0, 2pi)
+Track covariance matrix at collision vertex
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksCov 
+
+Is used in:
+
+    o2::aod::TrackCov = o2::aod::TracksCov::iterator
+    o2::aod::TracksWCov = soa::Join<o2::aod::Tracks, o2::aod::TracksCov>
+    o2::aod::TracksWCovDca = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksDCA>
+    o2::aod::TracksWCovExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksExtra>
+    o2::aod::TracksWCovDcaExtra = soa::Join<o2::aod::Tracks, o2::aod::TracksCov, o2::aod::TracksDCA, o2::aod::TracksExtra>
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::track::SigmaZ 		sigmaZ 	float 	Covariance matrix
+o2::aod::track::SigmaSnp 		sigmaSnp 	float 	Covariance matrix
+o2::aod::track::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::track::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::track::RhoZY 		rhoZY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpY 		rhoSnpY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpZ 		rhoSnpZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglZ 		rhoTglZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglSnp 		rhoTglSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtZ 		rho1PtZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtSnp 		rho1PtSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+o2::aod::0 	GI 		? 	
+o2::aod::track::CYY 	E 	cYY 	float 	
+o2::aod::track::CZY 	E 	cZY 	float 	
+o2::aod::track::CZZ 	E 	cZZ 	float 	
+o2::aod::track::CSnpY 	E 	cSnpY 	float 	
+o2::aod::track::CSnpZ 	E 	cSnpZ 	float 	
+o2::aod::track::CSnpSnp 	E 	cSnpSnp 	float 	
+o2::aod::track::CTglY 	E 	cTglY 	float 	
+o2::aod::track::CTglZ 	E 	cTglZ 	float 	
+o2::aod::track::CTglSnp 	E 	cTglSnp 	float 	
+o2::aod::track::CTglTgl 	E 	cTglTgl 	float 	
+o2::aod::track::C1PtY 	E 	c1PtY 	float 	
+o2::aod::track::C1PtZ 	E 	c1PtZ 	float 	
+o2::aod::track::C1PtSnp 	E 	c1PtSnp 	float 	
+o2::aod::track::C1PtTgl 	E 	c1PtTgl 	float 	
+o2::aod::track::C1Pt21Pt2 	E 	c1Pt21Pt2 	float 	
+Track covariance matrix at inner most update (e.g. ITS) as it comes from the tracking
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksCovIU 
+
+Is used in:
+
+    o2::aod::TrackCovIU = o2::aod::TracksCovIU::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::track::SigmaZ 		sigmaZ 	float 	Covariance matrix
+o2::aod::track::SigmaSnp 		sigmaSnp 	float 	Covariance matrix
+o2::aod::track::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::track::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::track::RhoZY 		rhoZY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpY 		rhoSnpY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpZ 		rhoSnpZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglZ 		rhoTglZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglSnp 		rhoTglSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtZ 		rho1PtZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtSnp 		rho1PtSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+o2::aod::0 	GI 		? 	
+o2::aod::track::CYY 	E 	cYY 	float 	
+o2::aod::track::CZY 	E 	cZY 	float 	
+o2::aod::track::CZZ 	E 	cZZ 	float 	
+o2::aod::track::CSnpY 	E 	cSnpY 	float 	
+o2::aod::track::CSnpZ 	E 	cSnpZ 	float 	
+o2::aod::track::CSnpSnp 	E 	cSnpSnp 	float 	
+o2::aod::track::CTglY 	E 	cTglY 	float 	
+o2::aod::track::CTglZ 	E 	cTglZ 	float 	
+o2::aod::track::CTglSnp 	E 	cTglSnp 	float 	
+o2::aod::track::CTglTgl 	E 	cTglTgl 	float 	
+o2::aod::track::C1PtY 	E 	c1PtY 	float 	
+o2::aod::track::C1PtZ 	E 	c1PtZ 	float 	
+o2::aod::track::C1PtSnp 	E 	c1PtSnp 	float 	
+o2::aod::track::C1PtTgl 	E 	c1PtTgl 	float 	
+o2::aod::track::C1Pt21Pt2 	E 	c1Pt21Pt2 	float 	
+Additional track information (clusters, PID, etc.)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksExtra_000 
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterMap 		itsClusterMap 	uint8_t 	Old cluster ITS cluster map, kept for version 0 compatibility
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+o2::aod::0 	GI 		? 	
+o2::aod::track::DetectorMap 	E 	detectorMap 	uint8_t 	Detector map: see enum DetectorMapEnum
+Additional track information (clusters, PID, etc.)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksExtra_001 
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterSizes 		itsClusterSizes 	uint32_t 	Clusters sizes, four bits per a layer, starting from the innermost
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::v001::extensions::TPCDeltaTFwd 	D 	tpcDeltaTFwd 	float 	Delta Forward of track time in TPC time bis
+o2::aod::track::v001::extensions::TPCDeltaTBwd 	D 	tpcDeltaTBwd 	float 	Delta Backward of track time in TPC time bis
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::v001::ITSClusterMap 	D 	itsClusterMap 	uint8_t 	ITS cluster map, one bit per a layer, starting from the innermost
+o2::aod::track::v001::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::v001::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::v001::ITSClsSizeInLayer 	D 	itsClsSizeInLayer 	uint8_t 	Size of the ITS cluster in a given layer
+o2::aod::track::v001::IsITSAfterburner 	D 	isITSAfterburner 	bool 	If the track used the afterburner in the ITS
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+o2::aod::1 	GI 		? 	
+o2::aod::track::v001::DetectorMap 	E 	detectorMap 	uint8_t 	Detector map version 1, see enum DetectorMapEnum
+Additional track information (clusters, PID, etc.)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredTracksExtra_002 
+
+Is used in:
+
+    o2::aod::TracksExtra = o2::aod::TracksExtra_002
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterSizes 		itsClusterSizes 	uint32_t 	Clusters sizes, four bits per a layer, starting from the innermost
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusPID 		tpcNClsFindableMinusPID 	int8_t 	TPC Clusters: Findable - Found clusters used for PID
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::v001::extensions::TPCDeltaTFwd 	D 	tpcDeltaTFwd 	float 	Delta Forward of track time in TPC time bis
+o2::aod::track::v001::extensions::TPCDeltaTBwd 	D 	tpcDeltaTBwd 	float 	Delta Backward of track time in TPC time bis
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsPID 	D 	tpcNClsPID 	int16_t 	Number of found TPC clusters used for PID
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::v001::ITSClusterMap 	D 	itsClusterMap 	uint8_t 	ITS cluster map, one bit per a layer, starting from the innermost
+o2::aod::track::v001::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::v001::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::v001::ITSClsSizeInLayer 	D 	itsClsSizeInLayer 	uint8_t 	Size of the ITS cluster in a given layer
+o2::aod::track::v001::IsITSAfterburner 	D 	isITSAfterburner 	bool 	If the track used the afterburner in the ITS
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+o2::aod::2 	GI 		? 	
+o2::aod::track::v001::DetectorMap 	E 	detectorMap 	uint8_t 	Detector map version 1, see enum DetectorMapEnum
+On disk version of the track parameters at collision vertex
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::track::CollisionId 	I 	collisionId 	int32 	Collision to which this track belongs
+o2::aod::track::TrackType 		trackType 	uint8_t 	Type of track. See enum TrackTypeEnum. This cannot be used to decide which detector has contributed to this track. Use hasITS, hasTPC, etc.
+o2::aod::track::X 		x 	float 	
+o2::aod::track::Alpha 		alpha 	float 	
+o2::aod::track::Y 		y 	float 	
+o2::aod::track::Z 		z 	float 	
+o2::aod::track::Snp 		snp 	float 	
+o2::aod::track::Tgl 		tgl 	float 	
+o2::aod::track::Signed1Pt 		signed1Pt 	float 	(sign of charge)/Pt in c/GeV. Use pt() and sign() instead
+o2::aod::track::IsWithinBeamPipe 	D 	isWithinBeamPipe 	bool 	Is the track within the beam pipe (= successfully propagated to a collision vertex)
+o2::aod::track::Px 	D 	px 	float 	Momentum in x-direction in GeV/c
+o2::aod::track::Py 	D 	py 	float 	Momentum in y-direction in GeV/c
+o2::aod::track::Pz 	D 	pz 	float 	Momentum in z-direction in GeV/c
+o2::aod::track::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::track::Energy 	D 	energy 	float 	Track energy, computed under the mass assumption given as input
+o2::aod::track::Rapidity 	D 	rapidity 	float 	Track rapidity, computed under the mass assumption given as input
+o2::aod::track::Sign 	D 	sign 	short 	Charge: positive: 1, negative: -1
+On disk version of the track parameters at inner most update (e.g. ITS) as it comes from the tracking
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::track::CollisionId 	I 	collisionId 	int32 	Collision to which this track belongs
+o2::aod::track::TrackType 		trackType 	uint8_t 	Type of track. See enum TrackTypeEnum. This cannot be used to decide which detector has contributed to this track. Use hasITS, hasTPC, etc.
+o2::aod::track::X 		x 	float 	
+o2::aod::track::Alpha 		alpha 	float 	
+o2::aod::track::Y 		y 	float 	
+o2::aod::track::Z 		z 	float 	
+o2::aod::track::Snp 		snp 	float 	
+o2::aod::track::Tgl 		tgl 	float 	
+o2::aod::track::Signed1Pt 		signed1Pt 	float 	(sign of charge)/Pt in c/GeV. Use pt() and sign() instead
+o2::aod::track::IsWithinBeamPipe 	D 	isWithinBeamPipe 	bool 	Is the track within the beam pipe (= successfully propagated to a collision vertex)
+o2::aod::track::Px 	D 	px 	float 	Momentum in x-direction in GeV/c
+o2::aod::track::Py 	D 	py 	float 	Momentum in y-direction in GeV/c
+o2::aod::track::Pz 	D 	pz 	float 	Momentum in z-direction in GeV/c
+o2::aod::track::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::track::Energy 	D 	energy 	float 	Track energy, computed under the mass assumption given as input
+o2::aod::track::Rapidity 	D 	rapidity 	float 	Track rapidity, computed under the mass assumption given as input
+o2::aod::track::Sign 	D 	sign 	short 	Charge: positive: 1, negative: -1
+On disk version of the TracksCov table at collision vertex
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::track::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::track::SigmaZ 		sigmaZ 	float 	Covariance matrix
+o2::aod::track::SigmaSnp 		sigmaSnp 	float 	Covariance matrix
+o2::aod::track::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::track::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::track::RhoZY 		rhoZY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpY 		rhoSnpY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpZ 		rhoSnpZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglZ 		rhoTglZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglSnp 		rhoTglSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtZ 		rho1PtZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtSnp 		rho1PtSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+On disk version of the TracksCov table at inner most update (e.g. ITS) as it comes from the tracking
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::track::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::track::SigmaZ 		sigmaZ 	float 	Covariance matrix
+o2::aod::track::SigmaSnp 		sigmaSnp 	float 	Covariance matrix
+o2::aod::track::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::track::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::track::RhoZY 		rhoZY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpY 		rhoSnpY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoSnpZ 		rhoSnpZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglZ 		rhoTglZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::RhoTglSnp 		rhoTglSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtZ 		rho1PtZ 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtSnp 		rho1PtSnp 	int8_t 	Covariance matrix in compressed form
+o2::aod::track::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+On disk version of TracksExtra, version 0
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterMap 		itsClusterMap 	uint8_t 	Old cluster ITS cluster map, kept for version 0 compatibility
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterSizes 		itsClusterSizes 	uint32_t 	Clusters sizes, four bits per a layer, starting from the innermost
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::v001::extensions::TPCDeltaTFwd 	D 	tpcDeltaTFwd 	float 	Delta Forward of track time in TPC time bis
+o2::aod::track::v001::extensions::TPCDeltaTBwd 	D 	tpcDeltaTBwd 	float 	Delta Backward of track time in TPC time bis
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::v001::ITSClusterMap 	D 	itsClusterMap 	uint8_t 	ITS cluster map, one bit per a layer, starting from the innermost
+o2::aod::track::v001::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::v001::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::v001::ITSClsSizeInLayer 	D 	itsClsSizeInLayer 	uint8_t 	Size of the ITS cluster in a given layer
+o2::aod::track::v001::IsITSAfterburner 	D 	isITSAfterburner 	bool 	If the track used the afterburner in the ITS
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::StoredTracksExtra = o2::aod::StoredTracksExtra_002
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::TPCInnerParam 		tpcInnerParam 	float 	Momentum at inner wall of the TPC
+o2::aod::track::Flags 		flags 	uint32_t 	Track flags. Run 2: see TrackFlagsRun2Enum | Run 3: see TrackFlags
+o2::aod::track::ITSClusterSizes 		itsClusterSizes 	uint32_t 	Clusters sizes, four bits per a layer, starting from the innermost
+o2::aod::track::TPCNClsFindable 		tpcNClsFindable 	uint8_t 	Findable TPC clusters for this track geometry
+o2::aod::track::TPCNClsFindableMinusFound 		tpcNClsFindableMinusFound 	int8_t 	TPC Clusters: Findable - Found
+o2::aod::track::TPCNClsFindableMinusPID 		tpcNClsFindableMinusPID 	int8_t 	TPC Clusters: Findable - Found clusters used for PID
+o2::aod::track::TPCNClsFindableMinusCrossedRows 		tpcNClsFindableMinusCrossedRows 	int8_t 	TPC Clusters: Findable - crossed rows
+o2::aod::track::TPCNClsShared 		tpcNClsShared 	uint8_t 	Number of shared TPC clusters
+o2::aod::track::v001::extensions::TPCDeltaTFwd 	D 	tpcDeltaTFwd 	float 	Delta Forward of track time in TPC time bis
+o2::aod::track::v001::extensions::TPCDeltaTBwd 	D 	tpcDeltaTBwd 	float 	Delta Backward of track time in TPC time bis
+o2::aod::track::TRDPattern 		trdPattern 	uint8_t 	Contributor to the track on TRD layer in bits 0-5, starting from the innermost, bit 6 indicates a potentially split tracklet, bit 7 if the track crossed a padrow
+o2::aod::track::ITSChi2NCl 		itsChi2NCl 	float 	Chi2 / cluster for the ITS track segment
+o2::aod::track::TPCChi2NCl 		tpcChi2NCl 	float 	Chi2 / cluster for the TPC track segment
+o2::aod::track::TRDChi2 		trdChi2 	float 	Chi2 for the TRD track segment
+o2::aod::track::TOFChi2 		tofChi2 	float 	Chi2 for the TOF track segment
+o2::aod::track::TPCSignal 		tpcSignal 	float 	dE/dx signal in the TPC
+o2::aod::track::TRDSignal 		trdSignal 	float 	PID signal in the TRD
+o2::aod::track::Length 		length 	float 	Track length
+o2::aod::track::TOFExpMom 		tofExpMom 	float 	TOF expected momentum obtained in tracking, used to compute the expected times
+o2::aod::track::PIDForTracking 	D 	pidForTracking 	uint32_t 	PID hypothesis used during tracking. See the constants in the class PID in PID.h
+o2::aod::track::IsPVContributor 	D 	isPVContributor 	bool 	Run 3: Has this track contributed to the collision vertex fit
+o2::aod::track::HasITS 	D 	hasITS 	bool 	Flag to check if track has a ITS match
+o2::aod::track::HasTPC 	D 	hasTPC 	bool 	Flag to check if track has a TPC match
+o2::aod::track::HasTRD 	D 	hasTRD 	bool 	Flag to check if track has a TRD match
+o2::aod::track::HasTOF 	D 	hasTOF 	bool 	Flag to check if track has a TOF measurement
+o2::aod::track::TPCNClsFound 	D 	tpcNClsFound 	int16_t 	Number of found TPC clusters
+o2::aod::track::TPCNClsPID 	D 	tpcNClsPID 	int16_t 	Number of found TPC clusters used for PID
+o2::aod::track::TPCNClsCrossedRows 	D 	tpcNClsCrossedRows 	int16_t 	Number of crossed TPC Rows
+o2::aod::track::v001::ITSClusterMap 	D 	itsClusterMap 	uint8_t 	ITS cluster map, one bit per a layer, starting from the innermost
+o2::aod::track::v001::ITSNCls 	D 	itsNCls 	uint8_t 	Number of ITS clusters
+o2::aod::track::v001::ITSNClsInnerBarrel 	D 	itsNClsInnerBarrel 	uint8_t 	Number of ITS clusters in the Inner Barrel
+o2::aod::track::v001::ITSClsSizeInLayer 	D 	itsClsSizeInLayer 	uint8_t 	Size of the ITS cluster in a given layer
+o2::aod::track::v001::IsITSAfterburner 	D 	isITSAfterburner 	bool 	If the track used the afterburner in the ITS
+o2::aod::track::TOFExpTimeEl 	D 	tofExpTimeEl 	float 	Expected time for the track to reach the TOF under the electron hypothesis
+o2::aod::track::TOFExpTimeMu 	D 	tofExpTimeMu 	float 	Expected time for the track to reach the TOF under the muon hypothesis
+o2::aod::track::TOFExpTimePi 	D 	tofExpTimePi 	float 	Expected time for the track to reach the TOF under the pion hypothesis
+o2::aod::track::TOFExpTimeKa 	D 	tofExpTimeKa 	float 	Expected time for the track to reach the TOF under the kaon hypothesis
+o2::aod::track::TOFExpTimePr 	D 	tofExpTimePr 	float 	Expected time for the track to reach the TOF under the proton hypothesis
+o2::aod::track::TOFExpTimeDe 	D 	tofExpTimeDe 	float 	Expected time for the track to reach the TOF under the deuteron hypothesis
+o2::aod::track::TOFExpTimeTr 	D 	tofExpTimeTr 	float 	Expected time for the track to reach the TOF under the triton hypothesis
+o2::aod::track::TOFExpTimeHe 	D 	tofExpTimeHe 	float 	Expected time for the track to reach the TOF under the helium3 hypothesis
+o2::aod::track::TOFExpTimeAl 	D 	tofExpTimeAl 	float 	Expected time for the track to reach the TOF under the helium4 hypothesis
+o2::aod::track::TPCCrossedRowsOverFindableCls 	D 	tpcCrossedRowsOverFindableCls 	float 	Ratio crossed rows over findable clusters
+o2::aod::track::TPCFoundOverFindableCls 	D 	tpcFoundOverFindableCls 	float 	Ratio of found over findable clusters
+o2::aod::track::TPCFractionSharedCls 	D 	tpcFractionSharedCls 	float 	Fraction of shared TPC clusters
+o2::aod::track::TrackEtaEMCAL 		trackEtaEmcal 	float 	
+o2::aod::track::TrackPhiEMCAL 		trackPhiEmcal 	float 	
+o2::aod::track::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::track::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns (see TrackFlags::TrackTimeResIsRange)
+Additional MFTTracks information (Pt, Eta, P), version 0
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredMFTTracks_000 
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::NClusters 		nClusters 	int8_t 	Number of clusters
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+o2::aod::0 	GI 		? 	
+o2::aod::fwdtrack::Pt 	E 	pt 	float 	
+o2::aod::fwdtrack::Eta 	E 	eta 	float 	
+o2::aod::fwdtrack::P 	E 	p 	float 	
+Additional MFTTracks information (Pt, Eta, P), version 1
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredMFTTracks_001 
+
+Is used in:
+
+    o2::aod::MFTTracks = o2::aod::MFTTracks_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::v001::NClusters 	D 	nClusters 	int8_t 	Number of MFT clusters
+o2::aod::fwdtrack::MFTClusterSizesAndTrackFlags 		mftClusterSizesAndTrackFlags 	uint64_t 	Cluster sizes per track, stored per layer (each 6 bits). Remaining 4 bits for MFT flags
+o2::aod::fwdtrack::IsCA 	D 	isCA 	bool 	Returns true if used track-finding algorithm was Cellular Automaton
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+o2::aod::1 	GI 		? 	
+o2::aod::fwdtrack::Pt 	E 	pt 	float 	
+o2::aod::fwdtrack::Eta 	E 	eta 	float 	
+o2::aod::fwdtrack::P 	E 	p 	float 	
+On disk version of MFTTracks, version 0
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::NClusters 		nClusters 	int8_t 	Number of clusters
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+On disk version of MFTTracks, version 1
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::StoredMFTTracks = o2::aod::StoredMFTTracks_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::v001::NClusters 	D 	nClusters 	int8_t 	Number of MFT clusters
+o2::aod::fwdtrack::MFTClusterSizesAndTrackFlags 		mftClusterSizesAndTrackFlags 	uint64_t 	Cluster sizes per track, stored per layer (each 6 bits). Remaining 4 bits for MFT flags
+o2::aod::fwdtrack::IsCA 	D 	isCA 	bool 	Returns true if used track-finding algorithm was Cellular Automaton
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredFwdTracks 
+
+Is used in:
+
+    o2::aod::FwdTrack = o2::aod::FwdTracks::iterator
+    o2::aod::FullFwdTracks = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>
+    o2::aod::FullFwdTrack = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::TrackType 		trackType 	uint8_t 	Type of track. See enum ForwardTrackTypeEnum
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::NClusters 		nClusters 	int8_t 	Number of clusters
+o2::aod::fwdtrack::PDca 		pDca 	float 	PDca for MUONStandalone
+o2::aod::fwdtrack::RAtAbsorberEnd 		rAtAbsorberEnd 	float 	RAtAbsorberEnd for MUONStandalone tracks and GlobalMuonTrackstracks
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::Chi2MatchMCHMID 		chi2MatchMCHMID 	float 	MCH-MID Match Chi2 for MUONStandalone tracks
+o2::aod::fwdtrack::Chi2MatchMCHMFT 		chi2MatchMCHMFT 	float 	MCH-MFT Match Chi2 for GlobalMuonTracks
+o2::aod::fwdtrack::MatchScoreMCHMFT 		matchScoreMCHMFT 	float 	MCH-MFT Machine Learning Matching Score for GlobalMuonTracks
+o2::aod::fwdtrack::MFTTrackId 	I 	matchMFTTrackId 	int32 	ID of matching MFT track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::MCHTrackId 	SI 	matchMCHTrackId 	int 	Index of matching MCH track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::MCHBitMap 		mchBitMap 	uint16_t 	Fired muon trackig chambers bitmap
+o2::aod::fwdtrack::MIDBitMap 		midBitMap 	uint8_t 	MID bitmap: non-bending plane (4bit), bending plane (4bit)
+o2::aod::fwdtrack::MIDBoards 		midBoards 	uint32_t 	Local boards on each MID plane (8 bits per plane)
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+o2::aod::0 	GI 		? 	
+o2::aod::fwdtrack::Pt 	E 	pt 	float 	
+o2::aod::fwdtrack::Eta 	E 	eta 	float 	
+o2::aod::fwdtrack::P 	E 	p 	float 	
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredFwdTracksCov 
+
+Is used in:
+
+    o2::aod::FwdTrackCovFwd = o2::aod::FwdTracksCov::iterator
+    o2::aod::FullFwdTracks = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>
+    o2::aod::FullFwdTrack = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::fwdtrack::SigmaX 		sigmaX 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaPhi 		sigmaPhi 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::fwdtrack::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::fwdtrack::RhoXY 		rhoXY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiY 		rhoPhiY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiX 		rhoPhiX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglX 		rhoTglX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglPhi 		rhoTglPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtX 		rho1PtX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtPhi 		rho1PtPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+o2::aod::0 	GI 		? 	
+o2::aod::fwdtrack::CXX 	E 	cXX 	float 	
+o2::aod::fwdtrack::CXY 	E 	cXY 	float 	
+o2::aod::fwdtrack::CYY 	E 	cYY 	float 	
+o2::aod::fwdtrack::CPhiX 	E 	cPhiX 	float 	
+o2::aod::fwdtrack::CPhiY 	E 	cPhiY 	float 	
+o2::aod::fwdtrack::CPhiPhi 	E 	cPhiPhi 	float 	
+o2::aod::fwdtrack::CTglX 	E 	cTglX 	float 	
+o2::aod::fwdtrack::CTglY 	E 	cTglY 	float 	
+o2::aod::fwdtrack::CTglPhi 	E 	cTglPhi 	float 	
+o2::aod::fwdtrack::CTglTgl 	E 	cTglTgl 	float 	
+o2::aod::fwdtrack::C1PtX 	E 	c1PtX 	float 	
+o2::aod::fwdtrack::C1PtY 	E 	c1PtY 	float 	
+o2::aod::fwdtrack::C1PtPhi 	E 	c1PtPhi 	float 	
+o2::aod::fwdtrack::C1PtTgl 	E 	c1PtTgl 	float 	
+o2::aod::fwdtrack::C1Pt21Pt2 	E 	c1Pt21Pt2 	float 	
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::fwdtrack::TrackType 		trackType 	uint8_t 	Type of track. See enum ForwardTrackTypeEnum
+o2::aod::fwdtrack::X 		x 	float 	TrackParFwd parameter x
+o2::aod::fwdtrack::Y 		y 	float 	TrackParFwd parameter y
+o2::aod::fwdtrack::Z 		z 	float 	TrackParFwd propagation parameter z
+o2::aod::fwdtrack::Phi 		phi 	float 	TrackParFwd parameter phi; (i.e. pt pointing direction)
+o2::aod::fwdtrack::Tgl 		tgl 	float 	TrackParFwd parameter tan(\lamba); (\lambda = 90 - \theta_{polar})
+o2::aod::fwdtrack::Signed1Pt 		signed1Pt 	float 	TrackParFwd parameter: charged inverse transverse momentum; (q/pt)
+o2::aod::fwdtrack::NClusters 		nClusters 	int8_t 	Number of clusters
+o2::aod::fwdtrack::PDca 		pDca 	float 	PDca for MUONStandalone
+o2::aod::fwdtrack::RAtAbsorberEnd 		rAtAbsorberEnd 	float 	RAtAbsorberEnd for MUONStandalone tracks and GlobalMuonTrackstracks
+o2::aod::fwdtrack::Px 	D 	px 	float 	
+o2::aod::fwdtrack::Py 	D 	py 	float 	
+o2::aod::fwdtrack::Pz 	D 	pz 	float 	
+o2::aod::fwdtrack::Sign 	D 	sign 	short 	Sign of the track eletric charge
+o2::aod::fwdtrack::Chi2 		chi2 	float 	Track chi^2
+o2::aod::fwdtrack::Chi2MatchMCHMID 		chi2MatchMCHMID 	float 	MCH-MID Match Chi2 for MUONStandalone tracks
+o2::aod::fwdtrack::Chi2MatchMCHMFT 		chi2MatchMCHMFT 	float 	MCH-MFT Match Chi2 for GlobalMuonTracks
+o2::aod::fwdtrack::MatchScoreMCHMFT 		matchScoreMCHMFT 	float 	MCH-MFT Machine Learning Matching Score for GlobalMuonTracks
+o2::aod::fwdtrack::MFTTrackId 	I 	matchMFTTrackId 	int32 	ID of matching MFT track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::MCHTrackId 	SI 	matchMCHTrackId 	int 	Index of matching MCH track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::MCHBitMap 		mchBitMap 	uint16_t 	Fired muon trackig chambers bitmap
+o2::aod::fwdtrack::MIDBitMap 		midBitMap 	uint8_t 	MID bitmap: non-bending plane (4bit), bending plane (4bit)
+o2::aod::fwdtrack::MIDBoards 		midBoards 	uint32_t 	Local boards on each MID plane (8 bits per plane)
+o2::aod::fwdtrack::TrackTime 		trackTime 	float 	Estimated time of the track in ns wrt collision().bc() or ambiguoustrack.bcSlice()[0]
+o2::aod::fwdtrack::TrackTimeRes 		trackTimeRes 	float 	Resolution of the track time in ns
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::fwdtrack::SigmaX 		sigmaX 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaPhi 		sigmaPhi 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::fwdtrack::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::fwdtrack::RhoXY 		rhoXY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiY 		rhoPhiY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiX 		rhoPhiX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglX 		rhoTglX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglPhi 		rhoTglPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtX 		rho1PtX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtPhi 		rho1PtPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+Forward Track Cluster information
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FwdTrkCl = o2::aod::FwdTrkCls::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrkcl::FwdTrackId 	I 	fwdtrackId 	int32 	Track index
+o2::aod::fwdtrkcl::X 		x 	float 	Cluster x coordinate
+o2::aod::fwdtrkcl::Y 		y 	float 	Cluster y coordinate
+o2::aod::fwdtrkcl::Z 		z 	float 	Cluster z coordinate
+o2::aod::fwdtrkcl::ClInfo 		clInfo 	uint16_t 	Encoded detection element of cluster and cluster type along x and y
+o2::aod::fwdtrkcl::DEId 	D 	deId 	uint16_t 	
+o2::aod::fwdtrkcl::IsGoodX 	D 	isGoodX 	bool 	
+o2::aod::fwdtrkcl::IsGoodY 	D 	isGoodY 	bool 	
+Table for tracks which are not uniquely associated with a collision
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::AmbiguousTrack = o2::aod::AmbiguousTracks::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::ambiguous::TrackId 	I 	trackId 	int32 	Track index
+o2::aod::ambiguous::BCIdSlice 	SLI 	bcIds 	int32_t 	BC index (slice for 1 to N entries)
+Table for MFT tracks which are not uniquely associated with a collision
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::AmbiguousMFTTrack = o2::aod::AmbiguousMFTTracks::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::ambiguous::MFTTrackId 	I 	mfttrackId 	int32 	MFTTrack index
+o2::aod::ambiguous::BCIdSlice 	SLI 	bcIds 	int32_t 	BC index (slice for 1 to N entries)
+Table for Fwd tracks which are not uniquely associated with a collision
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::AmbiguousFwdTrack = o2::aod::AmbiguousFwdTracks::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::ambiguous::FwdTrackId 	I 	fwdtrackId 	int32 	FwdTrack index
+o2::aod::ambiguous::BCIdSlice 	SLI 	bcIds 	int32_t 	BC index (slice for 1 to N entries)
+
+Detectors
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FV0A = o2::aod::FV0As::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fv0a::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fv0a::Amplitude 		amplitude 	std::vector<float> 	Amplitudes of non-zero channels. The channel IDs are given in Channel (at the same index)
+o2::aod::fv0a::Channel 		channel 	std::vector<uint8_t> 	Channel IDs which had non-zero amplitudes. There are at maximum 48 channels.
+o2::aod::fv0a::Time 		time 	float 	Time in ns
+o2::aod::fv0a::TriggerMask 		triggerMask 	uint8_t 	
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FT0 = o2::aod::FT0s::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::ft0::BCId 	I 	bcId 	int32 	BC index
+o2::aod::ft0::AmplitudeA 		amplitudeA 	std::vector<float> 	Amplitudes of non-zero channels on the A-side. The channel IDs are given in ChannelA (at the same index)
+o2::aod::ft0::ChannelA 		channelA 	std::vector<uint8_t> 	Channel IDs on the A side which had non-zero amplitudes. There are at maximum 96 channels.
+o2::aod::ft0::AmplitudeC 		amplitudeC 	std::vector<float> 	Amplitudes of non-zero channels on the C-side. The channel IDs are given in ChannelC (at the same index)
+o2::aod::ft0::ChannelC 		channelC 	std::vector<uint8_t> 	Channel IDs on the C side which had non-zero amplitudes. There are at maximum 112 channels.
+o2::aod::ft0::TimeA 		timeA 	float 	Average A-side time
+o2::aod::ft0::TimeC 		timeC 	float 	Average C-side time
+o2::aod::ft0::TriggerMask 		triggerMask 	uint8_t 	
+o2::aod::ft0::PosZ 	D 	posZ 	float 	Z position calculated from timeA and timeC in cm
+o2::aod::ft0::CollTime 	D 	collTime 	float 	Collision time, one need also check validation (code below) for timeA and timeC
+o2::aod::ft0::IsValidTimeA 	D 	isValidTimeA 	bool 	Checks if time from A side was calculated, and if is not dummy
+o2::aod::ft0::IsValidTimeC 	D 	isValidTimeC 	bool 	Checks if time from C side was calculated
+o2::aod::ft0::IsValidTime 	D 	isValidTime 	bool 	Checks if times from A and C side were calculated simultaneously
+o2::aod::ft0::SumAmpA 	D 	sumAmpA 	float 	Calculates sum of positive amplitudes from side A
+o2::aod::ft0::SumAmpC 	D 	sumAmpC 	float 	Calculates sum of positive amplitudes from side C
+FDD table, version 000
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fdd::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fdd::AmplitudeA 		amplitudeA 	float[4] 	Amplitude in adjacent pairs A-side
+o2::aod::fdd::AmplitudeC 		amplitudeC 	float[4] 	Amplitude in adjacent pairs C-side
+o2::aod::fdd::TimeA 		timeA 	float 	
+o2::aod::fdd::TimeC 		timeC 	float 	
+o2::aod::fdd::TriggerMask 		triggerMask 	uint8_t 	
+FDD table, version 001
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FDDs = o2::aod::FDDs_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fdd::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fdd::ChargeA 		chargeA 	int16_t[8] 	Amplitude per channel A-side
+o2::aod::fdd::ChargeC 		chargeC 	int16_t[8] 	Amplitude per channel C-side
+o2::aod::fdd::TimeA 		timeA 	float 	
+o2::aod::fdd::TimeC 		timeC 	float 	
+o2::aod::fdd::TriggerMask 		triggerMask 	uint8_t 	
+Calorimeter cells
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Calo = o2::aod::Calos::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::calo::BCId 	I 	bcId 	int32 	BC index
+o2::aod::calo::CellNumber 		cellNumber 	int16_t 	
+o2::aod::calo::Amplitude 		amplitude 	float 	
+o2::aod::calo::Time 		time 	float 	
+o2::aod::calo::CellType 		cellType 	int8_t 	
+o2::aod::calo::CaloType 		caloType 	int8_t 	
+Trigger information from the calorimeter detectors
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::CaloTrigger = o2::aod::CaloTriggers::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::calotrigger::BCId 	I 	bcId 	int32 	BC index
+o2::aod::calotrigger::FastOrAbsID 		fastOrAbsID 	int16_t 	FastOR absolute ID
+o2::aod::calotrigger::LnAmplitude 		lnAmplitude 	int16_t 	L0 amplitude (ADC) := Peak Amplitude
+o2::aod::calotrigger::TriggerBits 		triggerBits 	int32_t 	Online trigger bits
+o2::aod::calotrigger::CaloType 		caloType 	int8_t 	Calorimeter type (-1 is undefined, 0 is PHOS, 1 is EMCAL)
+ZDC information
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::zdc::BCId 	I 	bcId 	int32 	BC index, to be used by both legacy and new table
+o2::aod::zdc::EnergyZEM1 		energyZEM1 	float 	
+o2::aod::zdc::EnergyZEM2 		energyZEM2 	float 	
+o2::aod::zdc::EnergyCommonZNA 		energyCommonZNA 	float 	
+o2::aod::zdc::EnergyCommonZNC 		energyCommonZNC 	float 	
+o2::aod::zdc::EnergyCommonZPA 		energyCommonZPA 	float 	
+o2::aod::zdc::EnergyCommonZPC 		energyCommonZPC 	float 	
+o2::aod::zdc::EnergySectorZNA 		energySectorZNA 	float[4] 	
+o2::aod::zdc::EnergySectorZNC 		energySectorZNC 	float[4] 	
+o2::aod::zdc::EnergySectorZPA 		energySectorZPA 	float[4] 	
+o2::aod::zdc::EnergySectorZPC 		energySectorZPC 	float[4] 	
+o2::aod::zdc::TimeZEM1 		timeZEM1 	float 	
+o2::aod::zdc::TimeZEM2 		timeZEM2 	float 	
+o2::aod::zdc::TimeZNA 		timeZNA 	float 	
+o2::aod::zdc::TimeZNC 		timeZNC 	float 	
+o2::aod::zdc::TimeZPA 		timeZPA 	float 	
+o2::aod::zdc::TimeZPC 		timeZPC 	float 	
+ZDC information, version 1, std::vector format
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Zdcs = o2::aod::Zdcs_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::zdc::BCId 	I 	bcId 	int32 	BC index, to be used by both legacy and new table
+o2::aod::zdc::Energy 		energy 	std::vector<float> 	Energy of non-zero channels. The channel IDs are given in ChannelE (at the same index)
+o2::aod::zdc::ChannelE 		channelE 	std::vector<uint8_t> 	Channel IDs which have reconstructed energy. There are at maximum 26 channels.
+o2::aod::zdc::Amplitude 		amplitude 	std::vector<float> 	Amplitudes of non-zero channels. The channel IDs are given in ChannelT (at the same index)
+o2::aod::zdc::Time 		time 	std::vector<float> 	Times of non-zero channels. The channel IDs are given in ChannelT (at the same index)
+o2::aod::zdc::ChannelT 		channelT 	std::vector<uint8_t> 	Channel IDs which had non-zero amplitudes. There are at maximum 26 channels.
+o2::aod::zdc::DyEnergyZEM1 	D 	energyZEM1 	float 	return ZEM1 energy
+o2::aod::zdc::DyEnergyZEM2 	D 	energyZEM2 	float 	return ZEM2 energy
+o2::aod::zdc::DyEnergyCommonZNA 	D 	energyCommonZNA 	float 	return common ZNA energy
+o2::aod::zdc::DyEnergyCommonZNC 	D 	energyCommonZNC 	float 	return common ZNC energy
+o2::aod::zdc::DyEnergyCommonZPA 	D 	energyCommonZPA 	float 	return common ZPA energy
+o2::aod::zdc::DyEnergyCommonZPC 	D 	energyCommonZPC 	float 	return common ZPC energy
+o2::aod::zdc::DyEnergySectorZNA 	D 	energySectorZNA 	std::array<float,4> 	return sector ZNA energy (array of 4 floats)
+o2::aod::zdc::DyEnergySectorZNC 	D 	energySectorZNC 	std::array<float,4> 	return sector ZNC energy (array of 4 floats)
+o2::aod::zdc::DyEnergySectorZPA 	D 	energySectorZPA 	std::array<float,4> 	return sector ZPA energy (array of 4 floats)
+o2::aod::zdc::DyEnergySectorZPC 	D 	energySectorZPC 	std::array<float,4> 	return sector ZPC energy (array of 4 floats)
+o2::aod::zdc::DyTimeZEM1 	D 	timeZEM1 	float 	return ZEM1 time information
+o2::aod::zdc::DyTimeZEM2 	D 	timeZEM2 	float 	return ZEM2 time information
+o2::aod::zdc::DyTimeZNA 	D 	timeZNA 	float 	return ZNA time information
+o2::aod::zdc::DyTimeZNC 	D 	timeZNC 	float 	return ZNC time information
+o2::aod::zdc::DyTimeZPA 	D 	timeZPA 	float 	return ZPA time information
+o2::aod::zdc::DyTimeZPC 	D 	timeZPC 	float 	return ZPC time information
+o2::aod::zdc::DyAmplitudeZEM1 	D 	amplitudeZEM1 	float 	return ZEM1 amplitude
+o2::aod::zdc::DyAmplitudeZEM2 	D 	amplitudeZEM2 	float 	return ZEM2 amplitude
+o2::aod::zdc::DyAmplitudeZNA 	D 	amplitudeZNA 	float 	return ZNA amplitude
+o2::aod::zdc::DyAmplitudeZNC 	D 	amplitudeZNC 	float 	return ZNC amplitude
+o2::aod::zdc::DyAmplitudeZPA 	D 	amplitudeZPA 	float 	return ZPA amplitude
+o2::aod::zdc::DyAmplitudeZPC 	D 	amplitudeZPC 	float 	return ZPC amplitude
+Only for RUN 2 converted data: V0C table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FV0C = o2::aod::FV0Cs::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fv0c::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fv0c::Amplitude 		amplitude 	std::vector<float> 	Amplitudes of non-zero channels. The channel IDs are given in Channel (at the same index)
+o2::aod::fv0a::Channel 		channel 	std::vector<uint8_t> 	Channel IDs which had non-zero amplitudes. There are at maximum 48 channels.
+o2::aod::fv0c::Time 		time 	float 	Time in ns
+CPV clusters
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::CPVCluster = o2::aod::CPVClusters::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::cpvcluster::BCId 	I 	bcId 	int32 	BC index
+o2::aod::cpvcluster::PosX 		posX 	float 	X position in cm
+o2::aod::cpvcluster::PosZ 		posZ 	float 	Z position in cm
+o2::aod::cpvcluster::Amplitude 		amplitude 	float 	Signal amplitude
+o2::aod::cpvcluster::ClusterStatus 		clusterStatus 	uint8_t 	8 bits packed cluster status (bits 0-4 = pads mult, bits 5-6 = (module number - 2), bit 7 = isUnfolded)
+o2::aod::cpvcluster::PadMult 	D 	padMult 	uint8_t 	
+o2::aod::cpvcluster::ModuleNumber 	D 	moduleNumber 	uint8_t 	
+o2::aod::cpvcluster::IsUnfolded 	D 	isUnfolded 	bool 	
+HMPID information
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::hmpid::TrackId 	I 	trackId 	int32 	Track index
+o2::aod::hmpid::HMPIDSignal 		hmpidSignal 	float 	Signal of the HMPID
+o2::aod::hmpid::HMPIDDistance 		hmpidDistance 	float 	Distance between the matched HMPID signal and the propagated track
+o2::aod::hmpid::HMPIDNPhotons 		hmpidNPhotons 	int 	Number of detected photons in HMPID
+o2::aod::hmpid::HMPIDQMip 		hmpidQMip 	float 	Matched MIP cluster charge
+HMPID information version 1
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::HMPIDs = o2::aod::HMPID_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::hmpid::TrackId 	I 	trackId 	int32 	Track index
+o2::aod::hmpid::HMPIDSignal 		hmpidSignal 	float 	Signal of the HMPID
+o2::aod::hmpid::HMPIDXTrack 		hmpidXTrack 	float 	Extrapolated track point x coordinate
+o2::aod::hmpid::HMPIDYTrack 		hmpidYTrack 	float 	Extrapolated track point y coordinate
+o2::aod::hmpid::HMPIDXMip 		hmpidXMip 	float 	Matched MIP track point x coordinate
+o2::aod::hmpid::HMPIDYMip 		hmpidYMip 	float 	Matched MIP track point y coordinate
+o2::aod::hmpid::HMPIDNPhotons 		hmpidNPhotons 	int 	Number of detected photons in HMPID
+o2::aod::hmpid::HMPIDQMip 		hmpidQMip 	float 	Matched MIP cluster charge
+o2::aod::hmpid::HMPIDClusSize 		hmpidClusSize 	int 	Matched MIP cluster size
+o2::aod::hmpid::HMPIDMom 		hmpidMom 	float 	Track momentum at the HMPID
+o2::aod::hmpid::HMPIDPhotsCharge 		hmpidPhotsCharge 	float[10] 	Photon cluster charge
+
+Strangeness
+Run 2 V0 table (version 000)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::v0::PosTrackId 	I 	posTrackId 	int 	Positive track
+o2::aod::v0::NegTrackId 	I 	negTrackId 	int 	Negative track
+Run 3 V0 table (version 001)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::v0::CollisionId 	I 	collisionId 	int32 	Collision index
+o2::aod::v0::PosTrackId 	I 	posTrackId 	int 	Positive track
+o2::aod::v0::NegTrackId 	I 	negTrackId 	int 	Negative track
+Run 3 V0 table (version 002)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::V0s = o2::aod::V0s_002
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::v0::CollisionId 	I 	collisionId 	int32 	Collision index
+o2::aod::v0::PosTrackId 	I 	posTrackId 	int 	Positive track
+o2::aod::v0::NegTrackId 	I 	negTrackId 	int 	Negative track
+o2::aod::v0::V0Type 		v0Type 	uint8_t 	custom bitmap for various selections (see below)
+o2::aod::v0::IsStandardV0 	D 	isStandardV0 	bool 	is standard V0
+o2::aod::v0::IsPhotonV0 	D 	isPhotonV0 	bool 	is TPC-only V0 for which the photon-mass-hypothesis was good
+o2::aod::v0::IsCollinearV0 	D 	isCollinearV0 	bool 	is V0 for which the photon-mass-hypothesis was good and was fitted collinearly
+Strangeness tracking V0 table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::TrackedV0s = o2::aod::TrackedV0s
+    o2::aod::TrackedV0 = o2::aod::TrackedV0s::iterator
+    o2::aod::AssignedTrackedV0s = soa::Join<o2::aod::TrackedV0s, o2::aod::TrackedV0Colls>
+    o2::aod::AssignedTrackedV0 = soa::Join<o2::aod::TrackedV0s, o2::aod::TrackedV0Colls>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::strangenesstracking::TrackId 	I 	trackId 	int32 	Strange track index
+o2::aod::strangenesstracking::ITSTrackId 	I 	itsTrackId 	int 	ITS index
+o2::aod::strangenesstracking::V0Id 	I 	v0Id 	int32 	V0 index
+o2::aod::strangenesstracking::DecayX 		decayX 	float 	X coordinate of decay vertex
+o2::aod::strangenesstracking::DecayY 		decayY 	float 	Y coordinate of decay vertex
+o2::aod::strangenesstracking::DecayZ 		decayZ 	float 	Z coordinate of decay vertex
+o2::aod::strangenesstracking::H3Lmass 		h3Lmass 	float 	H3L mass
+o2::aod::strangenesstracking::H4Lmass 		h4Lmass 	float 	H4L mass
+o2::aod::strangenesstracking::MatchingChi2 		matchingChi2 	float 	Matching Chi2
+o2::aod::strangenesstracking::TopologyChi2 		topologyChi2 	float 	Topology Chi2
+o2::aod::strangenesstracking::ITSclsSize 		itsClsSize 	float 	Average ITS cluster size
+Run 2 cascade table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::cascade::V0Id 	I 	v0Id 	int32 	V0 index
+o2::aod::cascade::BachelorId 	I 	bachelorId 	int 	Bachelor track index
+Run 3 cascade table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Cascades = o2::aod::Cascades_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::cascade::CollisionId 	I 	collisionId 	int32 	Collision index
+o2::aod::cascade::V0Id 	I 	v0Id 	int32 	V0 index
+o2::aod::cascade::BachelorId 	I 	bachelorId 	int 	Bachelor track index
+Strangeness tracking cascade table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::TrackedCascades = o2::aod::TrackedCascades
+    o2::aod::TrackedCascade = o2::aod::TrackedCascades::iterator
+    o2::aod::AssignedTrackedCascades = soa::Join<o2::aod::TrackedCascades, o2::aod::TrackedCascadeColls>
+    o2::aod::AssignedTrackedCascade = soa::Join<o2::aod::TrackedCascades, o2::aod::TrackedCascadeColls>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::strangenesstracking::TrackId 	I 	trackId 	int32 	Strange track index
+o2::aod::strangenesstracking::ITSTrackId 	I 	itsTrackId 	int 	ITS index
+o2::aod::strangenesstracking::CascadeId 	I 	cascadeId 	int32 	Cascade index
+o2::aod::strangenesstracking::DecayX 		decayX 	float 	X coordinate of decay vertex
+o2::aod::strangenesstracking::DecayY 		decayY 	float 	Y coordinate of decay vertex
+o2::aod::strangenesstracking::DecayZ 		decayZ 	float 	Z coordinate of decay vertex
+o2::aod::strangenesstracking::XiMass 		xiMass 	float 	Xi mass
+o2::aod::strangenesstracking::OmegaMass 		omegaMass 	float 	Omega mass
+o2::aod::strangenesstracking::MatchingChi2 		matchingChi2 	float 	Matching Chi2
+o2::aod::strangenesstracking::TopologyChi2 		topologyChi2 	float 	Topology Chi2
+o2::aod::strangenesstracking::ITSclsSize 		itsClsSize 	float 	Average ITS cluster size
+Strangeness tracking V0 table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::TrackedV0s = o2::aod::TrackedV0s
+    o2::aod::TrackedV0 = o2::aod::TrackedV0s::iterator
+    o2::aod::AssignedTrackedV0s = soa::Join<o2::aod::TrackedV0s, o2::aod::TrackedV0Colls>
+    o2::aod::AssignedTrackedV0 = soa::Join<o2::aod::TrackedV0s, o2::aod::TrackedV0Colls>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::strangenesstracking::TrackId 	I 	trackId 	int32 	Strange track index
+o2::aod::strangenesstracking::ITSTrackId 	I 	itsTrackId 	int 	ITS index
+o2::aod::strangenesstracking::V0Id 	I 	v0Id 	int32 	V0 index
+o2::aod::strangenesstracking::DecayX 		decayX 	float 	X coordinate of decay vertex
+o2::aod::strangenesstracking::DecayY 		decayY 	float 	Y coordinate of decay vertex
+o2::aod::strangenesstracking::DecayZ 		decayZ 	float 	Z coordinate of decay vertex
+o2::aod::strangenesstracking::H3Lmass 		h3Lmass 	float 	H3L mass
+o2::aod::strangenesstracking::H4Lmass 		h4Lmass 	float 	H4L mass
+o2::aod::strangenesstracking::MatchingChi2 		matchingChi2 	float 	Matching Chi2
+o2::aod::strangenesstracking::TopologyChi2 		topologyChi2 	float 	Topology Chi2
+o2::aod::strangenesstracking::ITSclsSize 		itsClsSize 	float 	Average ITS cluster size
+3-body decay table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Decay3Bodys = o2::aod::Decay3Bodys
+    o2::aod::Decay3Body = o2::aod::Decay3Bodys::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::decay3body::CollisionId 	I 	collisionId 	int32 	Collision index
+o2::aod::decay3body::Track0Id 	I 	track0Id 	int 	Track 0 index
+o2::aod::decay3body::Track1Id 	I 	track1Id 	int 	Track 1 index
+o2::aod::decay3body::Track2Id 	I 	track2Id 	int 	Track 2 index
+Strangeness tracking 3-body decay table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Tracked3Bodys = o2::aod::Tracked3Bodys
+    o2::aod::Tracked3body = o2::aod::Tracked3Bodys::iterator
+    o2::aod::AssignedTracked3Bodys = soa::Join<o2::aod::Tracked3Bodys, o2::aod::Tracked3BodyColls>
+    o2::aod::AssignedTracked3Body = soa::Join<o2::aod::Tracked3Bodys, o2::aod::Tracked3BodyColls>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::strangenesstracking::TrackId 	I 	trackId 	int32 	Strange track index
+o2::aod::strangenesstracking::ITSTrackId 	I 	itsTrackId 	int 	ITS index
+o2::aod::strangenesstracking::Decay3BodyId 	I 	decay3BodyId 	int32 	Decay 3 body index
+o2::aod::strangenesstracking::DecayX 		decayX 	float 	X coordinate of decay vertex
+o2::aod::strangenesstracking::DecayY 		decayY 	float 	Y coordinate of decay vertex
+o2::aod::strangenesstracking::DecayZ 		decayZ 	float 	Z coordinate of decay vertex
+o2::aod::strangenesstracking::H3Lmass 		h3Lmass 	float 	H3L mass
+o2::aod::strangenesstracking::He4Lmass 		he4Lmass 	float 	He4L mass
+o2::aod::strangenesstracking::MatchingChi2 		matchingChi2 	float 	Matching Chi2
+o2::aod::strangenesstracking::TopologyChi2 		topologyChi2 	float 	Topology Chi2
+o2::aod::strangenesstracking::ITSclsSize 		itsClsSize 	float 	Average ITS cluster size
+
+Indices
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::CollisionMatchedRun3Sparse = soa::Join<o2::aod::Collisions, o2::aod::Run3MatchedSparse>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::BcFullInfos = soa::Join<o2::aod::BCsWithTimestamps, o2::aod::BcSels, o2::aod::Run3MatchedToBCSparse>
+
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::CollisionIds 	GI 		? 	
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::CollisionIds 	GI 		? 	
+
+MonteCarlo
+MC collision table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mccollision::BCId 	I 	bcId 	int32 	BC index
+o2::aod::mccollision::GeneratorsID 		generatorsID 	short 	disentangled generator IDs should be accessed using getGeneratorId, getSubGeneratorId and getSourceId
+o2::aod::mccollision::PosX 		posX 	float 	X vertex position in cm
+o2::aod::mccollision::PosY 		posY 	float 	Y vertex position in cm
+o2::aod::mccollision::PosZ 		posZ 	float 	Z vertex position in cm
+o2::aod::mccollision::T 		t 	float 	Collision time relative to given bc in ns
+o2::aod::mccollision::Weight 		weight 	float 	MC weight
+o2::aod::mccollision::ImpactParameter 		impactParameter 	float 	Impact parameter for A-A
+o2::aod::mccollision::GetGeneratorId 	D 	getGeneratorId 	int 	The global generator ID which might have been assigned by the user
+o2::aod::mccollision::GetSubGeneratorId 	D 	getSubGeneratorId 	int 	A specific sub-generator ID in case the generator has some sub-generator logic
+o2::aod::mccollision::GetSourceId 	D 	getSourceId 	int 	The source ID to differentiate between signals and background in an embedding simulation
+MC collision table with event plane
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McCollisions = o2::aod::McCollisions_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mccollision::BCId 	I 	bcId 	int32 	BC index
+o2::aod::mccollision::GeneratorsID 		generatorsID 	short 	disentangled generator IDs should be accessed using getGeneratorId, getSubGeneratorId and getSourceId
+o2::aod::mccollision::PosX 		posX 	float 	X vertex position in cm
+o2::aod::mccollision::PosY 		posY 	float 	Y vertex position in cm
+o2::aod::mccollision::PosZ 		posZ 	float 	Z vertex position in cm
+o2::aod::mccollision::T 		t 	float 	Collision time relative to given bc in ns
+o2::aod::mccollision::Weight 		weight 	float 	MC weight
+o2::aod::mccollision::ImpactParameter 		impactParameter 	float 	Impact parameter for A-A
+o2::aod::mccollision::EventPlaneAngle 		eventPlaneAngle 	float 	Event plane angle for A-A
+o2::aod::mccollision::GetGeneratorId 	D 	getGeneratorId 	int 	The global generator ID which might have been assigned by the user
+o2::aod::mccollision::GetSubGeneratorId 	D 	getSubGeneratorId 	int 	A specific sub-generator ID in case the generator has some sub-generator logic
+o2::aod::mccollision::GetSourceId 	D 	getSourceId 	int 	The source ID to differentiate between signals and background in an embedding simulation
+Basic MC particle properties
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredMcParticles_000 
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mcparticle::McCollisionId 	I 	mcCollisionId 	int32 	MC collision of this particle
+o2::aod::mcparticle::PdgCode 		pdgCode 	int 	PDG code
+o2::aod::mcparticle::StatusCode 		statusCode 	int 	Generators status code or physics process. Do not use directly. Use dynamic columns getGenStatusCode() or getProcess()
+o2::aod::mcparticle::Flags 		flags 	uint8_t 	ALICE specific flags, see MCParticleFlags. Do not use directly. Use the dynamic columns, e.g. producedByGenerator()
+o2::aod::mcparticle::Mother0Id 	SI 	mother0Id 	int 	Track index of the first mother
+o2::aod::mcparticle::Mother1Id 	SI 	mother1Id 	int 	Track index of the last mother
+o2::aod::mcparticle::Daughter0Id 	SI 	daughter0Id 	int 	Track index of the first daugther
+o2::aod::mcparticle::Daughter1Id 	SI 	daughter1Id 	int 	Track index of the last daugther
+o2::aod::mcparticle::Weight 		weight 	float 	MC weight
+o2::aod::mcparticle::Px 		px 	float 	Momentum in x in GeV/c
+o2::aod::mcparticle::Py 		py 	float 	Momentum in y in GeV/c
+o2::aod::mcparticle::Pz 		pz 	float 	Momentum in z in GeV/c
+o2::aod::mcparticle::E 		e 	float 	Energy
+o2::aod::mcparticle::Vx 		vx 	float 	X production vertex in cm
+o2::aod::mcparticle::Vy 		vy 	float 	Y production vertex in cm
+o2::aod::mcparticle::Vz 		vz 	float 	Z production vertex in cm
+o2::aod::mcparticle::Vt 		vt 	float 	Production time
+o2::aod::mcparticle::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::mcparticle::ProducedByGenerator 	D 	producedByGenerator 	bool 	True if particle produced by the generator (==TMCProcess::kPrimary); False if by the transport code
+o2::aod::mcparticle::FromBackgroundEvent 	D 	fromBackgroundEvent 	bool 	Particle from background event
+o2::aod::mcparticle::GetGenStatusCode 	D 	getGenStatusCode 	int 	The native status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetHepMCStatusCode 	D 	getHepMCStatusCode 	int 	The HepMC status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetProcess 	D 	getProcess 	int 	The VMC physics code (as int) that generated this particle (see header TMCProcess.h in ROOT)
+o2::aod::mcparticle::IsPhysicalPrimary 	D 	isPhysicalPrimary 	bool 	True if particle is considered a physical primary according to the ALICE definition
+o2::aod::0 	GI 		? 	
+o2::aod::mcparticle::Phi 	E 	phi 	float 	Phi in the range [0, 2pi)
+o2::aod::mcparticle::Eta 	E 	eta 	float 	Pseudorapidity, conditionally defined to avoid FPEs
+o2::aod::mcparticle::Pt 	E 	pt 	float 	Transverse momentum in GeV/c
+o2::aod::mcparticle::P 	E 	p 	float 	Total momentum in GeV/c
+o2::aod::mcparticle::Y 	E 	y 	float 	Particle rapidity, conditionally defined to avoid FPEs
+Basic MC particle properties
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredMcParticles_001 
+
+Is used in:
+
+    o2::aod::McParticles = o2::aod::McParticles_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mcparticle::McCollisionId 	I 	mcCollisionId 	int32 	MC collision of this particle
+o2::aod::mcparticle::PdgCode 		pdgCode 	int 	PDG code
+o2::aod::mcparticle::StatusCode 		statusCode 	int 	Generators status code or physics process. Do not use directly. Use dynamic columns getGenStatusCode() or getProcess()
+o2::aod::mcparticle::Flags 		flags 	uint8_t 	ALICE specific flags, see MCParticleFlags. Do not use directly. Use the dynamic columns, e.g. producedByGenerator()
+o2::aod::mcparticle::MothersIds 	SAI 	mothersIds 		Mother tracks (possible empty) array. Iterate over mcParticle.mothers_as<aod::McParticles>())
+o2::aod::mcparticle::DaughtersIdSlice 	SSLI 	daughtersIds 	int32_t 	Daughter tracks (possibly empty) slice. Check for non-zero with mcParticle.has_daughters(). Iterate over mcParticle.daughters_as<aod::McParticles>())
+o2::aod::mcparticle::Weight 		weight 	float 	MC weight
+o2::aod::mcparticle::Px 		px 	float 	Momentum in x in GeV/c
+o2::aod::mcparticle::Py 		py 	float 	Momentum in y in GeV/c
+o2::aod::mcparticle::Pz 		pz 	float 	Momentum in z in GeV/c
+o2::aod::mcparticle::E 		e 	float 	Energy
+o2::aod::mcparticle::Vx 		vx 	float 	X production vertex in cm
+o2::aod::mcparticle::Vy 		vy 	float 	Y production vertex in cm
+o2::aod::mcparticle::Vz 		vz 	float 	Z production vertex in cm
+o2::aod::mcparticle::Vt 		vt 	float 	Production time
+o2::aod::mcparticle::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::mcparticle::ProducedByGenerator 	D 	producedByGenerator 	bool 	True if particle produced by the generator (==TMCProcess::kPrimary); False if by the transport code
+o2::aod::mcparticle::FromBackgroundEvent 	D 	fromBackgroundEvent 	bool 	Particle from background event
+o2::aod::mcparticle::GetGenStatusCode 	D 	getGenStatusCode 	int 	The native status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetHepMCStatusCode 	D 	getHepMCStatusCode 	int 	The HepMC status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetProcess 	D 	getProcess 	int 	The VMC physics code (as int) that generated this particle (see header TMCProcess.h in ROOT)
+o2::aod::mcparticle::IsPhysicalPrimary 	D 	isPhysicalPrimary 	bool 	True if particle is considered a physical primary according to the ALICE definition
+o2::aod::1 	GI 		? 	
+o2::aod::mcparticle::Phi 	E 	phi 	float 	Phi in the range [0, 2pi)
+o2::aod::mcparticle::Eta 	E 	eta 	float 	Pseudorapidity, conditionally defined to avoid FPEs
+o2::aod::mcparticle::Pt 	E 	pt 	float 	Transverse momentum in GeV/c
+o2::aod::mcparticle::P 	E 	p 	float 	Total momentum in GeV/c
+o2::aod::mcparticle::Y 	E 	y 	float 	Particle rapidity, conditionally defined to avoid FPEs
+MC particle table, version 000
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mcparticle::McCollisionId 	I 	mcCollisionId 	int32 	MC collision of this particle
+o2::aod::mcparticle::PdgCode 		pdgCode 	int 	PDG code
+o2::aod::mcparticle::StatusCode 		statusCode 	int 	Generators status code or physics process. Do not use directly. Use dynamic columns getGenStatusCode() or getProcess()
+o2::aod::mcparticle::Flags 		flags 	uint8_t 	ALICE specific flags, see MCParticleFlags. Do not use directly. Use the dynamic columns, e.g. producedByGenerator()
+o2::aod::mcparticle::Mother0Id 	SI 	mother0Id 	int 	Track index of the first mother
+o2::aod::mcparticle::Mother1Id 	SI 	mother1Id 	int 	Track index of the last mother
+o2::aod::mcparticle::Daughter0Id 	SI 	daughter0Id 	int 	Track index of the first daugther
+o2::aod::mcparticle::Daughter1Id 	SI 	daughter1Id 	int 	Track index of the last daugther
+o2::aod::mcparticle::Weight 		weight 	float 	MC weight
+o2::aod::mcparticle::Px 		px 	float 	Momentum in x in GeV/c
+o2::aod::mcparticle::Py 		py 	float 	Momentum in y in GeV/c
+o2::aod::mcparticle::Pz 		pz 	float 	Momentum in z in GeV/c
+o2::aod::mcparticle::E 		e 	float 	Energy
+o2::aod::mcparticle::Vx 		vx 	float 	X production vertex in cm
+o2::aod::mcparticle::Vy 		vy 	float 	Y production vertex in cm
+o2::aod::mcparticle::Vz 		vz 	float 	Z production vertex in cm
+o2::aod::mcparticle::Vt 		vt 	float 	Production time
+o2::aod::mcparticle::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::mcparticle::ProducedByGenerator 	D 	producedByGenerator 	bool 	True if particle produced by the generator (==TMCProcess::kPrimary); False if by the transport code
+o2::aod::mcparticle::FromBackgroundEvent 	D 	fromBackgroundEvent 	bool 	Particle from background event
+o2::aod::mcparticle::GetGenStatusCode 	D 	getGenStatusCode 	int 	The native status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetHepMCStatusCode 	D 	getHepMCStatusCode 	int 	The HepMC status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetProcess 	D 	getProcess 	int 	The VMC physics code (as int) that generated this particle (see header TMCProcess.h in ROOT)
+o2::aod::mcparticle::IsPhysicalPrimary 	D 	isPhysicalPrimary 	bool 	True if particle is considered a physical primary according to the ALICE definition
+MC particle table, version 001
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::StoredMcParticles = o2::aod::StoredMcParticles_001
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::mcparticle::McCollisionId 	I 	mcCollisionId 	int32 	MC collision of this particle
+o2::aod::mcparticle::PdgCode 		pdgCode 	int 	PDG code
+o2::aod::mcparticle::StatusCode 		statusCode 	int 	Generators status code or physics process. Do not use directly. Use dynamic columns getGenStatusCode() or getProcess()
+o2::aod::mcparticle::Flags 		flags 	uint8_t 	ALICE specific flags, see MCParticleFlags. Do not use directly. Use the dynamic columns, e.g. producedByGenerator()
+o2::aod::mcparticle::MothersIds 	SAI 	mothersIds 		Mother tracks (possible empty) array. Iterate over mcParticle.mothers_as<aod::McParticles>())
+o2::aod::mcparticle::DaughtersIdSlice 	SSLI 	daughtersIds 	int32_t 	Daughter tracks (possibly empty) slice. Check for non-zero with mcParticle.has_daughters(). Iterate over mcParticle.daughters_as<aod::McParticles>())
+o2::aod::mcparticle::Weight 		weight 	float 	MC weight
+o2::aod::mcparticle::Px 		px 	float 	Momentum in x in GeV/c
+o2::aod::mcparticle::Py 		py 	float 	Momentum in y in GeV/c
+o2::aod::mcparticle::Pz 		pz 	float 	Momentum in z in GeV/c
+o2::aod::mcparticle::E 		e 	float 	Energy
+o2::aod::mcparticle::Vx 		vx 	float 	X production vertex in cm
+o2::aod::mcparticle::Vy 		vy 	float 	Y production vertex in cm
+o2::aod::mcparticle::Vz 		vz 	float 	Z production vertex in cm
+o2::aod::mcparticle::Vt 		vt 	float 	Production time
+o2::aod::mcparticle::PVector 	D 	pVector 	std::array<float,3> 	Momentum vector in x,y,z-directions in GeV/c
+o2::aod::mcparticle::ProducedByGenerator 	D 	producedByGenerator 	bool 	True if particle produced by the generator (==TMCProcess::kPrimary); False if by the transport code
+o2::aod::mcparticle::FromBackgroundEvent 	D 	fromBackgroundEvent 	bool 	Particle from background event
+o2::aod::mcparticle::GetGenStatusCode 	D 	getGenStatusCode 	int 	The native status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetHepMCStatusCode 	D 	getHepMCStatusCode 	int 	The HepMC status code put by the generator, or -1 if a particle produced during transport
+o2::aod::mcparticle::GetProcess 	D 	getProcess 	int 	The VMC physics code (as int) that generated this particle (see header TMCProcess.h in ROOT)
+o2::aod::mcparticle::IsPhysicalPrimary 	D 	isPhysicalPrimary 	bool 	True if particle is considered a physical primary according to the ALICE definition
+Table joined to the track table containing the MC index
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McTrackLabel = o2::aod::McTrackLabels::iterator
+    o2::aod::TracksWMc = soa::Join<o2::aod::Tracks, o2::aod::McTrackLabels>
+    o2::aod::Reso2TracksMC = soa::Join<o2::aod::FullTracks, o2::aod::McTrackLabels>
+    o2::aod::ResoTrackCandidatesMC = soa::Join<o2::aod::ResoTrackCandidates, o2::aod::McTrackLabels>
+
+Name 		Getter 	Type 	Comment
+o2::aod::mctracklabel::McParticleId 	I 	mcParticleId 	int32 	MC particle
+o2::aod::mctracklabel::McMask 		mcMask 	uint16_t 	Bit mask to indicate detector mismatches (bit ON means mismatch). Bit 0-6: mismatch at ITS layer. Bit 12: ITSAB tracklet mismatch. Bit 13: ITS-TPC mismatch. Bit 14: isNoise == True (global track), Bit 15: isFake == True (global track)
+Table joined to the mft track table containing the MC index
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McMFTTrackLabel = o2::aod::McMFTTrackLabels::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::mcmfttracklabel::McParticleId 	I 	mcParticleId 	int32 	MC particle
+o2::aod::mcmfttracklabel::McMask 		mcMask 	uint8_t 	
+Table joined to the mft track table containing the MC index
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McFwdTrackLabel = o2::aod::McFwdTrackLabels::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::mcfwdtracklabel::McParticleId 	I 	mcParticleId 	int32 	MC particle
+o2::aod::mcfwdtracklabel::McMask 		mcMask 	uint8_t 	
+Table joined to the calo table containing the MC index (version 000, Run 2 format)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McCaloLabels = o2::aod::McCaloLabels_000
+
+Name 		Getter 	Type 	Comment
+o2::aod::mccalolabel::McParticleId 	I 	mcParticleId 	int32 	MC particle
+o2::aod::mccalolabel::McMask 		mcMask 	uint16_t 	Bit mask to indicate detector mismatches (bit ON means mismatch). Bit 15: indicates negative label
+Table joined to the calo table containing multiple MC indices and the amplitude fraction (version 001)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::mccalolabel::McParticleIds 	GI 		? 	
+o2::aod::mccalolabel::AmplitudeA 		amplitudeA 	std::vector<float> 	Energy fraction deposited by a particle inside this calo cell.
+Table joined to the collision table containing the MC index
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::McCollisionLabel = o2::aod::McCollisionLabels::iterator
+    o2::aod::ResoCollisionCandidatesMC = soa::Join<o2::aod::ResoCollisionCandidates, o2::aod::McCollisionLabels>
+    o2::aod::ResoRun2CollisionCandidatesMC = soa::Join<o2::aod::ResoRun2CollisionCandidates, o2::aod::McCollisionLabels>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::McCollisionsNoCents = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::McCollisionsFT0Cs = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels, o2::aod::CentFT0Cs>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::McCollisionsFT0Ms = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels, o2::aod::CentFT0Ms>
+    o2::aod::hf_cand_xic_to_xi_pi_pi::CollisionsWMcCentMult = soa::Join<o2::aod::Collisions, o2::aod::McCollisionLabels, o2::aod::CentFV0As, o2::aod::CentFT0Ms, o2::aod::CentFT0As, o2::aod::CentFT0Cs, o2::aod::PVMultZeqs>
+    o2::aod::pid_tpc_tof_utils::McCollisionsNoCents = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels>
+    o2::aod::pid_tpc_tof_utils::McCollisionsFT0Cs = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels, o2::aod::CentFT0Cs>
+    o2::aod::pid_tpc_tof_utils::McCollisionsFT0Ms = soa::Join<o2::aod::Collisions, o2::aod::EvSels, o2::aod::McCollisionLabels, o2::aod::CentFT0Ms>
+
+Name 		Getter 	Type 	Comment
+o2::aod::mccollisionlabel::McCollisionId 	I 	mcCollisionId 	int32 	MC collision
+o2::aod::mccollisionlabel::McMask 		mcMask 	uint16_t 	Bit mask to indicate collision mismatches (bit ON means mismatch). Bit 15: indicates negative label
+HepMC table for cross sections
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::HepMCXSection = o2::aod::HepMCXSections::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::hepmcxsection::McCollisionId 	I 	mcCollisionId 	int32 	MC collision index
+o2::aod::hepmcxsection::GeneratorsID 		generatorsID 	short 	
+o2::aod::hepmcxsection::Accepted 		accepted 	uint64_t 	The number of events generated so far
+o2::aod::hepmcxsection::Attempted 		attempted 	uint64_t 	The number of events attempted so far
+o2::aod::hepmcxsection::XsectGen 		xsectGen 	float 	Cross section in pb
+o2::aod::hepmcxsection::XsectErr 		xsectErr 	float 	Error associated with this cross section
+o2::aod::hepmcxsection::PtHard 		ptHard 	float 	PT-hard (event scale, for pp collisions)
+o2::aod::hepmcxsection::NMPI 		nMPI 	int 	number of MPIs (for pp collisions)
+o2::aod::hepmcxsection::ProcessId 		processId 	int 	process id from MC generator
+HepMC table for PDF infos
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::HepMCPdfInfo = o2::aod::HepMCPdfInfos::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::hepmcpdfinfo::McCollisionId 	I 	mcCollisionId 	int32 	MC collision index
+o2::aod::hepmcpdfinfo::GeneratorsID 		generatorsID 	short 	
+o2::aod::hepmcpdfinfo::Id1 		id1 	int 	flavour code of first parton
+o2::aod::hepmcpdfinfo::Id2 		id2 	int 	flavour code of second parton
+o2::aod::hepmcpdfinfo::PdfId1 		pdfId1 	int 	LHAPDF set id of first parton
+o2::aod::hepmcpdfinfo::PdfId2 		pdfId2 	int 	LHAPDF set id of second parton
+o2::aod::hepmcpdfinfo::X1 		x1 	float 	fraction of beam momentum carried by first parton ("beam side")
+o2::aod::hepmcpdfinfo::X2 		x2 	float 	fraction of beam momentum carried by second parton ("target side")
+o2::aod::hepmcpdfinfo::ScalePdf 		scalePdf 	float 	Q-scale used in evaluation of PDF's (in GeV)
+o2::aod::hepmcpdfinfo::Pdf1 		pdf1 	float 	PDF (id1, x1, Q) = x*f(x)
+o2::aod::hepmcpdfinfo::Pdf2 		pdf2 	float 	PDF (id2, x2, Q) = x*f(x)
+HepMC table for cross sections
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::HepMCHeavyIon = o2::aod::HepMCHeavyIons::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::hepmcheavyion::McCollisionId 	I 	mcCollisionId 	int32 	MC collision index
+o2::aod::hepmcheavyion::GeneratorsID 		generatorsID 	short 	
+o2::aod::hepmcheavyion::NcollHard 		ncollHard 	int 	Number of hard scatterings
+o2::aod::hepmcheavyion::NpartProj 		npartProj 	int 	Number of projectile participants
+o2::aod::hepmcheavyion::NpartTarg 		npartTarg 	int 	Number of target participants
+o2::aod::hepmcheavyion::Ncoll 		ncoll 	int 	Number of NN (nucleon-nucleon) collisions
+o2::aod::hepmcheavyion::NNwoundedCollisions 		nNwoundedCollisions 	int 	Number of N-Nwounded collisions
+o2::aod::hepmcheavyion::NwoundedNCollisions 		nwoundedNCollisions 	int 	Number of Nwounded-N collisions
+o2::aod::hepmcheavyion::NwoundedNwoundedCollisions 		nwoundedNwoundedCollisions 	int 	Number of Nwounded-Nwounded collisions
+o2::aod::hepmcheavyion::SpectatorNeutrons 		spectatorNeutrons 	int 	Number of spectator neutrons
+o2::aod::hepmcheavyion::SpectatorProtons 		spectatorProtons 	int 	Number of spectator protons
+o2::aod::hepmcheavyion::ImpactParameter 		impactParameter 	float 	Impact Parameter(fm) of collision
+o2::aod::hepmcheavyion::EventPlaneAngle 		eventPlaneAngle 	float 	Azimuthal angle of event plane
+o2::aod::hepmcheavyion::Eccentricity 		eccentricity 	float 	eccentricity of participating nucleons in the transverse plane (as in phobos nucl-ex/0510031)
+o2::aod::hepmcheavyion::SigmaInelNN 		sigmaInelNN 	float 	nucleon-nucleon inelastic (including diffractive) cross-section
+o2::aod::hepmcheavyion::Centrality 		centrality 	float 	centrality (prcentile of geometric cross section)
+
+Run2
+Legacy information for Run 2 event selection
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::run2::EventCuts 		eventCuts 	uint32_t 	Event selection flags. Check enum Run2EventSelectionCut
+o2::aod::run2::TriggerMaskNext50 		triggerMaskNext50 	uint64_t 	50 further trigger classes after bc.triggerMask()
+o2::aod::run2::L0TriggerInputMask 		l0TriggerInputMask 	uint32_t 	CTP L0 trigger input mask
+o2::aod::run2::SPDClustersL0 		spdClustersL0 	uint16_t 	Number of clusters in the first layer of the SPD
+o2::aod::run2::SPDClustersL1 		spdClustersL1 	uint16_t 	Number of clusters in the second layer of the SPD
+o2::aod::run2::SPDFiredChipsL0 		spdFiredChipsL0 	uint16_t 	Fired chips in the first layer of the SPD (offline)
+o2::aod::run2::SPDFiredChipsL1 		spdFiredChipsL1 	uint16_t 	Fired chips in the second layer of the SPD (offline)
+o2::aod::run2::SPDFiredFastOrL0 		spdFiredFastOrL0 	uint16_t 	Fired FASTOR signals in the first layer of the SPD (online)
+o2::aod::run2::SPDFiredFastOrL1 		spdFiredFastOrL1 	uint16_t 	Fired FASTOR signals in the first layer of the SPD (online)
+o2::aod::run2::V0TriggerChargeA 		v0TriggerChargeA 	uint16_t 	V0A trigger charge
+o2::aod::run2::V0TriggerChargeC 		v0TriggerChargeC 	uint16_t 	V0C trigger charge
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Run2BCInfos = o2::aod::Run2BCInfos_001
+
+Name 		Getter 	Type 	Comment
+o2::aod::run2::EventCuts 		eventCuts 	uint32_t 	Event selection flags. Check enum Run2EventSelectionCut
+o2::aod::run2::TriggerMaskNext50 		triggerMaskNext50 	uint64_t 	50 further trigger classes after bc.triggerMask()
+o2::aod::run2::L0TriggerInputMask 		l0TriggerInputMask 	uint32_t 	CTP L0 trigger input mask
+o2::aod::run2::SPDClustersL0 		spdClustersL0 	uint16_t 	Number of clusters in the first layer of the SPD
+o2::aod::run2::SPDClustersL1 		spdClustersL1 	uint16_t 	Number of clusters in the second layer of the SPD
+o2::aod::run2::SPDFiredChipsL0 		spdFiredChipsL0 	uint16_t 	Fired chips in the first layer of the SPD (offline)
+o2::aod::run2::SPDFiredChipsL1 		spdFiredChipsL1 	uint16_t 	Fired chips in the second layer of the SPD (offline)
+o2::aod::run2::SPDFiredFastOrL0 		spdFiredFastOrL0 	uint16_t 	Fired FASTOR signals in the first layer of the SPD (online)
+o2::aod::run2::SPDFiredFastOrL1 		spdFiredFastOrL1 	uint16_t 	Fired FASTOR signals in the first layer of the SPD (online)
+o2::aod::run2::V0TriggerChargeA 		v0TriggerChargeA 	uint16_t 	V0A trigger charge
+o2::aod::run2::V0TriggerChargeC 		v0TriggerChargeC 	uint16_t 	V0C trigger charge
+o2::aod::run2::NTPCClusters 		nTPCClusters 	uint32_t 	total number of TPC clusters (for ev sel)
+o2::aod::run2::NSDDSSDClusters 		nSDDSSDClusters 	uint32_t 	total number of SSD + SDD clusters (for ev sel)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FV0CId 	I 	fv0cId 	int32 	Pointer into FV0Cs
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::CollisionMatchedRun2Sparse = soa::Join<o2::aod::Collisions, o2::aod::Run2MatchedSparse>::iterator
+
+Name 		Getter 	Type 	Comment
+o2::aod::indices::CollisionId 	I 	collisionId 	int32 	Pointer into Collisions
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FV0CId 	I 	fv0cId 	int32 	Pointer into FV0Cs
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::indices::BCId 	I 	bcId 	int32 	Pointer into BCs
+o2::aod::indices::ZdcId 	I 	zdcId 	int32 	Pointer into Zdcs
+o2::aod::indices::FT0Id 	I 	ft0Id 	int32 	Pointer into FT0s
+o2::aod::indices::FV0AId 	I 	fv0aId 	int32 	Pointer into FV0As
+o2::aod::indices::FV0CId 	I 	fv0cId 	int32 	Pointer into FV0Cs
+o2::aod::indices::FDDId 	I 	fddId 	int32 	Pointer into FDDs
+
+Others
+flag for tagging UPCs, joinable with BCs
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::bc::Flags 		flags 	uint8_t 	BC flags (e.g. tagging of UPC tracking settings, etc)
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::aod::track::ITSSignal 		itsSignal 	float 	dE/dx signal in the ITS (Run 2)
+adds ITS shared cluster map
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Run2TrackExtras = o2::aod::Run2TrackExtras_001
+
+Name 		Getter 	Type 	Comment
+o2::aod::track::ITSSignal 		itsSignal 	float 	dE/dx signal in the ITS (Run 2)
+o2::aod::track::ITSSharedClusterMap 		itsSharedClusterMap 	uint8_t 	shared ITS cluster map (Run 2)
+o2::aod::track::ITSNSharedCls 	D 	itsNSharedCls 	uint8_t 	Number of shared ITS clusters (Run 2)
+trackQA information - sampled QA information currently for the TPC - version 0
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::trackqa::TrackId 	I 	trackId 	int32 	track to which this QA information belongs
+o2::aod::trackqa::TPCTime0 		tpcTime0 	float 	tpc only time0 (mTime0 in TPC track)
+o2::aod::trackqa::TPCDCAR 		tpcdcaR 	int16_t 	tpc only DCAr
+o2::aod::trackqa::TPCDCAZ 		tpcdcaZ 	int16_t 	tpc only DCAz
+o2::aod::trackqa::TPCClusterByteMask 		tpcClusterByteMask 	uint8_t 	tracklet bitmask - track defining 8 tracklets (152=8*19 rows) bit set if nCluster>thr (default 5)
+o2::aod::trackqa::TPCdEdxMax0R 		tpcdEdxMax0R 	uint8_t 	TPC dEdxQMax -ROC0/dEdx from TrackTPC.mdEdxAlt
+o2::aod::trackqa::TPCdEdxMax1R 		tpcdEdxMax1R 	uint8_t 	TPC dEdxQMax -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxMax2R 		tpcdEdxMax2R 	uint8_t 	TPC dEdxQMax -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxMax3R 		tpcdEdxMax3R 	uint8_t 	TPC dEdxQMax -ROC3/dEdx
+o2::aod::trackqa::TPCdEdxTot0R 		tpcdEdxTot0R 	uint8_t 	TPC dEdxQtot -ROC0/dEdx
+o2::aod::trackqa::TPCdEdxTot1R 		tpcdEdxTot1R 	uint8_t 	TPC dEdxQtot -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxTot2R 		tpcdEdxTot2R 	uint8_t 	TPC dEdxQtot -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxTot3R 		tpcdEdxTot3R 	uint8_t 	TPC dEdxQtot -ROC3/dEdx
+trackQA information - version 1 - including contributor residuals of matched tracks at reference radius
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::trackqa::TrackId 	I 	trackId 	int32 	track to which this QA information belongs
+o2::aod::trackqa::TPCTime0 		tpcTime0 	float 	tpc only time0 (mTime0 in TPC track)
+o2::aod::trackqa::TPCDCAR 		tpcdcaR 	int16_t 	tpc only DCAr
+o2::aod::trackqa::TPCDCAZ 		tpcdcaZ 	int16_t 	tpc only DCAz
+o2::aod::trackqa::TPCClusterByteMask 		tpcClusterByteMask 	uint8_t 	tracklet bitmask - track defining 8 tracklets (152=8*19 rows) bit set if nCluster>thr (default 5)
+o2::aod::trackqa::TPCdEdxMax0R 		tpcdEdxMax0R 	uint8_t 	TPC dEdxQMax -ROC0/dEdx from TrackTPC.mdEdxAlt
+o2::aod::trackqa::TPCdEdxMax1R 		tpcdEdxMax1R 	uint8_t 	TPC dEdxQMax -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxMax2R 		tpcdEdxMax2R 	uint8_t 	TPC dEdxQMax -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxMax3R 		tpcdEdxMax3R 	uint8_t 	TPC dEdxQMax -ROC3/dEdx
+o2::aod::trackqa::TPCdEdxTot0R 		tpcdEdxTot0R 	uint8_t 	TPC dEdxQtot -ROC0/dEdx
+o2::aod::trackqa::TPCdEdxTot1R 		tpcdEdxTot1R 	uint8_t 	TPC dEdxQtot -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxTot2R 		tpcdEdxTot2R 	uint8_t 	TPC dEdxQtot -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxTot3R 		tpcdEdxTot3R 	uint8_t 	TPC dEdxQtot -ROC3/dEdx
+o2::aod::trackqa::DeltaRefContParamY 		deltaRefContParamY 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefContParamZ 		deltaRefITSParamZ 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefContParamSnp 		deltaRefContParamSnp 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefContParamTgl 		deltaRefContParamTgl 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefContParamQ2Pt 		deltaRefContParamQ2Pt 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::DeltaRefGloParamY 		deltaRefGloParamY 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefGloParamZ 		deltaRefGloParamZ 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefGloParamSnp 		deltaRefGloParamSnp 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefGloParamTgl 		deltaRefGloParamTgl 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefGloParamQ2Pt 		deltaRefGloParamQ2Pt 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::IsDummy 	D 	isDummy 	bool 	indicates if the propagation of the contrib. tracks was successful and residuals are available
+trackQA information - version 2 - including contributor residuals of matched tracks at reference radius + TOF delta information
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::trackqa::TrackId 	I 	trackId 	int32 	track to which this QA information belongs
+o2::aod::trackqa::TPCTime0 		tpcTime0 	float 	tpc only time0 (mTime0 in TPC track)
+o2::aod::trackqa::TPCDCAR 		tpcdcaR 	int16_t 	tpc only DCAr
+o2::aod::trackqa::TPCDCAZ 		tpcdcaZ 	int16_t 	tpc only DCAz
+o2::aod::trackqa::TPCClusterByteMask 		tpcClusterByteMask 	uint8_t 	tracklet bitmask - track defining 8 tracklets (152=8*19 rows) bit set if nCluster>thr (default 5)
+o2::aod::trackqa::TPCdEdxMax0R 		tpcdEdxMax0R 	uint8_t 	TPC dEdxQMax -ROC0/dEdx from TrackTPC.mdEdxAlt
+o2::aod::trackqa::TPCdEdxMax1R 		tpcdEdxMax1R 	uint8_t 	TPC dEdxQMax -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxMax2R 		tpcdEdxMax2R 	uint8_t 	TPC dEdxQMax -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxMax3R 		tpcdEdxMax3R 	uint8_t 	TPC dEdxQMax -ROC3/dEdx
+o2::aod::trackqa::TPCdEdxTot0R 		tpcdEdxTot0R 	uint8_t 	TPC dEdxQtot -ROC0/dEdx
+o2::aod::trackqa::TPCdEdxTot1R 		tpcdEdxTot1R 	uint8_t 	TPC dEdxQtot -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxTot2R 		tpcdEdxTot2R 	uint8_t 	TPC dEdxQtot -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxTot3R 		tpcdEdxTot3R 	uint8_t 	TPC dEdxQtot -ROC3/dEdx
+o2::aod::trackqa::DeltaRefContParamY 		deltaRefContParamY 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefContParamZ 		deltaRefITSParamZ 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefContParamSnp 		deltaRefContParamSnp 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefContParamTgl 		deltaRefContParamTgl 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefContParamQ2Pt 		deltaRefContParamQ2Pt 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::DeltaRefGloParamY 		deltaRefGloParamY 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefGloParamZ 		deltaRefGloParamZ 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefGloParamSnp 		deltaRefGloParamSnp 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefGloParamTgl 		deltaRefGloParamTgl 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefGloParamQ2Pt 		deltaRefGloParamQ2Pt 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::DeltaTOFdX 		deltaTOFdX 	int8_t 	
+o2::aod::trackqa::DeltaTOFdZ 		deltaTOFdZ 	int8_t 	
+o2::aod::trackqa::IsDummy 	D 	isDummy 	bool 	indicates if the propagation of the contrib. tracks was successful and residuals are available
+trackQA information - version 3 - including alternative dedx normalization
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::TracksQAVersion = o2::aod::TracksQA_003
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::trackqa::TrackId 	I 	trackId 	int32 	track to which this QA information belongs
+o2::aod::trackqa::TPCTime0 		tpcTime0 	float 	tpc only time0 (mTime0 in TPC track)
+o2::aod::trackqa::TPCdEdxNorm 		tpcdEdxNorm 	float 	100/TrackTPC.mdEdxAlt used to normalize dEdX...values below
+o2::aod::trackqa::TPCDCAR 		tpcdcaR 	int16_t 	tpc only DCAr
+o2::aod::trackqa::TPCDCAZ 		tpcdcaZ 	int16_t 	tpc only DCAz
+o2::aod::trackqa::TPCClusterByteMask 		tpcClusterByteMask 	uint8_t 	tracklet bitmask - track defining 8 tracklets (152=8*19 rows) bit set if nCluster>thr (default 5)
+o2::aod::trackqa::TPCdEdxMax0R 		tpcdEdxMax0R 	uint8_t 	TPC dEdxQMax -ROC0/dEdx from TrackTPC.mdEdxAlt
+o2::aod::trackqa::TPCdEdxMax1R 		tpcdEdxMax1R 	uint8_t 	TPC dEdxQMax -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxMax2R 		tpcdEdxMax2R 	uint8_t 	TPC dEdxQMax -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxMax3R 		tpcdEdxMax3R 	uint8_t 	TPC dEdxQMax -ROC3/dEdx
+o2::aod::trackqa::TPCdEdxTot0R 		tpcdEdxTot0R 	uint8_t 	TPC dEdxQtot -ROC0/dEdx
+o2::aod::trackqa::TPCdEdxTot1R 		tpcdEdxTot1R 	uint8_t 	TPC dEdxQtot -ROC1/dEdx
+o2::aod::trackqa::TPCdEdxTot2R 		tpcdEdxTot2R 	uint8_t 	TPC dEdxQtot -ROC2/dEdx
+o2::aod::trackqa::TPCdEdxTot3R 		tpcdEdxTot3R 	uint8_t 	TPC dEdxQtot -ROC3/dEdx
+o2::aod::trackqa::DeltaRefContParamY 		deltaRefContParamY 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefContParamZ 		deltaRefITSParamZ 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefContParamSnp 		deltaRefContParamSnp 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefContParamTgl 		deltaRefContParamTgl 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefContParamQ2Pt 		deltaRefContParamQ2Pt 	int8_t 	Normalized delta of contributor tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::DeltaRefGloParamY 		deltaRefGloParamY 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Y
+o2::aod::trackqa::DeltaRefGloParamZ 		deltaRefGloParamZ 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Z
+o2::aod::trackqa::DeltaRefGloParamSnp 		deltaRefGloParamSnp 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Snp
+o2::aod::trackqa::DeltaRefGloParamTgl 		deltaRefGloParamTgl 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Tgl
+o2::aod::trackqa::DeltaRefGloParamQ2Pt 		deltaRefGloParamQ2Pt 	int8_t 	Normalized delta of global track to average contributors matched tracks at reference point in the same frame Q2Pt
+o2::aod::trackqa::DeltaTOFdX 		deltaTOFdX 	int8_t 	
+o2::aod::trackqa::DeltaTOFdZ 		deltaTOFdZ 	int8_t 	
+o2::aod::trackqa::IsDummy 	D 	isDummy 	bool 	indicates if the propagation of the contrib. tracks was successful and residuals are available
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::MFTTrackId 	I 	matchMFTTrackId 	int32 	ID of matching MFT track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::SigmaX 		sigmaX 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaPhi 		sigmaPhi 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::fwdtrack::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::fwdtrack::RhoXY 		rhoXY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiX 		rhoPhiX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiY 		rhoPhiY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglX 		rhoTglX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglPhi 		rhoTglPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtX 		rho1PtX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtPhi 		rho1PtPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Extends:
+
+    o2::aod::StoredMFTTracksCov 
+
+Is used in:
+
+    o2::aod::MFTTrackCovFwd = o2::aod::MFTTracksCov::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fwdtrack::MFTTrackId 	I 	matchMFTTrackId 	int32 	ID of matching MFT track for GlobalMuonTracks and GlobalForwardTracks
+o2::aod::fwdtrack::SigmaX 		sigmaX 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaY 		sigmaY 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaPhi 		sigmaPhi 	float 	Covariance matrix
+o2::aod::fwdtrack::SigmaTgl 		sigmaTgl 	float 	Covariance matrix
+o2::aod::fwdtrack::Sigma1Pt 		sigma1Pt 	float 	Covariance matrix
+o2::aod::fwdtrack::RhoXY 		rhoXY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiX 		rhoPhiX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoPhiY 		rhoPhiY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglX 		rhoTglX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglY 		rhoTglY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::RhoTglPhi 		rhoTglPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtX 		rho1PtX 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtY 		rho1PtY 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtPhi 		rho1PtPhi 	int8_t 	Covariance matrix in compressed form
+o2::aod::fwdtrack::Rho1PtTgl 		rho1PtTgl 	int8_t 	Covariance matrix in compressed form
+o2::aod::0 	GI 		? 	
+o2::aod::fwdtrack::CXX 	E 	cXX 	float 	
+o2::aod::fwdtrack::CXY 	E 	cXY 	float 	
+o2::aod::fwdtrack::CYY 	E 	cYY 	float 	
+o2::aod::fwdtrack::CPhiX 	E 	cPhiX 	float 	
+o2::aod::fwdtrack::CPhiY 	E 	cPhiY 	float 	
+o2::aod::fwdtrack::CPhiPhi 	E 	cPhiPhi 	float 	
+o2::aod::fwdtrack::CTglX 	E 	cTglX 	float 	
+o2::aod::fwdtrack::CTglY 	E 	cTglY 	float 	
+o2::aod::fwdtrack::CTglPhi 	E 	cTglPhi 	float 	
+o2::aod::fwdtrack::CTglTgl 	E 	cTglTgl 	float 	
+o2::aod::fwdtrack::C1PtX 	E 	c1PtX 	float 	
+o2::aod::fwdtrack::C1PtY 	E 	c1PtY 	float 	
+o2::aod::fwdtrack::C1PtPhi 	E 	c1PtPhi 	float 	
+o2::aod::fwdtrack::C1PtTgl 	E 	c1PtTgl 	float 	
+o2::aod::fwdtrack::C1Pt21Pt2 	E 	c1Pt21Pt2 	float 	
+FV0AsExtra table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FV0AExtra = o2::aod::FV0AsExtra::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fv0a::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fv0a::TimeFV0A 		timeFV0A 	std::vector<float> 	Time of non-zero channels. The channel IDs are given in Channel (at the same index). Only for the FITExtra table
+FT0sExtra table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FT0Extra = o2::aod::FT0sExtra::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::ft0::BCId 	I 	bcId 	int32 	BC index
+o2::aod::ft0::TimeFT0A 		timeFT0A 	std::vector<float> 	Time of non-zero channels on the A-side. The channel IDs are given in ChannelA (at the same index). Only for the FITExtra table
+o2::aod::ft0::TimeFT0C 		timeFT0C 	std::vector<float> 	Time of non-zero channels on the C-side. The channel IDs are given in ChannelC (at the same index). Only for the FITExtra table
+FDDsExtra table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::FDDExtra = o2::aod::FDDsExtra::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::fdd::BCId 	I 	bcId 	int32 	BC index
+o2::aod::fdd::TimeFDDA 		timeFDDA 	float[8] 	Time per channel A-side, only for the FITExtra table
+o2::aod::fdd::TimeFDDC 		timeFDDC 	float[8] 	Time per channel C-side, only for the FITExtra table
+Table which contains the IDs of all dataframes merged into this dataframe
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Origin = o2::aod::Origins::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::origins::DataframeID 		dataframeID 	uint64_t 	Data frame ID (what is usually found in directory name in the AO2D.root, i.e. DF_XXX)
+Run 2 V0 on the fly table
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Run2OTFV0 = o2::aod::Run2OTFV0s::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::run2::oftv0::CollisionId 	I 	collisionId 	int32 	Collision index
+o2::aod::run2::oftv0::PosTrackId 	I 	posTrackId 	int 	Positive track
+o2::aod::run2::oftv0::NegTrackId 	I 	negTrackId 	int 	Negative track
+o2::aod::run2::oftv0::Px 		px 	float 	momentum in x
+o2::aod::run2::oftv0::Py 		py 	float 	momentum in y
+o2::aod::run2::oftv0::Pz 		pz 	float 	momentum in z
+o2::aod::run2::oftv0::E 		e 	float 	energy
+o2::aod::run2::oftv0::Qt 		qt 	float 	Qt of AP
+o2::aod::run2::oftv0::Alpha 		alpha 	float 	Alpha of AP
+o2::aod::run2::oftv0::X 		x 	float 	conversion point x coordiante
+o2::aod::run2::oftv0::Y 		y 	float 	conversion point y coordiante
+o2::aod::run2::oftv0::Z 		z 	float 	conversion point z coordiante
+o2::aod::run2::oftv0::Chi2NDF 		chi2NDF 	float 	chi^2 over NDF from KFParticle
+o2::aod::run2::oftv0::PsiPair 		psiPair 	float 	Psi pair
+o2::aod::run2::oftv0::DCAr 		dcaR 	float 	DCA in radial direction
+o2::aod::run2::oftv0::DCAz 		dcaZ 	float 	DCA in z direction
+o2::aod::run2::oftv0::MassInMeV 		mass 	float 	mass of the conversion in MeV. Do NOT use for cut!
+Photon information from PMD detector
+Header file: Framework/Core/include/Framework/AnalysisDataModel.h
+Is used in:
+
+    o2::aod::Pmd = o2::aod::Pmds::iterator
+
+Name 		Getter 	Type 	Comment
+o2::soa::Index 	GI 	globalIndex 	int64_t 	
+o2::aod::run2::pmd::BCId 	I 	bcId 	int32 	BC index
+o2::aod::run2::pmd::X 		pmdclsx 	float 	cluster x position
+o2::aod::run2::pmd::Y 		pmdclsy 	float 	cluster y position
+o2::aod::run2::pmd::Z 		pmdclsz 	float 	cluster z position
+o2::aod::run2::pmd::CluADC 		pmdclsadc 	float 	cluster energy in ADC
+o2::aod::run2::pmd::CluPID 		pmdclspid 	float 	cluster probability, 1: photon, 0:hadron
+o2::aod::run2::pmd::Det 		pmddet 	uint8_t 	Detector, 0:PRE, 1:CPV
+o2::aod::run2::pmd::Ncell 		pmdncell 	uint8_t 	cluster cells
+o2::aod::run2::pmd::Smn 		pmdmodule 	int32_t 	module number
+o2::aod::run2::pmd::TrackNo 		pmdtrackno 	int32_t 	Track number assigned to clus from simulation
+o2::aod::run2::pmd::TrackPid 		pmdtrackpid 	int32_t 	Track PID assigned to clus from simulation
+o2::aod::run2::pmd::SigX 		pmdsigx 	float 	Cluster x-width
+o2::aod::run2::pmd::SigY 		pmdsigy 	float 	Cluster y-width
+o2::aod::run2::pmd::ClMatching 		pmdclmatching 	int32_t 	Cluster of PRE matching with CPV

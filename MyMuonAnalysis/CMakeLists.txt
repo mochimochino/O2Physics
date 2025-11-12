@@ -1,5 +1,9 @@
 # From Tutorial PWGMM cmakelists
 # Changed to my muon tasks
+o2physics_add_dpl_workflow(my-mc-fwd-dca
+                  SOURCES fwd_dca.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)
 
 o2physics_add_dpl_workflow(my-mc-fwd-allgen
                   SOURCES fwd_particles_allgen.cxx

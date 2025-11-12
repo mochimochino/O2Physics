@@ -54,6 +54,15 @@ struct mc_muon_resto_track {
       auto mc = mcParticles.iteratorAt(mcId);
       if (std::abs(mc.pdgCode()) != 13) continue; // muon only
 
+// cut info
+      if (trk.eta() < -4.0 || trk.eta() > -2.5) continue; // Match eta cut
+      if (trk.rAtAbsorberEnd() < 17.6 || trk.rAtAbsorberEnd() > 89.5) continue; // Match rAtAbsorberEnd cut
+      if (trk.pDca() > 594.0 && trk.rAtAbsorberEnd() < 26.5) continue; // Match pDca cut
+      if (trk.pDca() > 324.0 && trk.rAtAbsorberEnd() >= 26.5) continue; // Match pDca cut
+      if (trk.chi2() > 1e6) continue; // Match chi2 cut
+      if (trk.chi2MatchMCHMID() > 1e6) continue; // Match chi2MatchMCHMID cut
+      if (trk.chi2MatchMCHMFT() > 1e6) continue; // Match chi2MatchMCHMFT cut
+
       float ptReco = trk.pt();
       float ptGen = mc.pt();
       if (ptGen <= 0) continue;

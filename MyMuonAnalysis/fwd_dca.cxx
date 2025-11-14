@@ -19,7 +19,7 @@ struct fwd_dca {
   Configurable<float> minPhi{"minPhi", - TMath::Pi(), "min Phi"};
   Configurable<float> maxPhi{"maxPhi", TMath::Pi(), "max Phi"};
 
-  Configurable<int> nBinsRes{"nBinsRes", 100, "N bins in resolution histo"};
+  Configurable<int> nBinsRes{"nBinsRes", 20, "N bins in resolution histo"};
   Configurable<float> minRes{"minRes", -0.5, "min resolution"};
   Configurable<float> maxRes{"maxRes", 0.5, "max resolution"};
 
@@ -43,13 +43,13 @@ struct fwd_dca {
 
 
 
-        histos.add("pt_resolution", "(pT_reco - pT_gen)/pT_gen", kTH1F, {axisRes});
-        histos.add("eta_resolution", "eta_reco - eta_gen", kTH1F, {axisEtaRes});
-        histos.add("phi_resolution", "phi_reco - phi_gen", kTH1F, {axisPhiRes});
+        histos.add("Resolution/pt_resolution", "(pT_reco - pT_gen)/pT_gen", kTH1F, {axisRes});
+        histos.add("Resolution/eta_resolution", "eta_reco - eta_gen", kTH1F, {axisEtaRes});
+        histos.add("Resolution/phi_resolution", "phi_reco - phi_gen", kTH1F, {axisPhiRes});
 
-        histos.add("ptRes_vs_pt", "Resolution vs pT_gen", kTH2F, {axisPt, axisRes});
-        histos.add("etaRes_vs_pt", "Eta Resolution vs pT_gen", kTH2F, {axisPt, axisEtaRes});
-        histos.add("phiRes_vs_pt", "Phi Resolution vs pT_gen", kTH2F, {axisPt, axisPhiRes});
+        histos.add("Resolution/ptRes_vs_pt", "Resolution vs pT_gen", kTH2F, {axisPt, axisRes});
+        histos.add("Resolution/etaRes_vs_pt", "Eta Resolution vs pT_gen", kTH2F, {axisPt, axisEtaRes});
+        histos.add("Resolution/phiRes_vs_pt", "Phi Resolution vs pT_gen", kTH2F, {axisPt, axisPhiRes});
 
         histos.add("pt_gen", "Generated pT (Matched to Reco)", kTH1F, {axisPt});
         histos.add("pt_reco", "Reconstructed pT (Matched to Gen)", kTH1F, {axisPt});
@@ -58,33 +58,33 @@ struct fwd_dca {
         histos.add("phi_gen", "Generated phi (Matched to Reco)", kTH1F, {axisPhi});
         histos.add("phi_reco", "Reconstructed phi (Matched to Gen)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all", "Generated pT (All Findable)", kTH1F, {axisPt});
-        histos.add("eta_gen_all", "Generated eta (All Findable)", kTH1F, {axisEta});
-        histos.add("phi_gen_all", "Generated phi (All Findable)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all", "Generated pT (All Findable)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all", "Generated eta (All Findable)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all", "Generated phi (All Findable)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_findable", "Generated pT (All Findable Muons)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_findable", "Generated eta (All Findable Muons)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_findable", "Generated phi (All Findable Muons)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_findable", "Generated pT (All Findable Muons)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_findable", "Generated eta (All Findable Muons)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_findable", "Generated phi (All Findable Muons)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_pion_findable", "Generated pT (All Findable Pions)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_pion_findable", "Generated eta (All Findable Pions)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_pion_findable", "Generated phi (All Findable Pions)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_pion_findable", "Generated pT (All Findable Pions)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_pion_findable", "Generated eta (All Findable Pions)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_pion_findable", "Generated phi (All Findable Pions)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_electron_findable", "Generated pT (All Findable Electrons)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_electron_findable", "Generated eta (All Findable Electrons)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_electron_findable", "Generated phi (All Findable Electrons)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_electron_findable", "Generated pT (All Findable Electrons)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_electron_findable", "Generated eta (All Findable Electrons)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_electron_findable", "Generated phi (All Findable Electrons)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_kaon_findable", "Generated pT (All Findable Kaons)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_kaon_findable", "Generated eta (All Findable Kaons)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_kaon_findable", "Generated phi (All Findable Kaons)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_kaon_findable", "Generated pT (All Findable Kaons)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_kaon_findable", "Generated eta (All Findable Kaons)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_kaon_findable", "Generated phi (All Findable Kaons)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_proton_findable", "Generated pT (All Findable Protons)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_proton_findable", "Generated eta (All Findable Protons)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_proton_findable", "Generated phi (All Findable Protons)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_proton_findable", "Generated pT (All Findable Protons)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_proton_findable", "Generated eta (All Findable Protons)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_proton_findable", "Generated phi (All Findable Protons)", kTH1F, {axisPhi});
 
-        histos.add("pt_gen_all_other_findable", "Generated pT (All Other Findable Particles)", kTH1F, {axisPt});
-        histos.add("eta_gen_all_other_findable", "Generated eta (All Other Findable Particles)", kTH1F, {axisEta});
-        histos.add("phi_gen_all_other_findable", "Generated phi (All Other Findable Particles)", kTH1F, {axisPhi});
+        histos.add("Findable/pt_gen_all_other_findable", "Generated pT (All Other Findable Particles)", kTH1F, {axisPt});
+        histos.add("Findable/eta_gen_all_other_findable", "Generated eta (All Other Findable Particles)", kTH1F, {axisEta});
+        histos.add("Findable/phi_gen_all_other_findable", "Generated phi (All Other Findable Particles)", kTH1F, {axisPhi});
 
         AxisSpec axisParentCat{6, 0.5, 6.5, "Parent Category"};
         histos.add("muon_parent_category", "Category of Muon Parent (from Reco Muon)", kTH1F, {axisParentCat});
@@ -95,17 +95,21 @@ struct fwd_dca {
         histos.add("pt_reco_beauty", "Reco pT (Parent: Beauty)", kTH1F, {axisPt});
         histos.add("pt_reco_other", "Reco pT (Parent: Other)", kTH1F, {axisPt});
 
-        // 1D pDCA
-        histos.add("pdca_all", "p*DCA (All Matched Muons)", kTH1F, {axisPDca});
-        histos.add("pdca_primary", "p*DCA (Parent: Primary)", kTH1F, {axisPDca});
-        histos.add("pdca_pion", "p*DCA (Parent: Pion)", kTH1F, {axisPDca});
-        histos.add("pdca_kaon", "p*DCA (Parent: Kaon)", kTH1F, {axisPDca});
-        histos.add("pdca_charm", "p*DCA (Parent: Charm)", kTH1F, {axisPDca});
-        histos.add("pdca_beauty", "p*DCA (Parent: Beauty)", kTH1F, {axisPDca});
-        histos.add("pdca_other", "p*DCA (Parent: Other)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_vs_pt_beauty", "p*DCA vs pT (Parent: Beauty)", kTH2F, {axisPt, axisPDca});
+        histos.add("PDCA/pdca_vs_pt_pion", "p*DCA vs pT (Parent: Pion)", kTH2F, {axisPt, axisPDca});
+        histos.add("PDCA/pdca_vs_pt_charm", "p*DCA vs pT (Parent: Charm)", kTH2F, {axisPt, axisPDca});
+
+          // 1D pDCA
+        histos.add("PDCA/pdca_all", "p*DCA (All Matched Muons)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_primary", "p*DCA (Parent: Primary)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_pion", "p*DCA (Parent: Pion)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_kaon", "p*DCA (Parent: Kaon)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_charm", "p*DCA (Parent: Charm)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_beauty", "p*DCA (Parent: Beauty)", kTH1F, {axisPDca});
+        histos.add("PDCA/pdca_other", "p*DCA (Parent: Other)", kTH1F, {axisPDca});
 
         // 2D (vs pT)
-        histos.add("pdca_vs_pt", "p*DCA vs pT (All Matched Muons)", kTH2F, {axisPt, axisPDca});
+        histos.add("PDCA/pdca_vs_pt", "p*DCA vs pT (All Matched Muons)", kTH2F, {axisPt, axisPDca});
 
         // 1D Inclusive
         histos.add("trk_chi2MatchMCHMFT", "MCH-MFT Match Chi2", kTH1F, {axisChi2Match});
@@ -122,21 +126,22 @@ struct fwd_dca {
 
         for (int type : trackTypes) {
         std::string t = std::to_string(type);
+        std::string dirName = "TrackType/Type" + t + "/";
 
-        histos.add(("pt_resolution_Type" + t).c_str(), ("pT resolution (Type " + t + ")").c_str(), kTH1F, {axisRes});
-        histos.add(("eta_resolution_Type" + t).c_str(), ("eta resolution (Type " + t + ")").c_str(), kTH1F, {axisEtaRes});
-        histos.add(("phi_resolution_Type" + t).c_str(), ("phi resolution (Type " + t + ")").c_str(), kTH1F, {axisPhiRes});
+        histos.add((dirName + "pt_resolution_Type" + t).c_str(), ("pT resolution (Type " + t + ")").c_str(), kTH1F, {axisRes});
+        histos.add((dirName + "eta_resolution_Type" + t).c_str(), ("eta resolution (Type " + t + ")").c_str(), kTH1F, {axisEtaRes});
+        histos.add((dirName + "phi_resolution_Type" + t).c_str(), ("phi resolution (Type " + t + ")").c_str(), kTH1F, {axisPhiRes});
 
-        histos.add(("ptRes_vs_pt_Type" + t).c_str(), ("pT res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisRes});
-        histos.add(("etaRes_vs_pt_Type" + t).c_str(), ("eta res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisEtaRes});
-        histos.add(("phiRes_vs_pt_Type" + t).c_str(), ("phi res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisPhiRes});
+        histos.add((dirName + "ptRes_vs_pt_Type" + t).c_str(), ("pT res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisRes});
+        histos.add((dirName + "etaRes_vs_pt_Type" + t).c_str(), ("eta res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisEtaRes});
+        histos.add((dirName + "phiRes_vs_pt_Type" + t).c_str(), ("phi res vs pT (Type " + t + ")").c_str(), kTH2F, {axisPt, axisPhiRes});
 
-        histos.add(("pt_gen_Type" + t).c_str(), ("Generated pT (Matched, Type " + t + ")").c_str(), kTH1F, {axisPt});
-        histos.add(("pt_reco_Type" + t).c_str(), ("Reconstructed pT (Matched, Type " + t + ")").c_str(), kTH1F, {axisPt});
-        histos.add(("eta_gen_Type" + t).c_str(), ("Generated eta (Matched, Type " + t + ")").c_str(), kTH1F, {axisEta});
-        histos.add(("eta_reco_Type" + t).c_str(), ("Reconstructed eta (Matched, Type " + t + ")").c_str(), kTH1F, {axisEta});
-        histos.add(("phi_gen_Type" + t).c_str(), ("Generated phi (Matched, Type " + t + ")").c_str(), kTH1F, {axisPhi});
-        histos.add(("phi_reco_Type" + t).c_str(), ("Reconstructed phi (Matched, Type " + t + ")").c_str(), kTH1F, {axisPhi});
+        histos.add((dirName + "pt_gen_Type" + t).c_str(), ("Generated pT (Matched, Type " + t + ")").c_str(), kTH1F, {axisPt});
+        histos.add((dirName + "pt_reco_Type" + t).c_str(), ("Reconstructed pT (Matched, Type " + t + ")").c_str(), kTH1F, {axisPt});
+        histos.add((dirName + "eta_gen_Type" + t).c_str(), ("Generated eta (Matched, Type " + t + ")").c_str(), kTH1F, {axisEta});
+        histos.add((dirName + "eta_reco_Type" + t).c_str(), ("Reconstructed eta (Matched, Type " + t + ")").c_str(), kTH1F, {axisEta});
+        histos.add((dirName + "phi_gen_Type" + t).c_str(), ("Generated phi (Matched, Type " + t + ")").c_str(), kTH1F, {axisPhi});
+        histos.add((dirName + "phi_reco_Type" + t).c_str(), ("Reconstructed phi (Matched, Type " + t + ")").c_str(), kTH1F, {axisPhi});
         }
     } 
 
@@ -178,7 +183,7 @@ struct fwd_dca {
       //if (etaGen < minEta || etaGen > maxEta) continue;
       //if (phiGen < minPhi || phiGen > maxPhi) continue;
 
-      float resPt = (ptReco - ptGen) / ptGen;
+      float resPt = (ptGen > 0) ? (ptReco - ptGen) / ptGen : 0; // Avoid division by zero
       float resEta = etaReco - etaGen;
       float rawDPhi = phiReco - phiGen;
       float resPhi = normPhi(rawDPhi);
@@ -187,8 +192,8 @@ struct fwd_dca {
       float chi2MatchMFT = trk.chi2MatchMCHMFT();
       float rAbs = trk.rAtAbsorberEnd();
 
-      histos.fill(HIST("pdca_all"), pdca);
-      histos.fill(HIST("pdca_vs_pt"), ptReco, pdca);
+      histos.fill(HIST("PDCA/pdca_all"), pdca);
+      histos.fill(HIST("PDCA/pdca_vs_pt"), ptReco, pdca);
 
       histos.fill(HIST("trk_chi2MatchMCHMFT"), chi2MatchMFT);
       histos.fill(HIST("trk_rAbs"), rAbs);
@@ -231,26 +236,30 @@ struct fwd_dca {
       switch (parentCategory) {
         case 1: // Primary
           histos.fill(HIST("pt_reco_primary"), ptReco);
-          histos.fill(HIST("pdca_primary"), pdca);
+          histos.fill(HIST("PDCA/pdca_primary"), pdca);
           break;
         case 2: // Pion
           histos.fill(HIST("pt_reco_pion"), ptReco);
-          histos.fill(HIST("pdca_pion"), pdca);
+          histos.fill(HIST("PDCA/pdca_pion"), pdca);
+          histos.fill(HIST("PDCA/pdca_vs_pt_pion"), ptReco, pdca);
 
           histos.fill(HIST("trk_chi2MatchMCHMFT_pion"), chi2MatchMFT);
           histos.fill(HIST("trk_rAbs_pion"), rAbs);
           break;
         case 3: // Kaon
           histos.fill(HIST("pt_reco_kaon"), ptReco);
-          histos.fill(HIST("pdca_kaon"), pdca);
+          histos.fill(HIST("PDCA/pdca_kaon"), pdca);
+
           break;
         case 4: // Charm
           histos.fill(HIST("pt_reco_charm"), ptReco);
-          histos.fill(HIST("pdca_charm"), pdca);
+          histos.fill(HIST("PDCA/pdca_charm"), pdca);
+          histos.fill(HIST("PDCA/pdca_vs_pt_charm"), ptReco, pdca);
           break;
         case 5: // Beauty
           histos.fill(HIST("pt_reco_beauty"), ptReco);
-          histos.fill(HIST("pdca_beauty"), pdca);
+          histos.fill(HIST("PDCA/pdca_beauty"), pdca);
+          histos.fill(HIST("PDCA/pdca_vs_pt_beauty"), ptReco, pdca);
 
           histos.fill(HIST("trk_chi2MatchMCHMFT_beauty"), chi2MatchMFT);
           histos.fill(HIST("trk_rAbs_beauty"), rAbs);
@@ -258,26 +267,23 @@ struct fwd_dca {
         case 6: // Other
         default:
           histos.fill(HIST("pt_reco_other"), ptReco);
-          histos.fill(HIST("pdca_other"), pdca);
+          histos.fill(HIST("PDCA/pdca_other"), pdca);
           break;
       }
       
-      //float resPt = (ptReco - ptGen) / ptGen;
-      //float resEta = etaReco - etaGen;
-      //float rawDPhi = phiReco - phiGen;
-      //float resPhi = normPhi(rawDPhi);
-
       int type = trk.trackType();
       
-      histos.fill(HIST("pt_resolution"), resPt);
-      histos.fill(HIST("eta_resolution"), resEta);
-      histos.fill(HIST("phi_resolution"), resPhi);
+      if (ptGen > 0) { // Avoid filling resolution histos if ptGen is 0
+        histos.fill(HIST("Resolution/pt_resolution"), resPt);
+        histos.fill(HIST("Resolution/ptRes_vs_pt"), ptGen, resPt);
+      }
+      histos.fill(HIST("Resolution/eta_resolution"), resEta);
+      histos.fill(HIST("Resolution/phi_resolution"), resPhi);
       
-      histos.fill(HIST("ptRes_vs_pt"), ptGen, resPt);
-      histos.fill(HIST("etaRes_vs_pt"), ptGen, resEta);
-      histos.fill(HIST("phiRes_vs_pt"), ptGen, resPhi);
+      histos.fill(HIST("Resolution/etaRes_vs_pt"), ptGen, resEta);
+      histos.fill(HIST("Resolution/phiRes_vs_pt"), ptGen, resPhi);
 
-      // These fill "matched" gen/reco histograms
+      // These fill "matched" gen/reco histograms (No path, matches init)
       histos.fill(HIST("pt_gen"), ptGen);
       histos.fill(HIST("pt_reco"), ptReco);
       histos.fill(HIST("eta_gen"), etaGen);
@@ -285,71 +291,55 @@ struct fwd_dca {
       histos.fill(HIST("phi_gen"), phiGen);
       histos.fill(HIST("phi_reco"), phiReco);
 
+
       switch (type) {
         case 0: //global MUON (MFT+MCH+MID)
-          histos.fill(HIST("pt_resolution_Type0"), resPt);
-          histos.fill(HIST("eta_resolution_Type0"), resEta);
-          histos.fill(HIST("phi_resolution_Type0"), resPhi);
-          histos.fill(HIST("ptRes_vs_pt_Type0"), ptGen, resPt);
-          histos.fill(HIST("etaRes_vs_pt_Type0"), ptGen, resEta);
-          histos.fill(HIST("phiRes_vs_pt_Type0"), ptGen, resPhi);
-          histos.fill(HIST("pt_gen_Type0"), ptGen);
-          histos.fill(HIST("pt_reco_Type0"), ptReco);
-          histos.fill(HIST("eta_gen_Type0"), etaGen);
-          histos.fill(HIST("eta_reco_Type0"), etaReco);
-          histos.fill(HIST("phi_gen_Type0"), phiGen);
-          histos.fill(HIST("phi_reco_Type0"), phiReco);
+          if (ptGen > 0) {
+            histos.fill(HIST("TrackType/Type0/pt_resolution_Type0"), resPt);
+            histos.fill(HIST("TrackType/Type0/ptRes_vs_pt_Type0"), ptGen, resPt);
+          }
+          histos.fill(HIST("TrackType/Type0/eta_resolution_Type0"), resEta);
+          histos.fill(HIST("TrackType/Type0/phi_resolution_Type0"), resPhi);
+          histos.fill(HIST("TrackType/Type0/etaRes_vs_pt_Type0"), ptGen, resEta);
+          histos.fill(HIST("TrackType/Type0/phiRes_vs_pt_Type0"), ptGen, resPhi);
+          histos.fill(HIST("TrackType/Type0/pt_gen_Type0"), ptGen);
+          histos.fill(HIST("TrackType/Type0/pt_reco_Type0"), ptReco);
+          histos.fill(HIST("TrackType/Type0/eta_gen_Type0"), etaGen);
+          histos.fill(HIST("TrackType/Type0/eta_reco_Type0"), etaReco);
+          histos.fill(HIST("TrackType/Type0/phi_gen_Type0"), phiGen);
+          histos.fill(HIST("TrackType/Type0/phi_reco_Type0"), phiReco);
           break;
 
         case 2: // MFT+MCH track
-          //histos.fill(HIST("pt_resolution_Type2"), resPt);
-          //histos.fill(HIST("eta_resolution_Type2"), resEta);
-          //histos.fill(HIST("phi_resolution_Type2"), resPhi);
-          //histos.fill(HIST("ptRes_vs_pt_Type2"), ptGen, resPt);
-          //histos.fill(HIST("etaRes_vs_pt_Type2"), ptGen, resEta);
-          //histos.fill(HIST("phiRes_vs_pt_Type2"), ptGen, resPhi);
-          //histos.fill(HIST("pt_gen_Type2"), ptGen);
-          //histos.fill(HIST("pt_reco_Type2"), ptReco);
-          //histos.fill(HIST("eta_gen_Type2"), etaGen);
-          //histos.fill(HIST("eta_reco_Type2"), etaReco);
-          //histos.fill(HIST("phi_gen_Type2"), phiGen);
-          //histos.fill(HIST("phi_reco_Type2"), phiReco);
+         
           break;
 
         case 3: //standalone MUON (MCH+MID)
-          histos.fill(HIST("pt_resolution_Type3"), resPt);
-          histos.fill(HIST("eta_resolution_Type3"), resEta);
-          histos.fill(HIST("phi_resolution_Type3"), resPhi);
-          histos.fill(HIST("ptRes_vs_pt_Type3"), ptGen, resPt);
-          histos.fill(HIST("etaRes_vs_pt_Type3"), ptGen, resEta);
-          histos.fill(HIST("phiRes_vs_pt_Type3"), ptGen, resPhi);
-          histos.fill(HIST("pt_gen_Type3"), ptGen);
-          histos.fill(HIST("pt_reco_Type3"), ptReco);
-          histos.fill(HIST("eta_gen_Type3"), etaGen);
-          histos.fill(HIST("eta_reco_Type3"), etaReco);
-          histos.fill(HIST("phi_gen_Type3"), phiGen);
-          histos.fill(HIST("phi_reco_Type3"), phiReco);
+          if (ptGen > 0) {
+            histos.fill(HIST("TrackType/Type3/pt_resolution_Type3"), resPt);
+            histos.fill(HIST("TrackType/Type3/ptRes_vs_pt_Type3"), ptGen, resPt);
+          }
+          histos.fill(HIST("TrackType/Type3/eta_resolution_Type3"), resEta);
+          histos.fill(HIST("TrackType/Type3/phi_resolution_Type3"), resPhi);
+          histos.fill(HIST("TrackType/Type3/etaRes_vs_pt_Type3"), ptGen, resEta);
+          histos.fill(HIST("TrackType/Type3/phiRes_vs_pt_Type3"), ptGen, resPhi);
+          histos.fill(HIST("TrackType/Type3/pt_gen_Type3"), ptGen);
+          histos.fill(HIST("TrackType/Type3/pt_reco_Type3"), ptReco);
+          histos.fill(HIST("TrackType/Type3/eta_gen_Type3"), etaGen);
+          histos.fill(HIST("TrackType/Type3/eta_reco_Type3"), etaReco);
+          histos.fill(HIST("TrackType/Type3/phi_gen_Type3"), phiGen);
+          histos.fill(HIST("TrackType/Type3/phi_reco_Type3"), phiReco);
           break;
 
         case 4: //standalone MCH track
-          //histos.fill(HIST("pt_resolution_Type4"), resPt);
-          //histos.fill(HIST("eta_resolution_Type4"), resEta);
-          //histos.fill(HIST("phi_resolution_Type4"), resPhi);
-          //histos.fill(HIST("ptRes_vs_pt_Type4"), ptGen, resPt);
-          //histos.fill(HIST("etaRes_vs_pt_Type4"), ptGen, resEta);
-          //histos.fill(HIST("phiRes_vs_pt_Type4"), ptGen, resPhi);
-          //histos.fill(HIST("pt_gen_Type4"), ptGen);
-          //histos.fill(HIST("pt_reco_Type4"), ptReco);
-          //histos.fill(HIST("eta_gen_Type4"), etaGen);
-          //histos.fill(HIST("eta_reco_Type4"), etaReco);
-          //histos.fill(HIST("phi_gen_Type4"), phiGen);
-          //histos.fill(HIST("phi_reco_Type4"), phiReco);
+       
           break;
 
         default:
           break;
       }
     }
+    
     for (size_t i = 0; i < mcParticles.size(); ++i) {
         auto mc = mcParticles.iteratorAt(i);
         
@@ -361,36 +351,36 @@ struct fwd_dca {
         if (etaGen < minEta || etaGen > maxEta) continue;
         // if (phiGen < minPhi || phiGen > maxPhi) continue;
 
-        histos.fill(HIST("pt_gen_all"), ptGen);
-        histos.fill(HIST("eta_gen_all"), etaGen);
-        histos.fill(HIST("phi_gen_all"), phiGen);
+        histos.fill(HIST("Findable/pt_gen_all"), ptGen);
+        histos.fill(HIST("Findable/eta_gen_all"), etaGen);
+        histos.fill(HIST("Findable/phi_gen_all"), phiGen);
 
         int pdgCode = std::abs(mc.pdgCode());
 
         if (pdgCode == 13) { // Muon
-            histos.fill(HIST("pt_gen_all_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_findable"), phiGen);
         } else if (pdgCode == 211) { // Pion
-            histos.fill(HIST("pt_gen_all_pion_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_pion_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_pion_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_pion_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_pion_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_pion_findable"), phiGen);
         } else if (pdgCode == 11) { // Electron
-            histos.fill(HIST("pt_gen_all_electron_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_electron_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_electron_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_electron_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_electron_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_electron_findable"), phiGen);
         } else if (pdgCode == 321) { // Kaon
-            histos.fill(HIST("pt_gen_all_kaon_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_kaon_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_kaon_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_kaon_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_kaon_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_kaon_findable"), phiGen);
         } else if (pdgCode == 2212) { // Proton
-            histos.fill(HIST("pt_gen_all_proton_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_proton_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_proton_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_proton_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_proton_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_proton_findable"), phiGen);
         } else {
-            histos.fill(HIST("pt_gen_all_other_findable"), ptGen);
-            histos.fill(HIST("eta_gen_all_other_findable"), etaGen);
-            histos.fill(HIST("phi_gen_all_other_findable"), phiGen);
+            histos.fill(HIST("Findable/pt_gen_all_other_findable"), ptGen);
+            histos.fill(HIST("Findable/eta_gen_all_other_findable"), etaGen);
+            histos.fill(HIST("Findable/phi_gen_all_other_findable"), phiGen);
         }
     }
   }

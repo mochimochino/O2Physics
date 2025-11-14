@@ -147,7 +147,7 @@ void muon_mother()
         hPt_Reco_Beauty->Draw("HIST SAME");
         hPt_Reco_Other->Draw("HIST SAME");
 
-        TLegend* leg2 = new TLegend(0.65, 0.65, 0.88, 0.88);
+        TLegend* leg2 = new TLegend(0.7, 0.7, 0.9, 0.9);
         leg2->SetBorderSize(0);
         leg2->AddEntry(hPt_Reco_allgen, "All generated reco muons", "l");
         leg2->AddEntry(hPt_Reco_Beauty, "Beauty decay", "l");

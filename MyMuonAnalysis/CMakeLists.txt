@@ -1,5 +1,9 @@
 # From Tutorial PWGMM cmakelists
 # Changed to my muon tasks
+o2physics_add_dpl_workflow(my-collision-associate-central-fwd
+                  SOURCES collision_associate_central_fwd.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-collision-associate
                   SOURCES collision_associate.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore

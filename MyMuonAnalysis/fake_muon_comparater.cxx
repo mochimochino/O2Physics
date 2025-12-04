@@ -13,10 +13,13 @@ struct FakeMuonComparator {
   Configurable<float> maxMatchChi2{"maxMatchChi2", 150.0, "Max Match Chi2"};
   Configurable<float> maxPDCA{"maxPDCA", 500.0, "Max p*DCA"};
 
-  AxisSpec axisPt{100, 0.0, 4.0, "p_{T} [GeV/c]"};
+  AxisSpec axisPt{100, 0.0, 10.0, "p_{T} [GeV/c]"};
   AxisSpec axisP{100, 0.0, 100.0, "p [GeV/c]"};
   AxisSpec axisEta{50, -4.0, -2.5, "#eta"};
   AxisSpec axisPhi{64, -TMath::Pi(), TMath::Pi(), "#phi [rad]"};
+
+  AxisSpec axisResEta{100, -0.05, 0.05, "#Delta#eta (#eta_{MCH} - #eta_{MFT})"};
+  AxisSpec axisResPhi{100, -0.05, 0.05, "#Delta#phi (#phi_{MCH} - #phi_{MFT})"};
 
   // Quality check
   AxisSpec axisChi2Norm{100, 0.0, 10.0, "#chi^{2}_{MCH} / NDF"};
@@ -115,7 +118,6 @@ struct FakeMuonComparator {
     histos.add("Select/hChi2Norm_SelectedMuon_Fake", "Norm #chi^{2} (Selected/Fake);#chi^{2}/NDF", kTH1F, {axisChi2Norm});
     histos.add("Select/hMatchChi2_SelectedMuon_Fake", "MCH-MFT Match #chi^{2} (Selected/Fake);#chi^{2}_{match}", kTH1F, {axisMatchChi2});
     histos.add("Select/hPDCA_SelectedMuon_Fake", "p#timesDCA (Selected/Fake);p#timesDCA", kTH1F, {axisPDCA}); 
-    // ======================================================
   }
 
   void process(soa::Join<aod::FwdTracks, aod::McFwdTrackLabels> const& tracks)

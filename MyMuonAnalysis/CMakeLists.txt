@@ -1,5 +1,9 @@
 # From Tutorial PWGMM cmakelists
 # Changed to my muon tasks
+o2physics_add_dpl_workflow(my-centrality-check
+                  SOURCES centrality.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
+                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-collision-associate-central-fwd
                   SOURCES collision_associate_central_fwd.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
@@ -51,5 +55,10 @@ o2physics_add_dpl_workflow(my-muon-tracking-efficiency
                   COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mc-res-track
                   SOURCES my_muon_resto_track.cxx
+                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore 
+                  COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(my-mch-mft-residuals
+                  SOURCES MchMftResiduals.cxx
                   PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore 
                   COMPONENT_NAME Analysis)

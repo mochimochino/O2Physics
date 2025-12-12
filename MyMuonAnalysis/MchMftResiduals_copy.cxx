@@ -24,12 +24,14 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 using namespace o2::aod;
 
-using MyMuons = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
-using MyMuonsWithCov = soa::Join<aod::FwdTracks, aod::FwdTracksCov, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
-using MyMuonsRealignWithCov = soa::Join<aod::FwdTracksReAlign, aod::FwdTrksCovReAlign, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
 
-using MyEvents = soa::Join<aod::Collisions, aod::EvSels, aod::McCollisionLabels>;
-using MFTTrackLabeled = soa::Join<o2::aod::MFTTracks, aod::McMFTTrackLabels>;
+using MCHMuons = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>;
+//using MyMuons = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
+//using MyMuonsWithCov = soa::Join<aod::FwdTracks, aod::FwdTracksCov, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
+//using MyMuonsRealignWithCov = soa::Join<aod::FwdTracksReAlign, aod::FwdTrksCovReAlign, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
+
+//using MyEvents = soa::Join<aod::Collisions, aod::EvSels, aod::McCollisionLabels>;
+//using MFTTrackLabeled = soa::Join<o2::aod::MFTTracks, aod::McMFTTrackLabels>;
 /*using SMatrix55Sym = ROOT::Math::SMatrix<double, 5, 5, ROOT::Math::MatRepSym<double, 5>>;
 using SMatrix55Std = ROOT::Math::SMatrix<double, 5, 5, ROOT::Math::MatRepStd<double, 5, 5>>;
 using SVector5     = ROOT::Math::SVector<double, 5>;*/
@@ -105,15 +107,18 @@ void fillBasicsHistograms(std::map<int, Counts> const& countsMap,
   }
 }*/
 
-  void processMatchingAnalysis(// std::map<int, Counts> const& countsMap,
+  /*void processMatchingAnalysis(// std::map<int, Counts> const& countsMap,
                             aod::Collisions const& collisions,
                             aod::FwdTracks const& mchTracks,
                             aod::MFTTracks const& mftTracks,
                             aod::FwdTrackCovFwd const& mchCovs,
                             aod::MFTTrackCovFwd const& mftCovs
-                          )
+                          )*/
+    void processMatchingAnalysis( MCHMuons const& mchJoined,
+                                  aod::Collisions const& collisions
+    )
   {
-    auto mchJoined = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>::interator(mchTracks, mchCovs);
+    //auto mchJoined = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>::interator(mchTracks, mchCovs);
 
     for (auto const& mchTr : mchJoined) {
 
@@ -124,6 +129,7 @@ void fillBasicsHistograms(std::map<int, Counts> const& countsMap,
     double y = prop.getY();
     double pt = prop.getPt();
     auto cov = prop.getCovariances(); 
+    histos.fill(HIST("Pt/pMCH"), pt);
     }
     /*auto mchJoined = o2::soa::join(mchTracks, mchCovs);
     for (auto const& mchTr : mchJoined) {
@@ -150,19 +156,22 @@ void fillBasicsHistograms(std::map<int, Counts> const& countsMap,
 
 
 
-  void process(aod::Collisions const& collisions,
+  void process(MCHMuons const& mchJoined,
+               aod::Collisions const& collisions,
                aod::FwdTracks const& mchTracks,
-               aod::MFTTracks const& mftTracks,
-               aod::McFwdTrackLabel const& mchLabels,
-               aod::McMFTTrackLabel const& mftLabels,
-               aod::FwdTrackCovFwd const& mchCovs,
-               aod::MFTTrackCovFwd const& mftCovs)
+               aod::MFTTracks const& mftTracks
+               //aod::McFwdTrackLabel const& mchLabels,
+               //aod::McMFTTrackLabel const& mftLabels,
+               //aod::FwdTrackCovFwd const& mchCovs,
+               //aod::MFTTrackCovFwd const& mftCovs
+               )
   {
    auto countsMap = countTracksPerCollision(collisions, mchTracks, mftTracks);
 
    //fillBasicsHistograms(countsMap, mchTracks, mftTracks);
 
-   processMatchingAnalysis(collisions, mchTracks, mftTracks, mchCovs, mftCovs);
+   //processMatchingAnalysis(collisions, mchTracks, mftTracks, mchCovs, mftCovs);
+   processMatchingAnalysis(mchJoined, collisions);
   }
 };
 

@@ -64,7 +64,7 @@ o2physics_add_dpl_workflow(my-mc-res-track
 #                  COMPONENT_NAME Analysis)
 o2physics_add_dpl_workflow(my-mch-mft-residuals
                   SOURCES MchMftResiduals_copy.cxx
-                  PUBLIC_LINK_LIBRARIES O2::Framework
+                  PUBLIC_LINK_LIBRARIES # O2::Framework
                                         O2Physics::AnalysisCore 
                                         O2Physics::PWGDQCore 
                                         O2::ReconstructionDataFormats

@@ -16,6 +16,10 @@
 #include "Framework/HistogramRegistry.h"
 #include "Framework/InitContext.h"
 
+#include <DataFormatsParameters/GRPMagField.h>
+#include "CCDB/BasicCCDBManager.h" // for accessing to o2::ccdb
+#include "Field/MagneticField.h" // for accessing to magnetic field
+
 #include <PWGDQ/Core/VarManager.h>
 #include <ReconstructionDataFormats/TrackFwd.h>
 
@@ -26,6 +30,12 @@ using namespace o2::aod;
 
 
 using MCHMuons = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>;
+using MyMuons = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
+using MyEvents = soa::Join<aod::Collisions, aod::evsel, aod::McCollisionLabels>;
+
+// For TBC
+using ExtBCs = soa::Join<aod::BCs, aod::Timestamps>; //BCs: bunch crossing, Timestamps: the timestamp of a BC
+
 //using MyMuons = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
 //using MyMuonsWithCov = soa::Join<aod::FwdTracks, aod::FwdTracksCov, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
 //using MyMuonsRealignWithCov = soa::Join<aod::FwdTracksReAlign, aod::FwdTrksCovReAlign, aod::McFwdTrackLabels, aod::FwdTracksDCA>;
@@ -37,6 +47,23 @@ using SMatrix55Std = ROOT::Math::SMatrix<double, 5, 5, ROOT::Math::MatRepStd<dou
 using SVector5     = ROOT::Math::SVector<double, 5>;*/
 
 struct MchMftResiduals {
+
+  // =====================================
+  // For use CCDB information
+  // =====================================
+  Service<o2::ccdb::BasicCCDBManager> ccdb;
+  float mMagField = 0.0;
+  o2::parameters::GRPMagField* grpmag = nullptr;
+  o2::ccdb::CcdbApi ccdbApi;
+  o2::field::MagneticField* fieldB;
+  int mRunNumber = 0;
+  Configurable<std::string> ccdburl{"ccdbburl", "htt@://alice-ccdb.cern.ch", "url of hte ccdb repository"};
+  Configurable<std::string> grpmagPath{"grpmagPath", "GLO/Config/GRPMagField", "CCDB path of the GRPMagField object"};
+  Configurable<std::string> geoPath{"geoPath", "GLO/COnfig/GeometryAligned", "Path of the geometry file"};
+
+  // =====================================
+  // Histograms
+  // =====================================
   HistogramRegistry histos{"histos", {}, OutputObjHandlingPolicy::AnalysisObject};
 
  struct Counts { int mft = 0; int mch = 0; };
@@ -56,6 +83,19 @@ struct MchMftResiduals {
 
   void init(InitContext const&)
   {
+    // =====================================
+    // For use CCDB information
+    // =====================================
+    ccdb->setURL(ccdburl);
+    ccdb->setCaching(true);
+    ccdb->setLocalObjectValidityChecking();
+    ccdb->setFatalWhenNull(false);
+    ccdbApi.init(ccdburl);
+    mRunNumber = 0;
+
+    // =====================================
+    // Histograms
+    // =====================================
     //histos.add("Pt/pTMFT_check", "MFT Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMFT});
     histos.add("Pt/pTMFT", "MFT Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMFT});
     histos.add("Pt/pTMCH", "MCH Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
@@ -114,44 +154,46 @@ void fillBasicsHistograms(std::map<int, Counts> const& countsMap,
                             aod::FwdTrackCovFwd const& mchCovs,
                             aod::MFTTrackCovFwd const& mftCovs
                           )*/
-    void processMatchingAnalysis( MCHMuons const& mchJoined,
-                                  aod::Collisions const& collisions
+
+  // ====================================
+  // To take DDDB information
+  // ====================================
+    template <typename TBC>
+    void initCCDB(TBC const& bc)
+    {
+      if (mRunNumber == bc.runNumber()) {
+      return;
+      }
+      mRunNumber = bc.runNumber();
+      std::map<std::string, std::string> metadata;
+      auto soreor = o2::ccdb::BasicCCDBManager::getRunDuration(ccdbApi, mRunNumber);
+      auto ts = soreor.first;
+      auto grpmag = ccdbApi.retrieveFromTFileAny<o2::parameters::GRPMagField>(grpmagPath, metadata, ts);
+      o2::base::Propagator::initFieldFromGRP(grpmag);
+      if (!o2::base::GeometryManager::isGeometryLoaded()) {
+      ccdb->get<TGeoManager>(geoPath);
+      }
+      o2::mch::TrackExtrap::setField();
+      fieldB = static_cast<o2::field::MagneticField*>(TGeoGlobalMagField::Instance()->GetField());
+    }
+
+  void processMatchingAnalysis( MCHMuons const& mchJoined,
+                                //aod::Collisions const& collisions // will add MyEvent
+                                MyEvents const& collisions
     )
   {
-    //auto mchJoined = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov>::interator(mchTracks, mchCovs);
 
     for (auto const& mchTr : mchJoined) {
 
-    auto const& collision = collisions.iteratorAt(mchTr.collisionId());
-    auto prop = VarManager::PropagateMuon(mchTr, collision, VarManager::kToMatching);
+    // auto const& collision = collisions.iteratorAt(mchTr.collisionId());
+    auto prop = VarManager::PropagateMuon(mchTr, collisions, VarManager::kToMatching);
     
     double x = prop.getX();
     double y = prop.getY();
     double pt = prop.getPt();
     auto cov = prop.getCovariances(); 
-    histos.fill(HIST("Pt/pMCH"), pt);
+    histos.fill(HIST("Pt/pTMCH"), pt);
     }
-    /*auto mchJoined = o2::soa::join(mchTracks, mchCovs);
-    for (auto const& mchTr : mchJoined) {
-      auto it = countsMap.find(mchTr.collisionId());
-      if (it == countsMap.end() || it->second.mft == 0 || it->second.mch ==0) {
-        continue;
-      }
-      if (mchTr.trackType() != 3) {
-        continue;
-      }
-
-      auto const& collision = collisions[mchTr.collisionId()];
-
-      MCHWrapper wrapper{mchTr.left(), mchTr.right()};
-      
-      // ★ここで外挿を実行
-      o2::dataformats::GlobalFwdTrack propagated_muon = 
-          VarManager::PropagateMuon(wrapper, collision, VarManager::kToMatching);
-*/
-      //auto propX = prop.getX();
-      //auto propY = prop.getY();
-    //}
   }         
 
 

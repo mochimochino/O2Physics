@@ -62,14 +62,16 @@ o2physics_add_dpl_workflow(my-mc-res-track
 #                  SOURCES MchMftResiduals.cxx
 #                  PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore 
 #                  COMPONENT_NAME Analysis)
+
 o2physics_add_dpl_workflow(my-mch-mft-residuals
                   SOURCES MchMftResiduals_copy.cxx
-                  PUBLIC_LINK_LIBRARIES # O2::Framework
+                  PUBLIC_LINK_LIBRARIES O2::Framework
                                         O2Physics::AnalysisCore 
                                         O2Physics::PWGDQCore 
                                         O2::ReconstructionDataFormats
                                         O2::DetectorsBase
                                         O2Physics::AnalysisCCDB
+                                        O2::GlobalTracking
                   COMPONENT_NAME Analysis)
 # O2Physics/MyMuonAnalysis/fwdtrackextension.cxx
 o2physics_add_dpl_workflow(my-mch-mft-fwdtrackextension

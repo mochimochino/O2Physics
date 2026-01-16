@@ -135,6 +135,8 @@ struct MchMftResiduals {
   AxisSpec axisZ_Absorber{200, -600.0, -400.0, "Z position (Absorber/Matching) [cm]"}; 
   AxisSpec axisZ_Vertex{200, -30.0, 30.0, "Z position (Vertex/DCA) [cm]"};
 
+  AxisSpec axisMatchChi2{100, 0.0, 100.0, "#chi^{2}_{Match} (MCH-MFT)"};
+
   // Error parameters
   AxisSpec axisErrPtRel{100, 0.0, 0.5, "#sigma_{p_{T}} / p_{T}"}; // Relative pT error
   AxisSpec axisErrXY{100, 0.0, 2.0, "#sigma_{xy} [cm]"}; // Position error
@@ -153,6 +155,8 @@ struct MchMftResiduals {
   // Number of Track types
   AxisSpec axisTrackTypes{5, -0.5, 4.5, "Track Types (0: MFT-MCH-MID, 1: none, 2: MFT-MCH, 3: MCH-MID, 4: MCH)"};
   AxisSpec axisNTracksMFT{3, -1.5, 1.5, "Number of MFT Tracks"};
+
+  AxisSpec axisIsTrue{2, -0.5, 1.5, "Is True Candidate (0:No, 1:Yes)"};
 
   void init(InitContext const&)
   {
@@ -296,6 +300,10 @@ struct MchMftResiduals {
 
     // True of Fake counter
     histos.add("Check/CountsTrueFake", "True vs Fake Tracks; Status (True=1, Fake=-1); Counts", kTH1F, {axisCountsTrueorFake});
+    // Check
+    histos.add("Check/p_histogram", "p Histogram; p [GeV/c]; Conts", kTH1F, {axisP});
+    histos.add("Check/pt_histogram", "pT Histogram; pT [GeV/c]; Conts", kTH1F, {axisPtMCH});
+    histos.add("Check/p_vs_pT", "p vs pT; pT [GeV/c]; p [GeV/c]", kTH2F, {axisPtMCH, axisP});
     // Number of Track types
     histos.add("Check/CountTrackTypeswithoutCut", "Track Types (0: MFT-MCH-MID, 1: none, 2: MFT-MCH, 3: MCH-MID, 4: MCH)", kTH1F, {axisTrackTypes});
     histos.add("Check/CountTrackTypeswithCut", "Track Types (0: MFT-MCH-MID, 1: none, 2: MFT-MCH, 3: MCH-MID, 4: MCH)", kTH1F, {axisTrackTypes});
@@ -333,6 +341,11 @@ struct MchMftResiduals {
     // Purity
     histos.add("Purity/Total_vs_MFTMult", "Total Global Muons vs MFT Multiplicity;MFT Multiplicity;Counts", kTH1F, {axisTracksMFT});
     histos.add("Purity/True_vs_MFTMult", "True Global Muons vs MFT Multiplicity;MFT Multiplicity;Counts", kTH1F, {axisTracksMFT});
+    
+    histos.add("kToMatching/5D_Correlations", "MCH at Matching Plane; X; Y; pT; Eta; Phi", kTHnSparseF, {axisX, axisY, axisPtMCH, axisEta, axisPhi});
+
+
+    histos.add("Purity/PurityMap_3D", "Purity Map; MFT Multiplicity; p_{T} [GeV/c]; IsTrue", kTHnSparseF, {axisTracksMFT, axisPtMCH, axisP, axisMatchChi2, axisIsTrue});
   }
 
   std::map<int, Counts> countTracksPerCollision(aod::Collisions const& collisions,
@@ -546,6 +559,7 @@ struct MchMftResiduals {
       histos.fill(HIST("ToMatching/Z_MCH"), zAtMP);
       histos.fill(HIST("ToMatching/X-Y_MCH"), xAtMP, yAtMP);
       histos.fill(HIST("ToMatching/XYZ"), xAtMP, yAtMP, zAtMP);
+      histos.fill(HIST("kToMatching/5D_Correlations"), xAtMP, yAtMP, ptAtMP, etaAtMP, phiAtMP);
       
       // kToMatchingPlane
       if (zAtMP == -77.5) {
@@ -561,10 +575,13 @@ struct MchMftResiduals {
         histos.fill(HIST("kToMatching/X-Y_MCH"), xAtMP, yAtMP);
         histos.fill(HIST("kToMatching/XYZ"), xAtMP, yAtMP, zAtMP);
 
+
         // XY vs pT and p 3D histograms
         histos.fill(HIST("kToMatching/XY-pT"), xAtMP, yAtMP, ptAtMP);
         histos.fill(HIST("kToMatching/XY-p"), xAtMP, yAtMP, pAtMP);
 
+
+        
       }
 
       // kToVertex
@@ -743,6 +760,15 @@ struct MchMftResiduals {
       if (countsMap.find(collId) == countsMap.end()) continue;
       float mftMult = static_cast<float>(countsMap.at(collId).mft);
 
+      float pt = track.pt();
+      float p = track.p();
+      float chi2 = track.chi2MatchMCHMFT();
+
+      float isTrueVal = (track.mcMask() == 0) ? 1.0 : 0.0; 
+
+      // 多次元で一気にFill
+      histos.fill(HIST("Purity/PurityMap_3D"), mftMult, pt, p, chi2, isTrueVal);
+
       bool isTrue = (track.mcMask() == 0); // 0 is Ture
       histos.fill(HIST("Purity/Total_vs_MFTMult"), mftMult);
       if (isTrue) {
@@ -818,7 +844,33 @@ struct MchMftResiduals {
         histos.fill(HIST("Check/CountsTrueFake"), -1.0);
       }
     }
-  }   
+  }
+  
+  
+  void p_pTrelation(MCHMuons const& tracks)
+  {
+    for (auto const& track : tracks) {
+      // ======================================= 
+      // Acceptance cuts 
+      // =======================================
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;  // < -4.0 is right cut
+      const float rAbs = track.rAtAbsorberEnd();
+      if (rAbs < 17.6 || rAbs > 89.5) continue; 
+      const float pDca = track.pDca();
+      if (pDca < 0.0) continue; 
+      if (rAbs < 26.5) {
+          if (pDca > 594.0) continue;
+      } else {
+          if (pDca > 324.0) continue;
+      }
+      float p = track.p();
+      float pT = track.pt();
+      histos.fill(HIST("Check/p_histogram"), p);
+      histos.fill(HIST("Check/pt_histogram"), pT);
+      histos.fill(HIST("Check/p_vs_pT"), pT, p);
+    }
+
+  }
 
 
 
@@ -827,7 +879,7 @@ struct MchMftResiduals {
                MyEvents const& collisions,
                aod::FwdTracks const& mchTracks,
                MFTTracks const& mftTracks,
-               MFTCovs const& mftCovs,
+               //MFTCovs const& mftCovs,
                ExtBCs const& bcs
                // MyEventsWithMults const& collisionsML,
                // MyMuonsWithCov const& mchtrackML,
@@ -871,9 +923,10 @@ struct MchMftResiduals {
    PurityCounter(mchJoined, countsMap);
    TrackTypeCounter(mchJoined);
    TrueorFakeCounter(mchJoined);
+   p_pTrelation(mchJoined);
    MFTTrackCounter(mftTracks);
    //processMatchingAnalysis(collisions, mchTracks, mftTracks, mchCovs, mftCovs);
-   processMatchingAnalysis_likeDQ(mchJoined, collisions, mftTracks, mftCovs, mchTracks);
+   //processMatchingAnalysis_likeDQ(mchJoined, collisions, mftTracks, mftCovs, mchTracks);
   }
 };
 

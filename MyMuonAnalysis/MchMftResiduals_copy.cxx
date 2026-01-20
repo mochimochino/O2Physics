@@ -68,6 +68,12 @@ using ExtBCs = soa::Join<aod::BCs, aod::Timestamps>; //BCs: bunch crossing, Time
 using SMatrix55Std = ROOT::Math::SMatrix<double, 5, 5, ROOT::Math::MatRepStd<double, 5, 5>>;
 using SVector5     = ROOT::Math::SVector<double, 5>;*/
 
+
+// Particle Information Analysis
+using ParticleInfo = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels>;
+
+
+
 struct MchMftResiduals {
 
   // =====================================
@@ -114,6 +120,24 @@ struct MchMftResiduals {
   // =====================================
   HistogramRegistry histos{"histos", {}, OutputObjHandlingPolicy::AnalysisObject};
 
+
+  // Configurable parameters pT Eta Phi
+  Configurable<int> nBinsPt{"nBinsPt", 60, "N bins in pT histo"};
+  Configurable<float> minPt{"minPt", 0.0, "min pT"};
+  Configurable<float> maxPt{"maxPt", 6.0, "max pT"};
+  Configurable<int> nBinsEta{"nBinsEta", 50, "N bins in Eta histo"};
+  Configurable<float> minEta{"minEta", -4.0, "min Eta"};
+  Configurable<float> maxEta{"maxEta", -2.5, "max Eta"};
+  Configurable<int> nBinsPhi{"nBinsPhi", 64, "N bins in Phi histo"};
+  Configurable<float> minPhi{"minPhi", - TMath::Pi(), "min Phi"};
+  Configurable<float> maxPhi{"maxPhi", TMath::Pi(), "max Phi"};
+
+  Configurable<int> nBinsRes{"nBinsRes", 100, "N bins in resolution histo"};
+  Configurable<float> minRes{"minRes", -0.5, "min resolution"};
+  Configurable<float> maxRes{"maxRes", 0.5, "max resolution"};
+
+  const std::array<int, 4> trackTypes = {0, 2, 3, 4};
+
  struct Counts { int mft = 0; int mch = 0; };
   AxisSpec axisPtMFT{100, 0.0, 10.0, "MFT p_{T} [GeV/c]"};
   AxisSpec axisPtMCH{100, 0.0, 10.0, "MCH p_{T} [GeV/c]"};
@@ -145,6 +169,8 @@ struct MchMftResiduals {
   AxisSpec axisTracksMFT{300, 0.0, 300.0, "Number of MFT Tracks"};
   AxisSpec axisTracksMCH{20, 0.0, 20.0, "Number of MCH Tracks"};
 
+  AxisSpec axisIndex{10000, 0.0, 10000.0, "Global Index"};
+
   // Residuals
   AxisSpec axisDeltaX{500, -50, 50, "Delta X [cm]"};
   AxisSpec axisDeltaY{500, -50, 50, "Delta Y [cm]"};
@@ -157,6 +183,17 @@ struct MchMftResiduals {
   AxisSpec axisNTracksMFT{3, -1.5, 1.5, "Number of MFT Tracks"};
 
   AxisSpec axisIsTrue{2, -0.5, 1.5, "Is True Candidate (0:No, 1:Yes)"};
+
+
+  // Particle information
+  AxisSpec axisSource{6, -0.5, 5.5, "Source (0:Pi, 1:K, 2:HF, 3:Res, 4:Other, 5:Fake)"};
+  AxisSpec axisPDGCode{1000, 0.0, 1000.0, "PDG Code"};
+  AxisSpec axisVx{100, -100.0, 100.0, "Prodcution vertex vx [cm]"};
+  AxisSpec axisVy{100, -100.0, 100.0, "Prodcution vertex vy [cm]"};
+  AxisSpec axisVz{1000, -800.0, 100.0, "Prodcution vertex vz [cm]"};
+  AxisSpec axisTrackTime{100, -100.0, 100.0, "Track Time [ns]"};
+
+
 
   void init(InitContext const&)
   {
@@ -309,6 +346,13 @@ struct MchMftResiduals {
     histos.add("Check/CountTrackTypeswithCut", "Track Types (0: MFT-MCH-MID, 1: none, 2: MFT-MCH, 3: MCH-MID, 4: MCH)", kTH1F, {axisTrackTypes});
     histos.add("Check/CountMFTTrackswithCut", "Number of MFT Tracks per Event", kTH1F, {axisTracksMFT});
     histos.add("Check/CountMFTTrackswithoutCut", "Number of MFT Tracks per Event", kTH1F, {axisNTracksMFT});
+    // Index of tracks
+    histos.add("Check/Index_MFT", "Index of MFT Tracks", kTH1F, {axisIndex});
+    histos.add("Check/Index_MCH", "Index of MCH Tracks", kTH1F, {axisIndex});
+    histos.add("Check/Index_Global", "Index of Global Tracks", kTH1F, {axisIndex});
+    histos.add("Check/Index_MFT_vs_Index_MCH", "Index of MFT vs Index of MCH-MID Tracks", kTH2F, {axisIndex, axisIndex});
+    histos.add("Check/Index_MFT_vs_Index_Global", "Index of MFT vs Index of Global Tracks", kTH2F, {axisIndex, axisIndex});
+    histos.add("Check/Index_MCH_vs_Index_Global", "Index of MCH-MID vs Index of Global Tracks", kTH2F, {axisIndex, axisIndex});
 
     // Matching Analysis
     // kToMatching
@@ -346,6 +390,33 @@ struct MchMftResiduals {
 
 
     histos.add("Purity/PurityMap_3D", "Purity Map; MFT Multiplicity; p_{T} [GeV/c]; IsTrue", kTHnSparseF, {axisTracksMFT, axisPtMCH, axisP, axisMatchChi2, axisIsTrue});
+
+
+
+
+    // Particle information
+    histos.add("Particle/Source/SourceParticle", "Source Particle; Source (0:Pi, 1:K, 2:HF, 3:Res, 4:Other, 5:Fake); Counts", kTH1F, {axisSource});
+    histos.add("Particle/Detect/Muon_pT", "Detected Muon pT; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
+    histos.add("Particle/Detect/Muon_p", "Detected Muon p; p [GeV/c]; Counts", kTH1F, {axisP});
+    histos.add("Particle/Detect/Particle_PDGCode", "Detected Muon PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+
+    histos.add("Particle/Detect/Particle_vx", "Detected Particle X production vertex; vx [cm]; Counts", kTH1F, {axisVx});
+    histos.add("Particle/Detect/Particle_vy", "Detected Particle Y production vertex; vy [cm]; Counts", kTH1F, {axisVy});
+    histos.add("Particle/Detect/Particle_vz", "Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/Particle_vxy", "Detected Particle XY production vertex; vx [cm]; vy [cm]", kTH2F, {axisVx, axisVy});
+    histos.add("Particle/Detect/Particle_vxyz", "Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
+    histos.add("Particle/Detect/Particle_vz_vs_chi2", "Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
+    histos.add("Particle/Detect/Particle_vz_vs_tracktime", "Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+
+    histos.add("Particle/Detect/TrueParticles_vz", "True Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/TrueParticle_vxyz", "True Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
+    histos.add("Particle/Detect/TrueParticle_vz_vs_chi2", "True Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
+    histos.add("Particle/Detect/TrueParticle_vz_vs_tracktime", "True Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+    histos.add("Particle/Detect/FakeParticles_vz", "Fake Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/FakeParticle_vxyz", "Fake Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
+    histos.add("Particle/Detect/FakeParticle_vz_vs_chi2", "Fake Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
+    histos.add("Particle/Detect/FakeParticle_vz_vs_tracktime", "Fake Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+
   }
 
   std::map<int, Counts> countTracksPerCollision(aod::Collisions const& collisions,
@@ -689,8 +760,41 @@ struct MchMftResiduals {
       int mchTrID = globalTr.matchMCHTrackID(); // MCH ID
       int mftTrID = globalTr.matchMFTTrackId(); // MFT ID
       LOG(info) << " Global Track ID: " << globalID << ", Collision ID: " << collID << ", MCH Track ID: " << mchTrID << ", MFT Track ID: " << mftTrID;
+  
 
     }
+  }
+
+  void fillIndexHistograms(MCHMuons const& mchJoined,
+                           aod::FwdTracks const& mchTracks,
+                           MFTTracks const& mftTracks)
+  {
+      // MFT Tracks Index
+      for (auto const& track : mftTracks) {
+          histos.fill(HIST("Check/Index_MFT"), static_cast<double>(track.globalIndex()));
+      }
+
+      // MCH Tracks Index
+      for (auto const& track : mchTracks) {
+          histos.fill(HIST("Check/Index_MCH"), static_cast<double>(track.globalIndex()));
+      }
+
+      // Global Muon (Joined) Index
+      for (auto const& track : mchJoined) {
+          histos.fill(HIST("Check/Index_Global"), static_cast<double>(track.globalIndex()));
+      }
+
+      for (auto const& track : mchJoined) {
+          if (track.trackType() != 0) continue; 
+
+          auto idxGlobal = static_cast<double>(track.globalIndex());
+          auto idxMCH    = static_cast<double>(track.matchMCHTrackId()); // MCH Track ID
+          auto idxMFT    = static_cast<double>(track.matchMFTTrackId()); // MFT Track ID
+
+          histos.fill(HIST("Check/Index_MFT_vs_Index_MCH"), idxMFT, idxMCH);
+          histos.fill(HIST("Check/Index_MFT_vs_Index_Global"), idxMFT, idxGlobal);
+          histos.fill(HIST("Check/Index_MCH_vs_Index_Global"), idxMCH, idxGlobal);
+      }
   }
 
 
@@ -872,6 +976,69 @@ struct MchMftResiduals {
 
   }
 
+  // Particle infformation analysis
+  // process(soa::Join<aod::FwdTracks, aod::McFwdTrackLabels> const& tracks,aod::McParticles const& mcParticles)
+  template <typename MCTracks, typename mcParticles>
+  void ParticleInfoAnalysis(MCTracks const& tracks, mcParticles const& particles)
+  {
+    for (auto const& track : tracks) {
+      // Select track type
+      if (track.trackType() != 0) continue; // MFT-MCH-MID tracks only
+      // if (track.trackType() != 0) continue; // MCH-MID tracks only
+
+      // =======================================
+      // Acceptance Cuts
+      // =======================================
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;  // < -4.0 is right cut
+      const float rAbs = track.rAtAbsorberEnd();
+      if (rAbs < 17.6 || rAbs > 89.5) continue; 
+      const float pDca = track.pDca();
+      if (pDca < 0.0) continue; 
+      if (rAbs < 26.5) {
+          if (pDca > 594.0) continue;
+      } else {
+          if (pDca > 324.0) continue;
+      }
+
+
+      int mcId = track.mcParticleId();
+      auto mcParticle = particles.iteratorAt(mcId);
+      int pdgCode = mcParticle.pdgCode();
+
+      // Count number fo particle and particle names
+      histos.fill(HIST("Particle/Detect/Particle_PDGCode"), pdgCode);
+
+      // Production Point
+      float vx = mcParticle.vx();
+      float vy = mcParticle.vy();
+      float vz = mcParticle.vz();
+
+      float chi2_matching = track.chi2MatchMCHMFT();
+      float tracktime = track.trackTime();
+
+      histos.fill(HIST("Particle/Detect/Particle_vx"), vx);
+      histos.fill(HIST("Particle/Detect/Particle_vy"), vy);
+      histos.fill(HIST("Particle/Detect/Particle_vz"), vz);
+      histos.fill(HIST("Particle/Detect/Particle_vxy"), vx, vy);
+      histos.fill(HIST("Particle/Detect/Particle_vxyz"), vx, vy, vz);
+      histos.fill(HIST("Particle/Detect/Particle_vz_vs_chi2"), vz, chi2_matching);
+      histos.fill(HIST("Particle/Detect/Particle_vz_vs_tracktime"), vz, tracktime);
+
+
+      int mcLabel = track.mcMask();
+      if (mcLabel == 0) {
+        histos.fill(HIST("Particle/Detect/TrueParticles_vz"), vz);
+        histos.fill(HIST("Particle/Detect/TrueParticle_vxyz"), vx, vy, vz);
+        histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_chi2"), vz, chi2_matching);
+        histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_tracktime"), vz, tracktime);
+      } else {
+        histos.fill(HIST("Particle/Detect/FakeParticles_vz"), vz);
+        histos.fill(HIST("Particle/Detect/FakeParticle_vxyz"), vx, vy, vz);
+        histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_chi2"), vz, chi2_matching);
+        histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_tracktime"), vz, tracktime);
+      }
+    }
+  }
 
 
   void process(MCHMuons const& mchJoined,
@@ -880,7 +1047,9 @@ struct MchMftResiduals {
                aod::FwdTracks const& mchTracks,
                MFTTracks const& mftTracks,
                //MFTCovs const& mftCovs,
-               ExtBCs const& bcs
+               ExtBCs const& bcs,
+               ParticleInfo const& mctracks,
+               aod::McParticles const& mcParticles
                // MyEventsWithMults const& collisionsML,
                // MyMuonsWithCov const& mchtrackML,
                // MFTTrackLabeled const& mfttrackML
@@ -922,9 +1091,11 @@ struct MchMftResiduals {
    // skimBestMuonMatchesML(mchtrackML, mfttrackML, aod::MFTTracksCov const& mftCovs, collisionsML);
    PurityCounter(mchJoined, countsMap);
    TrackTypeCounter(mchJoined);
+   fillIndexHistograms(mchJoined, mchTracks, mftTracks);
    TrueorFakeCounter(mchJoined);
    p_pTrelation(mchJoined);
    MFTTrackCounter(mftTracks);
+   ParticleInfoAnalysis(mctracks, mcParticles);
    //processMatchingAnalysis(collisions, mchTracks, mftTracks, mchCovs, mftCovs);
    //processMatchingAnalysis_likeDQ(mchJoined, collisions, mftTracks, mftCovs, mchTracks);
   }

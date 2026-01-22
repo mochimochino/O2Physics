@@ -71,6 +71,7 @@ using SVector5     = ROOT::Math::SVector<double, 5>;*/
 
 // Particle Information Analysis
 using ParticleInfo = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels>;
+using ParticleInfo_mft = soa::Join<aod::MFTTracks, aod::McMFTTrackLabels>;
 
 
 
@@ -188,10 +189,11 @@ struct MchMftResiduals {
   // Particle information
   AxisSpec axisSource{6, -0.5, 5.5, "Source (0:Pi, 1:K, 2:HF, 3:Res, 4:Other, 5:Fake)"};
   AxisSpec axisPDGCode{1000, 0.0, 1000.0, "PDG Code"};
-  AxisSpec axisVx{100, -100.0, 100.0, "Prodcution vertex vx [cm]"};
-  AxisSpec axisVy{100, -100.0, 100.0, "Prodcution vertex vy [cm]"};
+  AxisSpec axisVx{500, -100.0, 100.0, "Prodcution vertex vx [cm]"};
+  AxisSpec axisVy{500, -100.0, 100.0, "Prodcution vertex vy [cm]"};
   AxisSpec axisVz{1000, -800.0, 100.0, "Prodcution vertex vz [cm]"};
-  AxisSpec axisTrackTime{100, -100.0, 100.0, "Track Time [ns]"};
+  AxisSpec axisR{200, -100.0, 100.0, "Production vertex R [cm]"};
+  AxisSpec axisTrackTime{1000, -1000.0, 1000.0, "Track Time [ns]"};
 
 
 
@@ -412,10 +414,47 @@ struct MchMftResiduals {
     histos.add("Particle/Detect/TrueParticle_vxyz", "True Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
     histos.add("Particle/Detect/TrueParticle_vz_vs_chi2", "True Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
     histos.add("Particle/Detect/TrueParticle_vz_vs_tracktime", "True Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+    histos.add("Particle/Detect/TruePrimaryParticle_vz", "True Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/TrueNotPrimaryParticle_vz", "True Not Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/TrueNotPrimaryParticleFromMaterial_vz", "True Not Primary Detected Particle from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/TrueNotPrimaryParticleFromDecay_vz", "True Not Primary Detected Particle not from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+
     histos.add("Particle/Detect/FakeParticles_vz", "Fake Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/FakeParticle_vxyz", "Fake Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
     histos.add("Particle/Detect/FakeParticle_vz_vs_chi2", "Fake Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
     histos.add("Particle/Detect/FakeParticle_vz_vs_tracktime", "Fake Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+    histos.add("Particle/Detect/FakePrimaryParticle_vz", "Fake Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/FakeNotPrimaryParticle_vz", "Fake Not Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/FakeNotPrimaryParticleFromMaterial_vz", "Fake Not Primary Detected Particle from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/FakeNotPrimaryParticleFromDecay_vz", "Fake Not Primary Detected Particle not from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/Material/Self_PDG", "Fake Not Primary Detected particle from Material PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    histos.add("Particle/Detect/Material/Mother_PDG", "Fake Particle from Material Mother PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    histos.add("Particle/Detect/Material/Mother_vs_Self_PDG", "Fake Particle from Material Mother vs Self PDG Code; PDG Code; Counts", kTH2F, {axisPDGCode, axisPDGCode});
+    histos.add("Particle/Detect/Material/Mother_vz", "Fake Particle from Material Mother vz; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/Material/Mother_vxy", "Fake Particle from Material Mother vxy; vx [cm]; vy [cm]", kTH2F, {axisVx, axisVy});
+    histos.add("Particle/Detect/Material/Mother_R", "Fake Particle from Material Mother R; R [cm]; Counts", kTH1F, {axisR});
+
+    // propagate
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vx", "Propagated Detected Particle X production vertex to Vertex; vx [cm]; Counts", kTH1F, {axisVx});
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vy", "Propagated Detected Particle Y production vertex to Vertex; vy [cm]; Counts", kTH1F, {axisVy});
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vz", "Propagated Detected Particle Z production vertex to Vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_x", "Propagated Detected Particle X production vertex to DCA; vx [cm]; Counts", kTH1F, {axisVx});
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_y", "Propagated Detected Particle Y production vertex to DCA; vy [cm]; Counts", kTH1F, {axisVy});
+    histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_z", "Propagated Detected Particle Z production vertex to DCA; vz [cm]; Counts", kTH1F, {axisVz});
+
+    // MFT track
+    histos.add("Particle/Detect/MFT/Particle_PDGCode", "Detected MFT Particle PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    histos.add("Particle/Detect/MFT/Particle_vz", "Detected MFT Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+
+    histos.add("Particle/Detect/MFT/PrimaryParticle_vx", "Primary Detected MFT Particle X production vertex; vx [cm]; Counts", kTH1F, {axisVx});
+    histos.add("Particle/Detect/MFT/NotPrimaryParticle_vx", "Not Primary Detected MFT Particle X production vertex; vx [cm]; Counts", kTH1F, {axisVx});
+    histos.add("Particle/Detect/MFT/PrimaryParticle_vy", "Primary Detected MFT Particle Y production vertex; vy [cm]; Counts", kTH1F, {axisVy});
+    histos.add("Particle/Detect/MFT/NotPrimaryParticle_vy", "Not Primary Detected MFT Particle Y production vertex; vy [cm]; Counts", kTH1F, {axisVy});
+    histos.add("Particle/Detect/MFT/PrimaryParticle_vz", "Primary Detected MFT Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/MFT/NotPrimaryParticle_vz", "Not Primary Detected MFT Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/MFT/PrimaryParticle_PDGCode", "Primary Detected MFT Particle PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    histos.add("Particle/Detect/MFT/NotPrimaryParticle_PDGCode", "Not Primary Detected MFT Particle PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    
 
   }
 
@@ -901,6 +940,9 @@ struct MchMftResiduals {
       } else {
           if (pDca > 324.0) continue;
       }
+      if (track.chi2() < 0.0 || track.chi2() > 1e6) continue;
+      if (track.chi2MatchMCHMID() < 0.0 || track.chi2MatchMCHMID() > 1e6) continue; 
+      if (track.chi2MatchMCHMFT() < 0.0 || track.chi2MatchMCHMFT() > 1e6) continue;
       histos.fill(HIST("Check/CountTrackTypeswithCut"), static_cast<float>(trackType));
     }
   }
@@ -978,10 +1020,13 @@ struct MchMftResiduals {
 
   // Particle infformation analysis
   // process(soa::Join<aod::FwdTracks, aod::McFwdTrackLabels> const& tracks,aod::McParticles const& mcParticles)
-  template <typename MCTracks, typename mcParticles>
-  void ParticleInfoAnalysis(MCTracks const& tracks, mcParticles const& particles)
+  template <typename MCFwdTracks, typename MCMFTTracks, typename mcParticles>
+  void ParticleInfoAnalysis(MCFwdTracks const& fwdTracks, MCMFTTracks const& mftTracks, mcParticles const& particles)
   {
-    for (auto const& track : tracks) {
+    for (auto const& track : fwdTracks) {
+      // =======================================
+      // Forward Tracks Analysis
+      // =======================================
       // Select track type
       if (track.trackType() != 0) continue; // MFT-MCH-MID tracks only
       // if (track.trackType() != 0) continue; // MCH-MID tracks only
@@ -999,6 +1044,9 @@ struct MchMftResiduals {
       } else {
           if (pDca > 324.0) continue;
       }
+      if (track.chi2() < 0.0 || track.chi2() > 1e6) continue;
+      if (track.chi2MatchMCHMID() < 0.0 || track.chi2MatchMCHMID() > 1e6) continue; 
+      if (track.chi2MatchMCHMFT() < 0.0 || track.chi2MatchMCHMFT() > 1e6) continue;
 
 
       int mcId = track.mcParticleId();
@@ -1024,6 +1072,30 @@ struct MchMftResiduals {
       histos.fill(HIST("Particle/Detect/Particle_vz_vs_chi2"), vz, chi2_matching);
       histos.fill(HIST("Particle/Detect/Particle_vz_vs_tracktime"), vz, tracktime);
 
+      // Propagate to vertex and DCA (FwdTracks)
+      /*int collId = track.collisionId();
+
+      if (collId < 0 || collId >= collisions.size()) {
+        continue;
+      }
+
+      auto const& collRow = collisions.iteratorAt(collId);
+      auto propAtVertex = VarManager::PropagateMuon(track, collRow, VarManager::kToVertex);
+      // auto propAtDCA = VarManager::PropagateMuon(track, collRow, VarManager::kToDCA);
+      float vx_propagate = propAtVertex.getX();
+      float vy_propagate = propAtVertex.getY();
+      float vz_propagate = propAtVertex.getZ();
+      // float xDCA = propAtDCA.getX();
+      // float yDCA = propAtDCA.getY();
+      // float zDCA = propAtDCA.getZ();
+
+      histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToVertex_vx"), vx_propagate);
+      histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToVertex_vy"), vy_propagate);
+      histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToVertex_vz"), vz_propagate);
+      // histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToDCA_x"), xDCA);
+      // histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToDCA_y"), yDCA);
+      // histos.fill(HIST("Particle/Detect/Propagate/Particle_PropagatedToDCA_z"), zDCA);
+*/
 
       int mcLabel = track.mcMask();
       if (mcLabel == 0) {
@@ -1031,14 +1103,91 @@ struct MchMftResiduals {
         histos.fill(HIST("Particle/Detect/TrueParticle_vxyz"), vx, vy, vz);
         histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_chi2"), vz, chi2_matching);
         histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_tracktime"), vz, tracktime);
+        if (mcParticle.isPhysicalPrimary()) {
+          histos.fill(HIST("Particle/Detect/TruePrimaryParticle_vz"), vz);
+        } else {
+          histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticle_vz"), vz);
+          if (mcParticle.producedByGenerator()) {
+            histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticleFromDecay_vz"), vz);
+          } else {
+            histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticleFromMaterial_vz"), vz);
+          }
+        }
       } else {
         histos.fill(HIST("Particle/Detect/FakeParticles_vz"), vz);
         histos.fill(HIST("Particle/Detect/FakeParticle_vxyz"), vx, vy, vz);
         histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_chi2"), vz, chi2_matching);
         histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_tracktime"), vz, tracktime);
+        if (mcParticle.isPhysicalPrimary()) {
+          histos.fill(HIST("Particle/Detect/FakePrimaryParticle_vz"), vz);
+        } else {
+          histos.fill(HIST("Particle/Detect/FakeNotPrimaryParticle_vz"), vz);
+          if (mcParticle.producedByGenerator()) {
+            histos.fill(HIST("Particle/Detect/FakeNotPrimaryParticleFromDecay_vz"), vz);
+          } else {
+            histos.fill(HIST("Particle/Detect/FakeNotPrimaryParticleFromMaterial_vz"), vz);
+            int selfPdg = mcParticle.pdgCode();
+            histos.fill(HIST("Particle/Detect/Material/Self_PDG"), selfPdg);
+
+            auto mothers = mcParticle.template mothers_as<o2::aod::McParticles>();
+
+            for (auto const& mother : mothers) {
+                int motherPdg = mother.pdgCode();
+
+                float motherVx = mother.vx();
+                float motherVy = mother.vy();
+                float motherVz = mother.vz();
+                float motherR = std::sqrt(motherVx*motherVx + motherVy*motherVy);
+                
+                histos.fill(HIST("Particle/Detect/Material/Mother_PDG"), motherPdg);
+                histos.fill(HIST("Particle/Detect/Material/Mother_vs_Self_PDG"), motherPdg, selfPdg);
+
+                histos.fill(HIST("Particle/Detect/Material/Mother_vz"), motherVz);
+                histos.fill(HIST("Particle/Detect/Material/Mother_vxy"), motherVx, motherVy);
+                histos.fill(HIST("Particle/Detect/Material/Mother_R"), motherR);
+            }
+          }
+          
+        }
       }
     }
-  }
+    // How about doing same thing to MFT tracks?
+    // =======================================
+    // MFT Tracks Analysis
+    // =======================================
+    for (auto const& track : mftTracks) {
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;
+
+      int mcId = track.mcParticleId();
+
+      if (mcId < 0) continue;
+
+      auto mcParticle = particles.iteratorAt(mcId);
+      int pdgCode = mcParticle.pdgCode();
+
+      histos.fill(HIST("Particle/Detect/MFT/Particle_PDGCode"), pdgCode);
+
+      float vx = mcParticle.vx();
+      float vy = mcParticle.vy();
+      float vz = mcParticle.vz();
+
+
+      histos.fill(HIST("Particle/Detect/MFT/Particle_vz"), vz);
+      if (mcParticle.isPhysicalPrimary()) {
+        histos.fill(HIST("Particle/Detect/MFT/PrimaryParticle_vx"), vx);
+        histos.fill(HIST("Particle/Detect/MFT/PrimaryParticle_vy"), vy);
+        histos.fill(HIST("Particle/Detect/MFT/PrimaryParticle_vz"), vz);
+        histos.fill(HIST("Particle/Detect/MFT/PrimaryParticle_PDGCode"), pdgCode);
+      } else {
+        histos.fill(HIST("Particle/Detect/MFT/NotPrimaryParticle_vx"), vx);
+        histos.fill(HIST("Particle/Detect/MFT/NotPrimaryParticle_vy"), vy);
+        histos.fill(HIST("Particle/Detect/MFT/NotPrimaryParticle_vz"), vz);
+        histos.fill(HIST("Particle/Detect/MFT/NotPrimaryParticle_PDGCode"), pdgCode);
+      }
+      // To cut secondary particles from material - ncluster? 
+
+    } 
+   }
 
 
   void process(MCHMuons const& mchJoined,
@@ -1049,6 +1198,7 @@ struct MchMftResiduals {
                //MFTCovs const& mftCovs,
                ExtBCs const& bcs,
                ParticleInfo const& mctracks,
+               ParticleInfo_mft const& mcmfttracks,
                aod::McParticles const& mcParticles
                // MyEventsWithMults const& collisionsML,
                // MyMuonsWithCov const& mchtrackML,
@@ -1095,7 +1245,7 @@ struct MchMftResiduals {
    TrueorFakeCounter(mchJoined);
    p_pTrelation(mchJoined);
    MFTTrackCounter(mftTracks);
-   ParticleInfoAnalysis(mctracks, mcParticles);
+   //ParticleInfoAnalysis(mchJoined, mcmfttracks, mcParticles); //mctracks
    //processMatchingAnalysis(collisions, mchTracks, mftTracks, mchCovs, mftCovs);
    //processMatchingAnalysis_likeDQ(mchJoined, collisions, mftTracks, mftCovs, mchTracks);
   }

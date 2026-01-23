@@ -81,3 +81,14 @@ o2physics_add_dpl_workflow(my-mch-mft-fwdtrackextension
                                           O2::DetectorsBase
                                           O2::DetectorsCommonDataFormats
                     COMPONENT_NAME Analysis)
+    
+o2physics_add_dpl_workflow(my-mc-particle-analysis
+                  SOURCES mcParticleAnalysis.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework
+                                        O2Physics::AnalysisCore 
+                                        O2Physics::PWGDQCore 
+                                        O2::ReconstructionDataFormats
+                                        O2::DetectorsBase
+                                        O2Physics::AnalysisCCDB
+                                        O2::GlobalTracking
+                  COMPONENT_NAME Analysis)

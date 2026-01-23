@@ -184,7 +184,7 @@ struct mcParticleAnalysis {
   AxisSpec axisNClsMFT{15, -0.5, 14.5, "Number of MFT Clusters"};
 
   // Mass
-  AxisSpec axisMass{200, 0.0, 10.0, "Invariant Mass [GeV/c^{2}]"};
+  AxisSpec axisMass{200, 0.0, 4.0, "Invariant Mass [GeV/c^{2}]"};
 
 
 

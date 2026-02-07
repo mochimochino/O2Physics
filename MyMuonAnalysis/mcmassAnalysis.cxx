@@ -1,0 +1,336 @@
+#include <cmath>
+#include <vector>
+#include <iostream>
+#include <algorithm>
+#include <map>
+#include <unordered_map>
+
+#include <TMath.h>
+#include <TVector2.h>
+#include <Math/SMatrix.h>
+#include <Math/SVector.h>
+#include <TH1I.h> 
+#include <iterator>
+
+// O2 Headers
+#include "Common/DataModel/EventSelection.h" // for useing aod::EvSels
+#include "Common/Core/fwdtrackUtilities.h" //for propagateMuon
+
+#include "Framework/runDataProcessing.h"
+#include "Framework/AnalysisTask.h"
+#include "Framework/AnalysisDataModel.h"
+#include "Framework/Configurable.h"
+#include "Framework/HistogramRegistry.h"
+#include "Framework/InitContext.h"
+
+#include "DataFormatsParameters/GRPMagField.h"
+#include "CCDB/BasicCCDBManager.h" // for accessing to o2::ccdb
+#include "Field/MagneticField.h" // for accessing to magnetic field
+#include "DetectorsBase/GeometryManager.h" // GeometryManager
+#include "DetectorsBase/Propagator.h"
+
+// ML
+#include "PWGDQ/Core/MuonMatchingMlResponse.h"
+
+#include <PWGDQ/Core/VarManager.h>
+#include <ReconstructionDataFormats/TrackFwd.h>
+
+#include <TLorentzVector.h> // Mass
+
+using namespace o2;
+using namespace o2::framework;
+using namespace o2::framework::expressions;
+using namespace o2::aod;
+
+
+// True or Fake counter
+using MCHMuons = soa::Join<o2::aod::FwdTracks, o2::aod::FwdTracksCov, o2::aod::McFwdTrackLabels>;
+
+using MyEvents = soa::Join<aod::Collisions, aod::EvSels, aod::McCollisionLabels>;
+
+// https://aliceo2group.github.io/analysis-framework/docs/datamodel/joinsAndIterators.html
+using MFTTracks = o2::aod::MFTTracks;
+using MFTCovs = o2::aod::MFTTracksCov;
+// For TBC
+using ExtBCs = soa::Join<aod::BCs, aod::Timestamps>; //BCs: bunch crossing, Timestamps: the timestamp of a BC
+
+
+// Particle Information Analysis
+using ParticleInfo = soa::Join<aod::FwdTracks, aod::McFwdTrackLabels>;
+using ParticleInfo_mft = soa::Join<aod::MFTTracks, aod::McMFTTrackLabels>;
+
+
+
+struct mcmassAnalysis {
+
+  // =====================================
+  // For use CCDB information
+  // =====================================
+  Service<o2::ccdb::BasicCCDBManager> ccdb;
+  o2::parameters::GRPMagField* grpmag = nullptr;
+  o2::ccdb::CcdbApi ccdbApi;
+  o2::field::MagneticField* fieldB;
+  int mRunNumber = 0;
+
+
+  int mCurrentRun = -1;
+  float mMagField = 0.0;
+  float mBz = 0.0; // from EM/Dilepton/TableProducer/slimmerPrimaryMuon.cxx
+  Configurable<std::string> ccdburl{"ccdb-url", "http://alice-ccdb.cern.ch", "url of hte ccdb repository"};
+  Configurable<std::string> grpmagPath{"grpmagPath", "GLO/Config/GRPMagField", "CCDB path of the GRPMagField object"};
+  Configurable<std::string> geoPath{"geoPath", "GLO/Config/GeometryAligned", "Path of the geometry file"};
+
+  // For finding matching MFTtrack and mftCov
+  std::unordered_map<int64_t, int32_t> map_mfttrackcovs;
+
+  struct : ConfigurableGroup {
+    // Track related options
+    Configurable<bool> fPropTrack{"cfgPropTrack", true, "Propagate tracks to primary vertex"};
+    // Muon related options
+    Configurable<bool> fPropMuon{"cfgPropMuon", true, "Propagate muon tracks through absorber (do not use if applying pairing)"};
+    Configurable<bool> fRefitGlobalMuon{"cfgRefitGlobalMuon", true, "Correct global muon parameters"};
+    Configurable<bool> fKeepBestMatch{"cfgKeepBestMatch", false, "Keep only the best match global muons in the skimming"};
+    Configurable<bool> fUseML{"cfgUseML", false, "Import ONNX model from ccdb to decide which matching candidates to keep"};
+    Configurable<float> fMuonMatchEtaMin{"cfgMuonMatchEtaMin", -4.0f, "Definition of the acceptance of muon tracks to be matched with MFT"};
+    Configurable<float> fMuonMatchEtaMax{"cfgMuonMatchEtaMax", -2.5f, "Definition of the acceptance of muon tracks to be matched with MFT"};
+    Configurable<float> fzMatching{"cfgzMatching", -77.5f, "Plane for MFT-MCH matching"};
+    Configurable<std::vector<std::string>> fModelPathsCCDB{"fModelPathsCCDB", std::vector<std::string>{"Users/m/mcoquet/MLTest"}, "Paths of models on CCDB"};
+    Configurable<std::vector<std::string>> fInputFeatures{"cfgInputFeatures", std::vector<std::string>{"chi2MCHMFT"}, "Names of ML model input features"};
+    Configurable<std::vector<std::string>> fModelNames{"cfgModelNames", std::vector<std::string>{"model.onnx"}, "ONNX file names for each pT bin (if not from CCDB full path)"};
+  } fConfigVariousOptions;
+
+  std::map<uint32_t, bool> fBestMatch;
+
+  o2::analysis::MlResponseMFTMuonMatch<float> matchingMlResponse;
+  // =====================================
+  // Histograms
+  // =====================================
+  HistogramRegistry histos{"histos", {}, OutputObjHandlingPolicy::AnalysisObject};
+  // Mass
+  AxisSpec axisMass{200, 0.0, 4.0, "Invariant Mass [GeV/c^{2}]"};
+  AxisSpec axisPairType{3, -0.5, 2.5, "Pair Type (0:FF, 1:TF, 2:TT)"};
+
+
+
+  AxisSpec axisIsCandidateTrue{2, -0.5, 1.5, "Is True? (0:Fake, 1:True)"};
+
+  // 0 Best-Fake Second-Fake
+  // 1 Best-True Second-Fake
+  // 2 Best-Fake Second-True
+  // 3 Best-True Second-True (empty bin)
+  AxisSpec axisMatchStatus{4, -0.5, 3.5, "Match Status (0:FF, 1:TF, 2:FT, 3:TT)"};
+
+
+
+  void init(InitContext const&)
+  {
+    // =====================================
+    // For use CCDB information
+    // =====================================
+    ccdb->setURL(ccdburl);
+    ccdb->setCaching(true);
+    ccdb->setLocalObjectValidityChecking();
+    ccdb->setFatalWhenNull(false);
+    ccdbApi.init(ccdburl);
+
+    if (!o2::base::GeometryManager::isGeometryLoaded()) {
+      ccdb->get<TGeoManager>(geoPath);
+    }
+
+    VarManager::SetDefaultVarNames(); // Important that this is called before DefineCuts() !!!
+
+    
+    mRunNumber = 0;
+    mBz = 0;
+
+    // =====================================
+    // Histograms
+    // =====================================
+    // Mass
+    histos.add("Mass/Global_Mass_Unlike", "Global Dimuon Mass (Unlike Sign) - All; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+    histos.add("Mass/Global_Mass_Like", "Global Dimuon Mass (Like Sign) - All; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+
+    // 2. True / Fake 分類 (Unlike Signのみ詳細に見るのが一般的です)
+    // TT: 両方とも正しいマッチング (True-True) -> "Trueのみ"に対応
+    histos.add("Mass/Global_Mass_Unlike_TT", "Global Mass (Unlike) - True-True; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+    
+    // TF: 片方がFake (True-Fake) -> ピークの広がりやテールの主原因
+    histos.add("Mass/Global_Mass_Unlike_TF", "Global Mass (Unlike) - True-Fake; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+    
+    // FF: 両方ともFake (Fake-Fake) -> "Fakeのみ"に対応 (コンビナトリアルに近い)
+    histos.add("Mass/Global_Mass_Unlike_FF", "Global Mass (Unlike) - Fake-Fake; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+  }
+  // ====================================
+  // To take DDDB information (not using now)
+  // ====================================
+    template <typename TBC>
+    void initCCDB(TBC const& bc)
+    {
+      if (mRunNumber == bc.runNumber()) {
+      return;
+      }
+      mRunNumber = bc.runNumber();
+      std::map<std::string, std::string> metadata;
+      auto soreor = o2::ccdb::BasicCCDBManager::getRunDuration(ccdbApi, mRunNumber);
+      auto ts = soreor.first;
+      auto grpmag = ccdbApi.retrieveFromTFileAny<o2::parameters::GRPMagField>(grpmagPath, metadata, ts);
+      o2::base::Propagator::initFieldFromGRP(grpmag);
+      
+      if (!o2::base::GeometryManager::isGeometryLoaded()) {
+      ccdb->get<TGeoManager>(geoPath);
+      }
+      o2::mch::TrackExtrap::setField();
+      fieldB = static_cast<o2::field::MagneticField*>(TGeoGlobalMagField::Instance()->GetField());
+      // From EM to add Magnetic information
+      //const double centerMFT[3] = {0, 0, -61.4};
+      //o2::field::MagneticField* field = static_cast<o2::field::MagneticField*>(TGeoGlobalMagField::Instance()->GetField());
+      //mBz = field->getBz(centerMFT); // Get filed at center of MFT
+      //LOGF(info, "Bz at center of MFT = %f kZG", mBz);
+    }
+
+  // Mass Analysis for SImple Dimuon
+  // ====================================
+  // To Do
+  // Add MC True Dimuon Analysis
+  // Finding Matching relation from Mass information
+  // ====================================
+  void processSimpleDimuons(MCHMuons const& mchJoined)
+  {
+    std::map<int, std::vector<int>> collToTrackMap;
+    
+    for (int i = 0; i < mchJoined.size(); ++i) {
+      auto const& track = mchJoined.iteratorAt(i);
+      
+      if (track.trackType() != 0) continue; // MFT-MCH-MID
+      
+      // =======================================
+      // Acceptance Cuts
+      // =======================================
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;  // < -4.0 is right cut
+      const float rAbs = track.rAtAbsorberEnd();
+      if (rAbs < 17.6 || rAbs > 89.5) continue; 
+      const float pDca = track.pDca();
+      if (pDca < 0.0) continue; 
+      if (rAbs < 26.5) {
+          if (pDca > 594.0) continue;
+      } else {
+          if (pDca > 324.0) continue;
+      }
+      if (track.chi2() < 0.0 || track.chi2() > 1e6) continue;
+      if (track.chi2MatchMCHMID() < 0.0 || track.chi2MatchMCHMID() > 1e6) continue; 
+      if (track.chi2MatchMCHMFT() < 0.0 || track.chi2MatchMCHMFT() > 1e6) continue;
+      
+
+      collToTrackMap[track.collisionId()].push_back(i);
+    }
+
+    const double mMu = 0.105658; // [GeV/c2]
+
+    for (auto const& [collId, trackIndices] : collToTrackMap) {
+      if (trackIndices.size() < 2) continue;
+
+      for (size_t i = 0; i < trackIndices.size(); ++i) {
+        for (size_t j = i + 1; j < trackIndices.size(); ++j) {
+          
+          auto const& tr1 = mchJoined.iteratorAt(trackIndices[i]);
+          auto const& tr2 = mchJoined.iteratorAt(trackIndices[j]);
+
+          // =============================================
+          // True / Fake 
+          // =============================================
+          int MatchingLabel1 = tr1.mcMask();
+          int MatchingLabel2 = tr2.mcMask();
+
+          bool isTrue1 = (MatchingLabel1 == 0);
+          bool isTrue2 = (MatchingLabel2 == 0);
+          int pairType = 0; // 0: FF, 1: TF, 2: TT
+          if (isTrue1 && isTrue2) {
+            pairType = 2;
+          } else if (isTrue1 || isTrue2) {
+            pairType = 1;
+          } else {
+            pairType = 0;
+          }
+
+          float pt1 = 0, pt2 = 0;
+          if (std::abs(tr1.signed1Pt()) > 1e-8) pt1 = 1.0f / std::abs(tr1.signed1Pt());
+          if (std::abs(tr2.signed1Pt()) > 1e-8) pt2 = 1.0f / std::abs(tr2.signed1Pt());
+
+          TLorentzVector v1, v2, vPair;
+          v1.SetPtEtaPhiM(pt1, tr1.eta(), tr1.phi(), mMu);
+          v2.SetPtEtaPhiM(pt2, tr2.eta(), tr2.phi(), mMu);
+          
+          vPair = v1 + v2;
+          float mass = vPair.M();
+
+
+
+          if (tr1.sign() * tr2.sign() < 0) {
+              
+              // 1. 全てのペア
+              histos.fill(HIST("Mass/Global_Mass_Unlike"), mass);
+
+              // 2. 詳細分類
+              if (pairType == 2) {
+                  // True-True (TT)
+                  histos.fill(HIST("Mass/Global_Mass_Unlike_TT"), mass);
+              } else if (pairType == 0) {
+                  // Fake-Fake (FF)
+                  histos.fill(HIST("Mass/Global_Mass_Unlike_FF"), mass);
+              } else {
+                  // True-Fake (TF)
+                  histos.fill(HIST("Mass/Global_Mass_Unlike_TF"), mass);
+              }
+
+          } else {
+              // Like Sign
+              histos.fill(HIST("Mass/Global_Mass_Like"), mass);
+          }
+      }
+    }
+    }
+  }
+
+  void process(MCHMuons const& mchJoined,
+               aod::Collisions const& rawcollisions,
+               MyEvents const& collisions,
+               aod::FwdTracks const& mchTracks,
+               MFTTracks const& mftTracks,
+               ExtBCs const& bcs,
+               ParticleInfo const& mctracks,
+               ParticleInfo_mft const& mcmfttracks,
+               aod::McParticles const& mcParticles
+               )
+  {
+  if (bcs.size() > 0) {
+      int runNumber = bcs.begin().runNumber();
+      
+      if (runNumber != mCurrentRun) {
+        long timestamp = bcs.begin().timestamp();
+        grpmag = ccdb->getForTimeStamp<o2::parameters::GRPMagField>(grpmagPath, timestamp);
+        
+        if (grpmag != nullptr) {
+           o2::base::Propagator::initFieldFromGRP(grpmag);
+           
+           VarManager::SetMagneticField(grpmag->getNominalL3Field());
+
+           VarManager::SetMatchingPlane(-77.5); // for matching
+        }
+        
+
+        VarManager::SetupMuonMagField();
+        
+        mCurrentRun = runNumber;
+        LOG(info) << "Run " << mCurrentRun << ": Magnetic field updated for VarManager.";
+      }
+    }
+   processSimpleDimuons(mchJoined); // mass analysis
+  }
+};
+
+WorkflowSpec defineDataProcessing(ConfigContext const& cfg)
+{
+  return WorkflowSpec{
+    adaptAnalysisTask<mcmassAnalysis>(cfg)
+  };
+}

@@ -92,3 +92,15 @@ o2physics_add_dpl_workflow(my-mc-particle-analysis
                                         O2Physics::AnalysisCCDB
                                         O2::GlobalTracking
                   COMPONENT_NAME Analysis)
+
+
+o2physics_add_dpl_workflow(my-mc-mass-analysis
+                  SOURCES mcmassAnalysis.cxx
+                  PUBLIC_LINK_LIBRARIES O2::Framework
+                                        O2Physics::AnalysisCore 
+                                        O2Physics::PWGDQCore 
+                                        O2::ReconstructionDataFormats
+                                        O2::DetectorsBase
+                                        O2Physics::AnalysisCCDB
+                                        O2::GlobalTracking
+                  COMPONENT_NAME Analysis)

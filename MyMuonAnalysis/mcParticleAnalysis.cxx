@@ -186,6 +186,14 @@ struct mcParticleAnalysis {
   // Mass
   AxisSpec axisMass{200, 0.0, 4.0, "Invariant Mass [GeV/c^{2}]"};
 
+  AxisSpec axisIsCandidateTrue{2, -0.5, 1.5, "Is True? (0:Fake, 1:True)"};
+
+  // 0 Best-Fake Second-Fake
+  // 1 Best-True Second-Fake
+  // 2 Best-Fake Second-True
+  // 3 Best-True Second-True (empty bin)
+  AxisSpec axisMatchStatus{4, -0.5, 3.5, "Match Status (0:FF, 1:TF, 2:FT, 3:TT)"};
+
 
 
   void init(InitContext const&)
@@ -213,12 +221,12 @@ struct mcParticleAnalysis {
     // Histograms
     // =====================================
     // histos.add("Pt/pTMFT_check", "MFT Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMFT});
-    histos.add("Pt/pTMCH_kToMatching", "MCH Track pT at Matching Plane; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
+    //histos.add("Pt/pTMCH_kToMatching", "MCH Track pT at Matching Plane; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
     
 
-    histos.add("Pt/pTMFT", "MFT Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMFT});
-    histos.add("Pt/pTMCH", "MCH Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
-    histos.add("Pt/pT_MFTMCH_2D", "MFT vs MCH Tracks pT; MFT pT [GeV/c]; MCH pT [GeV/c]", kTH2F, {axisPtMFT, axisPtMCH});
+    //histos.add("Pt/pTMFT", "MFT Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMFT});
+    //histos.add("Pt/pTMCH", "MCH Track pT; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
+    //histos.add("Pt/pT_MFTMCH_2D", "MFT vs MCH Tracks pT; MFT pT [GeV/c]; MCH pT [GeV/c]", kTH2F, {axisPtMFT, axisPtMCH});
     /*
     // kToMatching
     histos.add("kToMatching/pTMCH", "MCH Track pT at Matching Plane; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
@@ -303,6 +311,7 @@ struct mcParticleAnalysis {
     histos.add("Particle/Detect/Particle_vy", "Detected Particle Y production vertex; vy [cm]; Counts", kTH1F, {axisVy});
     histos.add("Particle/Detect/Particle_vz", "Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/Particle_vxy", "Detected Particle XY production vertex; vx [cm]; vy [cm]", kTH2F, {axisVx, axisVy});
+    histos.add("Particle/Detect/TruePrimaryParticle_pT", "True Primary Detected Particle pT; pT [GeV/c]; Counts", kTH1F, {axisPtMCH});
     // [MEMORY FIX] Removed 3D
     // histos.add("Particle/Detect/Particle_vxyz", "Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
     
@@ -313,36 +322,39 @@ struct mcParticleAnalysis {
     // [MEMORY FIX] Removed 3D
     // histos.add("Particle/Detect/TrueParticle_vxyz", "True Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
     histos.add("Particle/Detect/TrueParticle_vz_vs_chi2", "True Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
-    histos.add("Particle/Detect/TrueParticle_vz_vs_tracktime", "True Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+    // histos.add("Particle/Detect/TrueParticle_vz_vs_tracktime", "True Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
     histos.add("Particle/Detect/TruePrimaryParticle_vz", "True Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/TrueNotPrimaryParticle_vz", "True Not Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/TrueNotPrimaryParticleFromMaterial_vz", "True Not Primary Detected Particle from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/TrueNotPrimaryParticleFromDecay_vz", "True Not Primary Detected Particle not from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
+    histos.add("Particle/Detect/TrueNotPrimaryParticleFromMaterial_pT", "True Not Primary Detected Particle from Material pT; pt [GeV/c]; Counts", kTH1F, {axisPtMCH});
 
     histos.add("Particle/Detect/FakeParticles_vz", "Fake Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     // [MEMORY FIX] Removed 3D
     // histos.add("Particle/Detect/FakeParticle_vxyz", "Fake Detected Particle XYZ production vertex; vx [cm]; vy [cm]; vz [cm]", kTH3F, {axisVx, axisVy, axisVz});
     histos.add("Particle/Detect/FakeParticle_vz_vs_chi2", "Fake Detected Particle vz vs Matching Chi2; vz [cm]; #chi^{2}", kTH2F, {axisVz, axisMatchChi2});
-    histos.add("Particle/Detect/FakeParticle_vz_vs_tracktime", "Fake Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
+    // histos.add("Particle/Detect/FakeParticle_vz_vs_tracktime", "Fake Detected Particle vz vs Track Time; vz [cm]; Track Time [ns]", kTH2F, {axisVz, axisTrackTime});
     histos.add("Particle/Detect/FakePrimaryParticle_vz", "Fake Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/FakeNotPrimaryParticle_vz", "Fake Not Primary Detected Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/FakeNotPrimaryParticleFromMaterial_vz", "Fake Not Primary Detected Particle from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/FakeNotPrimaryParticleFromDecay_vz", "Fake Not Primary Detected Particle not from Material Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/Material/Self_PDG", "Fake Not Primary Detected particle from Material PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
     histos.add("Particle/Detect/Material/Mother_PDG", "Fake Particle from Material Mother PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
+    histos.add("Particle/Detect/Material/Mother_pT", "Fake Particle from Material Mother pT; pt [GeV/c]; Counts", kTH1F, {axisPtMCH});
     histos.add("Particle/Detect/Material/Mother_vs_Self_PDG", "Fake Particle from Material Mother vs Self PDG Code; PDG Code; Counts", kTH2F, {axisPDGCode, axisPDGCode});
     histos.add("Particle/Detect/Material/Mother_vz", "Fake Particle from Material Mother vz; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/Material/Mother_vxy", "Fake Particle from Material Mother vxy; vx [cm]; vy [cm]", kTH2F, {axisVx, axisVy});
     histos.add("Particle/Detect/Material/Mother_R", "Fake Particle from Material Mother R; R [cm]; Counts", kTH1F, {axisR});
+    histos.add("Particle/Detect/Material/FakeNotPrimaryParticleFromMaterial_pT", "Fake Not Primary Detected Particle from Material pT; pt [GeV/c]; Counts", kTH1F, {axisPtMCH});
 
     // propagate
-    histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vx", "Propagated Detected Particle X production vertex to Vertex; vx [cm]; Counts", kTH1F, {axisVx});
+    /*histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vx", "Propagated Detected Particle X production vertex to Vertex; vx [cm]; Counts", kTH1F, {axisVx});
     histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vy", "Propagated Detected Particle Y production vertex to Vertex; vy [cm]; Counts", kTH1F, {axisVy});
     histos.add("Particle/Detect/Propagate/Particle_PropagatedToVertex_vz", "Propagated Detected Particle Z production vertex to Vertex; vz [cm]; Counts", kTH1F, {axisVz});
     histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_x", "Propagated Detected Particle X production vertex to DCA; vx [cm]; Counts", kTH1F, {axisVx});
     histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_y", "Propagated Detected Particle Y production vertex to DCA; vy [cm]; Counts", kTH1F, {axisVy});
     histos.add("Particle/Detect/Propagate/Particle_PropagatedToDCA_z", "Propagated Detected Particle Z production vertex to DCA; vz [cm]; Counts", kTH1F, {axisVz});
-
+*/
     // MFT track
     histos.add("Particle/Detect/MFT/Particle_PDGCode", "Detected MFT Particle PDG Code; PDG Code; Counts", kTH1F, {axisPDGCode});
     histos.add("Particle/Detect/MFT/Particle_vz", "Detected MFT Particle Z production vertex; vz [cm]; Counts", kTH1F, {axisVz});
@@ -411,6 +423,20 @@ struct mcParticleAnalysis {
     histos.add("Particle/Detect/Fake/SecondaryMFTProductionPoint_eta", "Secondary Fake Detected Particle MFT Production Point eta; eta; Counts", kTH1F, {axisEta});
     */
 
+    // Ambiguity
+    histos.add("Ambiguity/N_Candidates", "Number of Global Muon Candidates per MCH Track; N_{candidates}; Counts", kTH1F, {axisNTracksMFT});
+    histos.add("Ambiguity/Chi2_Best", "Best Match #chi^{2}; #chi^{2}_{best}; Counts", kTH1F, {axisMatchChi2});
+    histos.add("Ambiguity/Chi2_Second", "Second Best Match #chi^{2}; #chi^{2}_{2nd}; Counts", kTH1F, {axisMatchChi2});
+    histos.add("Ambiguity/Chi2_Correlation", "Best vs Second Best #chi^{2}; #chi^{2}_{best}; #chi^{2}_{2nd}", kTH2F, {axisMatchChi2, axisMatchChi2});
+    histos.add("Ambiguity/DeltaChi2", "Difference in #chi^{2} (2nd - Best); #Delta#chi^{2}; Counts", kTH1F, {axisMatchChi2});
+    
+    histos.add("Ambiguity/MC_Best_vs_Second", "MC Truth: Best vs 2nd Candidate; Best is True?; 2nd is True?", kTH2F, {axisIsCandidateTrue, axisIsCandidateTrue});
+    histos.add("Ambiguity/DeltaChi2_vs_BestTrue", "#Delta#chi^{2} vs Best Candidate Truth; #Delta#chi^{2} (2nd - Best); Best is True?", kTH2F, {axisMatchChi2, axisIsCandidateTrue});
+    
+    // pT vs Delta Chi2
+    histos.add("Ambiguity/Pt_vs_DeltaChi2", "p_{T} vs #Delta#chi^{2}; p_{T} [GeV/c]; #Delta#chi^{2} (2nd - Best)", kTH2F, {axisPtMCH, axisMatchChi2});
+    histos.add("Ambiguity/Pt_vs_MatchStatus", "p_{T} vs Match Status; p_{T} [GeV/c]; Status (0:FF, 1:TF, 2:FT, 3:TT)", kTH2F, {axisPtMCH, axisMatchStatus});
+    histos.add("Ambiguity/Pt_vs_BestIsTrue", "p_{T} vs Best is True; p_{T} [GeV/c]; Best is True (0/1)", kTH2F, {axisPtMCH, axisIsCandidateTrue});
 
     // Mass
     histos.add("Mass/Global_Mass_Unlike", "Global Dimuon Mass (Unlike Sign); M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
@@ -715,8 +741,9 @@ struct mcParticleAnalysis {
       if (track.chi2() < 0.0 || track.chi2() > 1e6) continue;
       if (track.chi2MatchMCHMID() < 0.0 || track.chi2MatchMCHMID() > 1e6) continue; 
       if (track.chi2MatchMCHMFT() < 0.0 || track.chi2MatchMCHMFT() > 1e6) continue;
+      // 0.3 GeV/c でCut,dqの人たち
 
-
+      
       int mcId = track.mcParticleId();
       auto mcParticle = particles.iteratorAt(mcId);
       int pdgCode = mcParticle.pdgCode();
@@ -728,6 +755,8 @@ struct mcParticleAnalysis {
       float vx = mcParticle.vx();
       float vy = mcParticle.vy();
       float vz = mcParticle.vz();
+
+      float pT = track.pt();
 
       float chi2_matching = track.chi2MatchMCHMFT();
       float tracktime = track.trackTime();
@@ -785,9 +814,10 @@ struct mcParticleAnalysis {
         // [MEMORY FIX] Removed 3D fill
         // histos.fill(HIST("Particle/Detect/TrueParticle_vxyz"), vx, vy, vz);
         histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_chi2"), vz, chi2_matching);
-        histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_tracktime"), vz, tracktime);
+        // histos.fill(HIST("Particle/Detect/TrueParticle_vz_vs_tracktime"), vz, tracktime);
         if (mcParticle.isPhysicalPrimary()) {
           histos.fill(HIST("Particle/Detect/TruePrimaryParticle_vz"), vz);
+          histos.fill(HIST("Particle/Detect/TruePrimaryParticle_pT"), pT);
 
           // histos.fill(HIST("Particle/Detect/TruePrimaryNumberOfMFTClusters"), nClustersMFT);
           /*histos.fill(HIST("Particle/Detect/True/PrimaryMFTProductionPoint_z"), z);
@@ -810,6 +840,7 @@ struct mcParticleAnalysis {
             histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticleFromDecay_vz"), vz); // This HIST should be empty!!!!
           } else {
             histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticleFromMaterial_vz"), vz);
+            histos.fill(HIST("Particle/Detect/TrueNotPrimaryParticleFromMaterial_pT"), pT);
           }
         }
       } else {
@@ -817,7 +848,7 @@ struct mcParticleAnalysis {
         // [MEMORY FIX] Removed 3D fill
         // histos.fill(HIST("Particle/Detect/FakeParticle_vxyz"), vx, vy, vz);
         histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_chi2"), vz, chi2_matching);
-        histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_tracktime"), vz, tracktime);
+        // histos.fill(HIST("Particle/Detect/FakeParticle_vz_vs_tracktime"), vz, tracktime);
         // histos.fill(HIST("Particle/Detect/FakeNumberOfMFTClusters"), nClustersMFT);
         /*histos.fill(HIST("Particle/Detect/Fake/MFTProductionPoint_z"), z);
         histos.fill(HIST("Particle/Detect/Fake/MFTProductionPoint_x"), x);
@@ -845,6 +876,7 @@ struct mcParticleAnalysis {
             histos.fill(HIST("Particle/Detect/FakeNotPrimaryParticleFromDecay_vz"), vz);
           } else {
             histos.fill(HIST("Particle/Detect/FakeNotPrimaryParticleFromMaterial_vz"), vz);
+            histos.fill(HIST("Particle/Detect/Material/FakeNotPrimaryParticleFromMaterial_pT"), pT);
             int selfPdg = mcParticle.pdgCode();
             histos.fill(HIST("Particle/Detect/Material/Self_PDG"), selfPdg);
 
@@ -856,11 +888,12 @@ struct mcParticleAnalysis {
                 float motherVx = mother.vx();
                 float motherVy = mother.vy();
                 float motherVz = mother.vz();
+                float motherpT = mother.pt();
                 float motherR = std::sqrt(motherVx*motherVx + motherVy*motherVy);
                 
                 histos.fill(HIST("Particle/Detect/Material/Mother_PDG"), motherPdg);
                 histos.fill(HIST("Particle/Detect/Material/Mother_vs_Self_PDG"), motherPdg, selfPdg);
-
+                histos.fill(HIST("Particle/Detect/Material/Mother_pT"), motherpT);
                 histos.fill(HIST("Particle/Detect/Material/Mother_vz"), motherVz);
                 histos.fill(HIST("Particle/Detect/Material/Mother_vxy"), motherVx, motherVy);
                 histos.fill(HIST("Particle/Detect/Material/Mother_R"), motherR);
@@ -912,6 +945,143 @@ struct mcParticleAnalysis {
 
     } 
    }
+
+
+
+  // ====================================
+  // Ambiguity Analysis
+  // ====================================
+  /*void processAmbiguityCheck(MCHMuons const& mchJoined)
+  {
+    struct Candidate {
+      int index;
+      float chi2;
+      bool isTrue;
+    };
+
+    std::map<std::pair<int, int>, std::vector<Candidate>> candidatesMap;
+
+    for (int i = 0; i < mchJoined.size(); ++i) {
+      auto const& track = mchJoined.iteratorAt(i);
+
+      if (track.trackType() != 0) continue; 
+
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;
+      
+      int mchID = track.matchMCHTrackId(); 
+      int collID = track.collisionId();
+      float chi2Match = track.chi2MatchMCHMFT();
+
+      int mcLabel = track.mcMask();
+      bool isTrue = (mcLabel == 0);
+
+      candidatesMap[{collID, mchID}].push_back({i, chi2Match, isTrue});
+    }
+
+    for (auto& [key, candidates] : candidatesMap) {
+      int nCandidates = candidates.size();
+      histos.fill(HIST("Ambiguity/N_Candidates"), nCandidates);
+
+      if (nCandidates >= 2) {
+        std::sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) {
+          return a.chi2 < b.chi2;
+        });
+
+        float chi2_best = candidates[0].chi2;
+        bool isTrue_best = candidates[0].isTrue;
+
+        float chi2_second = candidates[1].chi2;
+        bool isTrue_second = candidates[1].isTrue;
+
+        float delta_chi2 = chi2_second - chi2_best;
+        
+
+        histos.fill(HIST("Ambiguity/Chi2_Best"), chi2_best);
+        histos.fill(HIST("Ambiguity/Chi2_Second"), chi2_second);
+        histos.fill(HIST("Ambiguity/Chi2_Correlation"), chi2_best, chi2_second);
+        histos.fill(HIST("Ambiguity/DeltaChi2"), delta_chi2);
+
+        histos.fill(HIST("Ambiguity/MC_Best_vs_Second"), 
+                    isTrue_best ? 1.0 : 0.0, 
+                    isTrue_second ? 1.0 : 0.0);
+
+        histos.fill(HIST("Ambiguity/DeltaChi2_vs_BestTrue"), 
+                    delta_chi2, 
+                    isTrue_best ? 1.0 : 0.0);
+      }
+    }
+  }*/
+
+  // ====================================
+  // Ambiguity Analysis
+  // ====================================
+  void processAmbiguityCheck(MCHMuons const& mchJoined)
+  {
+    struct Candidate {
+      int index;
+      float chi2;
+      bool isTrue;
+      float pt;
+    };
+
+    std::map<std::pair<int, int>, std::vector<Candidate>> candidatesMap;
+
+    for (int i = 0; i < mchJoined.size(); ++i) {
+      auto const& track = mchJoined.iteratorAt(i);
+
+      if (track.trackType() != 0) continue; 
+      // Acceptance cuts
+      if (track.eta() < -3.6 || track.eta() > -2.5) continue;
+      
+      int mchID = track.matchMCHTrackId(); 
+      int collID = track.collisionId();
+      float chi2Match = track.chi2MatchMCHMFT();
+      
+      float pt = track.pt(); 
+
+      int mcLabel = track.mcMask();
+      bool isTrue = (mcLabel == 0);
+
+      candidatesMap[{collID, mchID}].push_back({i, chi2Match, isTrue, pt});
+    }
+
+    for (auto& [key, candidates] : candidatesMap) {
+      int nCandidates = candidates.size();
+      histos.fill(HIST("Ambiguity/N_Candidates"), nCandidates);
+
+      if (nCandidates >= 2) {
+        std::sort(candidates.begin(), candidates.end(), [](const Candidate& a, const Candidate& b) {
+          return a.chi2 < b.chi2;
+        });
+
+        float chi2_best = candidates[0].chi2;
+        bool isTrue_best = candidates[0].isTrue;
+        float pt_best = candidates[0].pt;
+
+        float chi2_second = candidates[1].chi2;
+        bool isTrue_second = candidates[1].isTrue;
+        // float pt_second = candidates[1].pt;
+
+        float delta_chi2 = chi2_second - chi2_best;
+
+        histos.fill(HIST("Ambiguity/Chi2_Best"), chi2_best);
+        histos.fill(HIST("Ambiguity/DeltaChi2"), delta_chi2);
+
+        histos.fill(HIST("Ambiguity/Pt_vs_DeltaChi2"), pt_best, delta_chi2);
+
+        // 0: F-F, 1: T-F(Best=True), 2: F-T(Best=Fake), 3: T-T
+        int status = 0;
+        if (isTrue_best && !isTrue_second) status = 1;      
+        else if (!isTrue_best && isTrue_second) status = 2;
+        else if (isTrue_best && isTrue_second) status = 3;
+        else status = 0;
+
+        histos.fill(HIST("Ambiguity/Pt_vs_MatchStatus"), pt_best, static_cast<float>(status));
+
+        histos.fill(HIST("Ambiguity/Pt_vs_BestIsTrue"), pt_best, isTrue_best ? 1.0 : 0.0);
+      }
+    }
+  }
 
 
   // Mass Analysis for SImple Dimuon
@@ -1024,7 +1194,10 @@ struct mcParticleAnalysis {
    MFTTrackCounter(mftTracks);
    ParticleInfoAnalysis(mchJoined, mcmfttracks, mcParticles); //mctracks
 
-   processSimpleDimuons(mchJoined);
+
+   // processAmbiguityCheck(mchJoined); // ambiguity analysis: (Type0 = x5 file)
+
+   processSimpleDimuons(mchJoined); // mass analysis
 
 
    // processMatchingAnalysis_likeDQ(mchJoined, collisions);

@@ -106,19 +106,22 @@ struct mcmassAnalysis {
   // Histograms
   // =====================================
   HistogramRegistry histos{"histos", {}, OutputObjHandlingPolicy::AnalysisObject};
-  // Mass
-  AxisSpec axisMass{200, 0.0, 4.0, "Invariant Mass [GeV/c^{2}]"};
+  // Mass (configurable bins)
+  Configurable<int> nBinsMass{"nBinsMass", 100, "N bins in mass histo"};
+  Configurable<float> minMass{"minMass", 0.0, "min mass in mass histo"};
+  Configurable<float> maxMass{"maxMass", 6.0, "max mass in mass histo"};
+  AxisSpec axisMass{nBinsMass, minMass, maxMass, "Invariant Mass [GeV/c^{2}]"};
   AxisSpec axisPairType{3, -0.5, 2.5, "Pair Type (0:FF, 1:TF, 2:TT)"};
 
 
+  Configurable<int> nBinspT{"nBinspT", 100, "N bins in pT histo"};
+  Configurable<float> minpT{"minpT", 0, "min pT in pT histo"};
+  Configurable<float> maxpT{"maxpT", 10, "max pT in pT histo"};
+  AxisSpec axispT{nBinspT, minpT, maxpT, "p_{T} [GeV/c]"};
 
-  AxisSpec axisIsCandidateTrue{2, -0.5, 1.5, "Is True? (0:Fake, 1:True)"};
-
-  // 0 Best-Fake Second-Fake
-  // 1 Best-True Second-Fake
-  // 2 Best-Fake Second-True
-  // 3 Best-True Second-True (empty bin)
-  AxisSpec axisMatchStatus{4, -0.5, 3.5, "Match Status (0:FF, 1:TF, 2:FT, 3:TT)"};
+  // 親粒子見る？
+  // 生成点を見るのもあり？
+  // chi2もみるべき？
 
 
 
@@ -146,20 +149,34 @@ struct mcmassAnalysis {
     // =====================================
     // Histograms
     // =====================================
+    // pT
+    histos.add("SingleMuon/Pt_All", "Single Muon p_{T} - All; p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("SingleMuon/Pt_Pos", "Single Muon p_{T} - Positive; p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("SingleMuon/Pt_Neg", "Single Muon p_{T} - Negative; p_{T} [GeV/c]; Counts", kTH1F, {axispT});
     // Mass
     histos.add("Mass/Global_Mass_Unlike", "Global Dimuon Mass (Unlike Sign) - All; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
     histos.add("Mass/Global_Mass_Like", "Global Dimuon Mass (Like Sign) - All; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+    histos.add("Mass/ND/Global_Mass_Unlike", "Global Dimuon Mass (Unlike Sign) nD; M_{#mu#mu} [GeV/c^{2}; Counts",  kTHnSparseD, {axisMass, axispT});
 
-    // 2. True / Fake 分類 (Unlike Signのみ詳細に見るのが一般的です)
-    // TT: 両方とも正しいマッチング (True-True) -> "Trueのみ"に対応
+
     histos.add("Mass/Global_Mass_Unlike_TT", "Global Mass (Unlike) - True-True; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
     
-    // TF: 片方がFake (True-Fake) -> ピークの広がりやテールの主原因
     histos.add("Mass/Global_Mass_Unlike_TF", "Global Mass (Unlike) - True-Fake; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
     
-    // FF: 両方ともFake (Fake-Fake) -> "Fakeのみ"に対応 (コンビナトリアルに近い)
     histos.add("Mass/Global_Mass_Unlike_FF", "Global Mass (Unlike) - Fake-Fake; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+
+
+    histos.add("Dimuon/Pt_InJpsiMassRegion", "Dimuon p_{T} in J/#psi Mass Region (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_InJpsiMassRegion_TT", "Dimuon p_{T} in J/#psi Mass Region - True-True (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_InJpsiMassRegion_TF", "Dimuon p_{T} in J/#psi Mass Region - True-Fake (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_InJpsiMassRegion_FF", "Dimuon p_{T} in J/#psi Mass Region - Fake-Fake (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_LowMassRegion", "Dimuon p_{T} in Low Mass Region (0.2 < M_{#mu#mu} < 0.5 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_LowMassRegion_TF", "Dimuon p_{T} in Low Mass Region - True-Fake (0.2 < M_{#mu#mu} < 0.5 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_LowMassRegion_FF", "Dimuon p_{T} in Low Mass Region - Fake-Fake (0.2 < M_{#mu#mu} < 0.5 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
+    histos.add("Dimuon/Pt_LowMassRegion_TT", "Dimuon p_{T} in Low Mass Region - True-True (0.2 < M_{#mu#mu} < 0.5 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
   }
+
+
   // ====================================
   // To take DDDB information (not using now)
   // ====================================
@@ -219,7 +236,18 @@ struct mcmassAnalysis {
       if (track.chi2() < 0.0 || track.chi2() > 1e6) continue;
       if (track.chi2MatchMCHMID() < 0.0 || track.chi2MatchMCHMID() > 1e6) continue; 
       if (track.chi2MatchMCHMFT() < 0.0 || track.chi2MatchMCHMFT() > 1e6) continue;
+
+      // pTCut
+      if (track.pt() < minpT) continue;
       
+
+      histos.fill(HIST("SingleMuon/Pt_All"), track.pt());
+
+      if (track.sign() > 0) {
+           histos.fill(HIST("SingleMuon/Pt_Pos"), track.pt());
+       } else {
+           histos.fill(HIST("SingleMuon/Pt_Neg"), track.pt());
+       }
 
       collToTrackMap[track.collisionId()].push_back(i);
     }
@@ -262,15 +290,46 @@ struct mcmassAnalysis {
           
           vPair = v1 + v2;
           float mass = vPair.M();
+          float pairPt = vPair.Pt();
 
+          // ここで全部入れたほうが楽
+          histos.fill(HIST("Mass/ND/Global_Mass_Unlike"), mass, vPair.Pt()); //?????????
 
 
           if (tr1.sign() * tr2.sign() < 0) {
-              
-              // 1. 全てのペア
+ 
               histos.fill(HIST("Mass/Global_Mass_Unlike"), mass);
 
-              // 2. 詳細分類
+              double massMin = 2.5;
+              double massMax = 3.5;
+
+              if (mass >= massMin && mass <= massMax) {
+                  histos.fill(HIST("Dimuon/Pt_InJpsiMassRegion"), pairPt);
+                        
+              // さらにTT/TF/FFで分けたい場合
+              if (pairType == 2) histos.fill(HIST("Dimuon/Pt_InJpsiMassRegion_TT"), pairPt);
+              } else if (pairType == 0) {
+                  // Fake-Fake (FF)
+                  histos.fill(HIST("Dimuon/Pt_InJpsiMassRegion_FF"), pairPt);
+              } else {
+                  // True-Fake (TF)
+                  histos.fill(HIST("Dimuon/Pt_InJpsiMassRegion_TF"), pairPt);
+              }
+                    
+              // 別の領域例: Low Mass (< 2.0 GeV/c2)
+              if (mass < 2.0) {
+                  histos.fill(HIST("Dimuon/Pt_LowMassRegion"), pairPt);
+                  if (pairType == 2) {
+                      histos.fill(HIST("Dimuon/Pt_LowMassRegion_TT"), pairPt);
+                  } else if (pairType == 0) {
+                      // Fake-Fake (FF)
+                      histos.fill(HIST("Dimuon/Pt_LowMassRegion_FF"), pairPt);
+                  } else {
+                      // True-Fake (TF)
+                      histos.fill(HIST("Dimuon/Pt_LowMassRegion_TF"), pairPt);
+                  }
+              }
+              
               if (pairType == 2) {
                   // True-True (TT)
                   histos.fill(HIST("Mass/Global_Mass_Unlike_TT"), mass);

@@ -165,6 +165,9 @@ struct mcmassAnalysis {
     
     histos.add("Mass/Global_Mass_Unlike_FF", "Global Mass (Unlike) - Fake-Fake; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
 
+    histos.add("Mass/Global_Mass_LikePP", "Global Dimuon Mass (Like Sign ++) ; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+    histos.add("Mass/Global_Mass_LikeMM", "Global Dimuon Mass (Like Sign --) ; M_{#mu#mu} [GeV/c^{2}]; Counts", kTH1F, {axisMass});
+
 
     histos.add("Dimuon/Pt_InJpsiMassRegion", "Dimuon p_{T} in J/#psi Mass Region (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
     histos.add("Dimuon/Pt_InJpsiMassRegion_TT", "Dimuon p_{T} in J/#psi Mass Region - True-True (2.9 < M_{#mu#mu} < 3.3 GeV/c^{2}); p_{T} [GeV/c]; Counts", kTH1F, {axispT});
@@ -344,6 +347,12 @@ struct mcmassAnalysis {
           } else {
               // Like Sign
               histos.fill(HIST("Mass/Global_Mass_Like"), mass);
+
+              if (tr1.sign() > 0) {
+                histos.fill(HIST("Mass/Global_Mass_LikePP"), mass);
+              } else {
+                histos.fill(HIST("Mass/Global_Mass_LikeMM"), mass);
+              }
           }
       }
     }

@@ -9,6 +9,7 @@
 # granted to it by virtue of its status as an Intergovernmental Organization
 # or submit itself to any jurisdiction.
 
+if(FALSE)
 o2physics_add_dpl_workflow(udtutorial-01
                            SOURCES UDTutorial_01.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
@@ -48,14 +49,17 @@ o2physics_add_dpl_workflow(udtutorial-06
                            SOURCES UDTutorial_06.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+endif()
 
 o2physics_add_dpl_workflow(udtutorial-07
                            SOURCES UDTutorial_07.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
 
+if(FALSE)
 o2physics_add_dpl_workflow(udtutorial-08
                            SOURCES UDTutorial_08.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::SGCutParHolder
                            COMPONENT_NAME Analysis)
+endif()
 

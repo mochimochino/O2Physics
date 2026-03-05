@@ -50,15 +50,19 @@ o2-analysis-my-upc-01 --aod-file /media/takuma/ESD-EAWA/Data/UPCcandMuon/AO2D_me
 
 ### バックグラウンド評価の数式
 通常、不変質量分布における組み合わせバックグラウンド $N_{bkg}$ は、正の同符号ペア $N_{++}$ と負の同符号ペア $N_{--}$ の幾何平均を用いて以下のように評価されます。
+
 $$ N_{bkg} = 2 \sqrt{N_{++} N_{--}} $$
 
 しかし、今回の `MyUPCTask.cxx` の実装では、Like Sign ($++$ と $--$) を区別せずに1つのヒストグラム（`MMuonLike`）として足し合わせて出力しています。
+
 $$ N_{like} = N_{++} + N_{--} $$
 
 $N_{++} \approx N_{--}$ の場合、算術平均と幾何平均はほぼ等しくなるため、以下のように近似できます。
+
 $$ 2 \sqrt{N_{++} N_{--}} \approx N_{++} + N_{--} = N_{like} $$
 
 したがって、このマクロでは単純に Unlike Sign から Like Sign を差し引くことでシグナル $N_{signal}$ を抽出しています。
+
 $$ N_{signal} = N_{+-} - N_{like} $$
 
 ### 実行方法

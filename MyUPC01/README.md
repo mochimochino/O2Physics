@@ -28,16 +28,10 @@ alienv enter O2Physics/latest-MyUPC01-o2
 o2-analysis-my-upc-01 --aod-file /media/takuma/ESD-EAWA/Data/UPCcandMuon/AO2D_merged.root -b
 ```
 
-## 今後の拡張に向けて（足りていない情報・検討事項）
-この解析タスクを完成度高く仕上げるために、以下の情報や確認が必要です。現状は仮のカット値（チュートリアルベース）で動作しています。
+## 適用している主要なカット（Selection Criteria）
 
-1. **ミューオントラックの選別（Track Selection）条件**:
-   - MCH-MIDマッチングのカイ二乗（$\chi^2$）の具体的なカット値
-   - $p_{T}$（横運動量）や $\eta$（疑似ラピディティ）への正確なカット範囲（現在は $\eta \in [-4.0, -2.5]$）
-2. **イベント選別（Event Selection）**:
-   - V0A / T0A などのウェト（Veto）条件の正確な閾値。現在は振幅 > 100 で弾いていますが、データセットに合わせたより正確なUPC（Empty条件）が必要です。
-3. **着目する不変質量の範囲**:
-   - $J/\psi$ や $\psi'$ などの特定共鳴状態に絞るのか、広範な質量分布（1.0 ~ 10.0 GeV/$c^2$ など）を見るのか。
+現行の `MyUPCTask.cxx` では以下のALICE UPCミューオン解析のカット条件を適用しています。
+（CodiMDを参照）
 
 ## 解析マクロ (`AnalysisMassReal.C`)
 `MyUPCTask.cxx` で作成された `AnalysisResults.root` を用いて、実際の不変質量分布の描画とバックグラウンドの差し引き（Signal Extraction）を行うための ROOT マクロです。

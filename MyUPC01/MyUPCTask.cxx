@@ -59,9 +59,9 @@ struct MyUPCTask {
     // create histograms
     // Fill counter to see effect of each selection criteria
     auto hSelectionCounter = registry.add<TH1>("hSelectionCounter", "hSelectionCounter;;NEvents", HistType::kTH1I, {{15, 0., 15.}});
-    TString SelectionCuts[13] = {"NoSelection", "V0A", "rAbs1", "rAbs2", "trackmatch", "eta1", "eta2", "trackpt", "pair rapidity", "mass_cut", "unlikesign", "likesign"};
+    TString SelectionCuts[13] = {"NoSelection", "V0A", "rAbs1", "rAbs2", "pDCA", "trackmatch", "eta1", "eta2", "pair pt", "pair rapidity", "mass_cut", "unlikesign", "likesign"};
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i < 13; i++) {
       hSelectionCounter->GetXaxis()->SetBinLabel(i + 1, SelectionCuts[i].Data());
     }
 
@@ -133,10 +133,21 @@ struct MyUPCTask {
       return;
     registry.fill(HIST("hSelectionCounter"), 3);
 
+    // pDCA cut
+    auto checkPDCA = [](auto& tr) {
+      double r = tr.rAtAbsorberEnd();
+      double pdca = tr.pDca();
+      if (r < 26.5) return pdca < 350.0;
+      else return pdca < 200.0;
+    };
+    if (!checkPDCA(tr1) || !checkPDCA(tr2))
+      return;
+    registry.fill(HIST("hSelectionCounter"), 4);
+
     // MCH-MID match selection
     if ((tr1.chi2MatchMCHMID() < 0) || (tr2.chi2MatchMCHMID() < 0))
       return;
-    registry.fill(HIST("hSelectionCounter"), 4);
+    registry.fill(HIST("hSelectionCounter"), 5);
 
     bool isUnlikeSign = (tr1.sign() + tr2.sign()) == 0;
     bool isLikeSign = ((tr1.sign() + tr2.sign()) != 0);
@@ -148,28 +159,28 @@ struct MyUPCTask {
     TLorentzVector p = p1 + p2;
 
     // eta cut on each track
-    if (p1.Eta() < -4.0 || p1.Eta() > -2.5)
-      return;
-    registry.fill(HIST("hSelectionCounter"), 5);
-    if (p2.Eta() < -4.0 || p2.Eta() > -2.5)
+    if (p1.Eta() <= -4.0 || p1.Eta() >= -2.5)
       return;
     registry.fill(HIST("hSelectionCounter"), 6);
-
-    // pt cut on track
-    if ((p1.Pt() < 0.0) || (p2.Pt() < 0.0))
+    if (p2.Eta() <= -4.0 || p2.Eta() >= -2.5)
       return;
     registry.fill(HIST("hSelectionCounter"), 7);
 
-    // pair rapidity cut
-    if ((p.Rapidity() < -4.0) || (p.Rapidity() > -2.5))
+    // pair pt cut (pT < 0.25 GeV/c)
+    if (p.Pt() >= 0.25)
       return;
     registry.fill(HIST("hSelectionCounter"), 8);
+
+    // pair rapidity cut (-4.0 < y < -2.5)
+    if ((p.Rapidity() <= -4.0) || (p.Rapidity() >= -2.5))
+      return;
+    registry.fill(HIST("hSelectionCounter"), 9);
 
     // cuts on pair kinematics (modify this range depending on J/psi or generic mu-mu)
     // For general mu-mu, we might want to relax this cut or keep it wide
     if (!(p.M() > 1.0 && p.M() < 10.0))
       return;
-    registry.fill(HIST("hSelectionCounter"), 9);
+    registry.fill(HIST("hSelectionCounter"), 10);
 
     registry.fill(HIST("hTracksMuons"), collision.numContrib());
     registry.fill(HIST("ptMuon1"), p1.Pt());
@@ -182,13 +193,13 @@ struct MyUPCTask {
     registry.fill(HIST("PhiJpsi"), p.Phi());
 
     if (isUnlikeSign) {
-      registry.fill(HIST("hSelectionCounter"), 10);
+      registry.fill(HIST("hSelectionCounter"), 11);
       registry.fill(HIST("MMuonUnlike"), p.M());
       registry.fill(HIST("PtMuonUnlike"), p.Pt());
     }
 
     if (isLikeSign) {
-      registry.fill(HIST("hSelectionCounter"), 11);
+      registry.fill(HIST("hSelectionCounter"), 12);
       registry.fill(HIST("MMuonLike"), p.M());
       registry.fill(HIST("PtMuonLike"), p.Pt());
     }

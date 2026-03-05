@@ -38,3 +38,32 @@ o2-analysis-my-upc-01 --aod-file /media/takuma/ESD-EAWA/Data/UPCcandMuon/AO2D_me
    - V0A / T0A などのウェト（Veto）条件の正確な閾値。現在は振幅 > 100 で弾いていますが、データセットに合わせたより正確なUPC（Empty条件）が必要です。
 3. **着目する不変質量の範囲**:
    - $J/\psi$ や $\psi'$ などの特定共鳴状態に絞るのか、広範な質量分布（1.0 ~ 10.0 GeV/$c^2$ など）を見るのか。
+
+## 解析マクロ (`AnalysisMassReal.C`)
+`MyUPCTask.cxx` で作成された `AnalysisResults.root` を用いて、実際の不変質量分布の描画とバックグラウンドの差し引き（Signal Extraction）を行うための ROOT マクロです。
+
+### 処理の概要
+1. **Raw Histogramsの描画**: 
+   異符号ペア（Unlike Sign: $+-$）と、同符号ペア（Like Sign: $++$ および $--$ の和）の不変質量分布を同一キャンバスに重ねて描画します。
+2. **シグナル抽出（Signal Extraction）**: 
+   Unlike Sign の分布から、組み合わせバックグラウンド（Combinatorial Background）としての Like Sign の分布を引き去り、純粋な物理シグナルを取り出します。
+
+### バックグラウンド評価の数式
+通常、不変質量分布における組み合わせバックグラウンド $N_{bkg}$ は、正の同符号ペア $N_{++}$ と負の同符号ペア $N_{--}$ の幾何平均を用いて以下のように評価されます。
+$$ N_{bkg} = 2 \sqrt{N_{++} N_{--}} $$
+
+しかし、今回の `MyUPCTask.cxx` の実装では、Like Sign ($++$ と $--$) を区別せずに1つのヒストグラム（`MMuonLike`）として足し合わせて出力しています。
+$$ N_{like} = N_{++} + N_{--} $$
+
+$N_{++} \approx N_{--}$ の場合、算術平均と幾何平均はほぼ等しくなるため、以下のように近似できます。
+$$ 2 \sqrt{N_{++} N_{--}} \approx N_{++} + N_{--} = N_{like} $$
+
+したがって、このマクロでは単純に Unlike Sign から Like Sign を差し引くことでシグナル $N_{signal}$ を抽出しています。
+$$ N_{signal} = N_{+-} - N_{like} $$
+
+### 実行方法
+`AnalysisResults.root` が存在するディレクトリ（例: `/home/takuma/work/alice/O2Physics/MyUPC01/`）で、以下のコマンドを実行します。
+```bash
+root -l -q AnalysisMassReal.C
+```
+出力として `RawMass.png`（生のヒストグラム）と `Unlike_bkg.png`（シグナル抽出後のヒストグラム）が生成されます。

@@ -19,6 +19,7 @@ add_subdirectory(PWGUD)
 # add_subdirectory(PWGMM)
 # add_subdirectory(PWGHF)
 
+if(FALSE)
 o2physics_add_dpl_workflow(histogram-track-selection
                     SOURCES src/histogramTrackSelection.cxx
                     PUBLIC_LINK_LIBRARIES O2Physics::AnalysisCore
@@ -233,3 +234,4 @@ o2physics_add_dpl_workflow(consume
                   SOURCES src/consume.cxx
                   PUBLIC_LINK_LIBRARIES O2::Framework
                   COMPONENT_NAME AnalysisTutorial)
+endif()

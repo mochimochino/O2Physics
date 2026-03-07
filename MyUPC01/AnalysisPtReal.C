@@ -7,7 +7,7 @@ void AnalysisPtReal() {
     }
     
     // 2. Access the directory where histograms are stored by task
-    TDirectoryFile *dir = (TDirectoryFile*)fIn->Get("my-upc-01");
+    TDirectoryFile *dir = (TDirectoryFile*)fIn->Get("my-upc-mass-01");
     if (!dir) {
         std::cerr << "Error: Directory 'my-upc-01' not found!" << std::endl;
         return;

@@ -10,7 +10,7 @@
 // or submit itself to any jurisdiction.
 ///
 /// \brief Custom task to compute invariant mass of dimuon at forward rapidity for UPC events.
-/// \author User
+/// \author Takuma
 /// \date 2026
 
 // O2 headers
@@ -41,7 +41,7 @@ struct MyUPCMass01Task {
   // Histogram registry: an object to hold your histograms
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
   Configurable<int> nBinsPt{"nBinsPt", 500, "N bins in pT histo"};
-  Configurable<int> nBinsMass{"nBinsMass", 500, "N bins in InvMass histo"};
+  Configurable<int> nBinsMass{"nBinsMass", 200, "N bins in InvMass histo (50 MeV/c^2 per bin)"};
 
   using UDCollisionsFwd = o2::aod::UDCollisions; // Option 2: Removed UDCollisionsSels and SelsFwd to run without helper task
   using fwdtraks = soa::Join<aod::UDFwdTracks, aod::UDFwdTracksExtra>;

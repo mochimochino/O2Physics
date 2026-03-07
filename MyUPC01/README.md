@@ -33,8 +33,54 @@ o2-analysis-my-upc-01 --aod-file /media/takuma/ESD-EAWA/Data/UPCcandMuon/AO2D_me
 現行の `MyUPCTask.cxx` では以下のALICE UPCミューオン解析のカット条件を適用しています。
 （CodiMDを参照）
 
-## 解析マクロ (`AnalysisMassReal.C`)
-`MyUPCTask.cxx` で作成された `AnalysisResults.root` を用いて、実際の不変質量分布の描画とバックグラウンドの差し引き（Signal Extraction）を行うための ROOT マクロです。
+## 各ミューオンの横運動量（pT）抽出機能
+特定の不変質量領域（例：J/$\psi$ピーク付近）にあるミューオン対を構成する「各々のミューオンの$p_T$分布」を出力する機能が備わっています。
+既存の `MyUPCTask` 内でペアの質量領域判定を行い、以下のヒストグラムに各ミューオンの$p_T$を個別に詰めています。
+- `PtEachMuonUnlikeMassRegion`: Unlike Signペアのうち、指定した不変質量領域に入った各ミューオンの$p_T$成分
+- `PtEachMuonLikeMassRegion`: Like Signペアのうち、指定した不変質量領域に入った各ミューオンの$p_T$成分
+
+対象となる質量領域は、Configurableパラメータとして外部から柔軟に変更可能です。デフォルトでは J/$\psi$ 付近（2.8〜3.4 GeV）に設定されています。
+実行時に任意の領域（例えば 2.0 〜 4.0 GeV）へ変更する場合は、以下のようにオプションを渡して実行します：
+
+```bash
+o2-analysis-my-upc-01 --aod-file /path/to/AO2D.root -b --massMin 2.0 --massMax 4.0
+```
+
+## 特定の質量領域におけるダイミューオン（ペア）の横運動量解析
+Coherent / Incoherent J/$\psi$ などの物理過程を分離・解析するためには、特定の不変質量領域にある**ミューオン対（ダイミューオン）そのものの横運動量（$p_T$）分布**を評価する必要があります。
+本モジュールでは、タスク実行時に 質量 vs $p_T$ の2次元ヒストグラム（`MassVsPtUnlike`, `MassVsPtLike`）を出力します。出力後、専用のマクロを用いて任意の質量領域の $p_T$ 分布を射影（Projection）して抽出することが可能です。
+
+### ZDC情報を用いたトポロジー分類（中性子放出）
+ZDC（Zero Degree Calorimeter: ZNA / ZNC）のエネルギー情報を用いて、どちらの原子核が電離によって壊れたか（中性子を放出したか）を判定し、事象を分類します。これによりCoherent（原子核が壊れにくい）とIncoherent（原子核が壊れやすい）の分離精度を高めることができます。
+
+タスク実行時に、以下の4つのトポロジーごとに独立した 質量 vs $p_T$ の2次元ヒストグラム（`MassVsPtUnlike_0n0n` など）が自動的に生成されます。
+- `0n0n` (topology 0): 両方の原子核が壊れなかった（ZNA, ZNC 共に閾値以下）
+- `Xn0n` (topology 1): A側の原子核のみ壊れた（ZNAのみ閾値より大きい）
+- `0nXn` (topology 2): C側の原子核のみ壊れた（ZNCのみ閾値より大きい）
+- `XnXn` (topology 3): 両方の原子核が壊れた（ZNA, ZNC 共に閾値より大きい）
+
+ZDCのエネルギー閾値（デフォルトは `1.0` ADC）も実行時のオプションで変更可能です：
+```bash
+# ZNAとZNCの閾値を 5.0 に設定する場合
+o2-analysis-my-upc-01 --aod-file /path/to/AO2D.root -b --cutZNAEnergy 5.0 --cutZNCEnergy 5.0
+```
+
+### 解析マクロ (`AnalysisPtReal.C`)
+出力された `AnalysisResults.root` を読み込み、特定の質量領域（デフォルトでは 2.8〜3.4 GeV）のダイミューオン横運動量分布を抽出するための ROOT マクロです。
+
+#### 実行方法
+1. マクロ内の `massMin` と `massMax` の値を、見たい質量領域に合わせて適宜修正します。
+2. `AnalysisResults.root` が存在するディレクトリで以下を実行します：
+```bash
+root -l -q AnalysisPtReal.C
+```
+3. 実行結果として以下が出力されます：
+   - `RawPt_MassRegion.png`: 指定領域の Unlike Sign と Like Sign の生の $p_T$ 分布比較
+   - `SignalPt_MassRegion.png`: 上記から Like Sign バックグラウンドを差し引いた純粋なシグナルの $p_T$ 分布
+   - 標準出力に、指定範囲での各 Sign のカウント数（Yield）が表示されます。
+
+## 不変質量分布の解析マクロ (`AnalysisMassReal.C`)
+`MyUPCTask.cxx` で作成された `AnalysisResults.root` を用いて、全体の不変質量分布の描画とバックグラウンドの差し引き（Signal Extraction）を行うための ROOT マクロです。
 
 ### 処理の概要
 1. **Raw Histogramsの描画**: 

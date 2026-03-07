@@ -8,8 +8,14 @@
 # In applying this license CERN does not waive the privileges and immunities
 # granted to it by virtue of its status as an Intergovernmental Organization
 # or submit itself to any jurisdiction.
-
+if(FALSE)
 o2physics_add_dpl_workflow(my-upc-01
                            SOURCES MyUPCTask.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+endif()
+
+o2physics_add_dpl_workflow(my-upc-mass-01
+                           SOURCES MyUPCMass01.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)

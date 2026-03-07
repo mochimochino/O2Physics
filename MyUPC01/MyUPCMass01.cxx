@@ -36,18 +36,12 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 using namespace std;
 
-struct MyUPCTask {
+struct MyUPCMass01Task {
 
   // Histogram registry: an object to hold your histograms
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
   Configurable<int> nBinsPt{"nBinsPt", 500, "N bins in pT histo"};
   Configurable<int> nBinsMass{"nBinsMass", 500, "N bins in InvMass histo"};
-  Configurable<float> massMin{"massMin", 2.8f, "Min mass for single muon pT region"};
-  Configurable<float> massMax{"massMax", 3.4f, "Max mass for single muon pT region"};
-  
-  // ZDC variables
-  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "Minimum ZNA energy (ADC) to be considered active (neutron)"};
-  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "Minimum ZNC energy (ADC) to be considered active (neutron)"};
 
   using UDCollisionsFwd = o2::aod::UDCollisions; // Option 2: Removed UDCollisionsSels and SelsFwd to run without helper task
   using fwdtraks = soa::Join<aod::UDFwdTracks, aod::UDFwdTracksExtra>;
@@ -92,38 +86,12 @@ struct MyUPCTask {
     registry.add("PtMuonUnlike", "PtMuonUnlike", kTH1F, {axisPt});
     registry.add("MMuonLike", "MMuonLike", kTH1F, {axisM});
     registry.add("PtMuonLike", "PtMuonLike", kTH1F, {axisPt});
-
-    registry.add("PtEachMuonUnlikeMassRegion", "Pt of each Muon (Unlike) in Mass Region", kTH1F, {axisPt});
-    registry.add("PtEachMuonLikeMassRegion", "Pt of each Muon (Like) in Mass Region", kTH1F, {axisPt});
-
-    // 2D Histograms for Mass vs Pt  
-    registry.add("MassVsPtUnlike", "Mass vs Pt (Unlike);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-    registry.add("MassVsPtLike", "Mass vs Pt (Like);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-
-    // ZDC Histograms
-    const AxisSpec axisZDC{1000, -2.5, 199.5, "ZDC Energy"};
-    const AxisSpec axisTopology{4, -0.5, 3.5, "0n0n, Xn0n, 0nXn, XnXn"};
-    registry.add("EnergyZNA", "Energy ZNA", kTH1F, {axisZDC});
-    registry.add("EnergyZNC", "Energy ZNC", kTH1F, {axisZDC});
-    registry.add("EnergyZNAvsZNC", "Energy ZNA vs ZNC; ZDC-C; ZDC-A", kTH2D, {axisZDC, axisZDC});
-    auto hTopologyCounter = registry.add<TH1>("hTopologyCounter", "Neutron Topology;;Events", HistType::kTH1I, {{4, 0., 4.}});
-    TString TopologyClasses[4] = {"0n0n", "Xn0n", "0nXn", "XnXn"};
-    for (int i = 0; i < 4; i++) {
-        hTopologyCounter->GetXaxis()->SetBinLabel(i + 1, TopologyClasses[i].Data());
-    }
-
-    // Topology specific Mass vs Pt (Unlike)
-    registry.add("MassVsPtUnlike_0n0n", "Mass vs Pt (Unlike, 0n0n);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-    registry.add("MassVsPtUnlike_Xn0n", "Mass vs Pt (Unlike, Xn0n);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-    registry.add("MassVsPtUnlike_0nXn", "Mass vs Pt (Unlike, 0nXn);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-    registry.add("MassVsPtUnlike_XnXn", "Mass vs Pt (Unlike, XnXn);M_{#mu#mu} (GeV/c^{2});p_{T} (GeV/c)", kTH2D, {axisM, axisPt});
-
   }
 
   //____________________________________________________________________________________________
 
   template <typename TTrack1, typename TTrack2>
-  void processCandidate(UDCollisionsFwd::iterator const& collision, TTrack1& tr1, TTrack2& tr2, float E_ZNA, float E_ZNC)
+  void processCandidate(UDCollisionsFwd::iterator const& collision, TTrack1& tr1, TTrack2& tr2)
   {
     registry.fill(HIST("eventCounter"), 0.5);
     registry.fill(HIST("hnumContrib"), collision.numContrib());
@@ -156,20 +124,6 @@ struct MyUPCTask {
     */
 
     registry.fill(HIST("hSelectionCounter"), 1);
-
-    // Get ZDC energies safely
-    registry.fill(HIST("EnergyZNA"), E_ZNA);
-    registry.fill(HIST("EnergyZNC"), E_ZNC);
-    registry.fill(HIST("EnergyZNAvsZNC"), E_ZNC, E_ZNA);
-
-    // Determine Topology
-    bool isZNA = (E_ZNA > cutZNAEnergy);
-    bool isZNC = (E_ZNC > cutZNCEnergy);
-    int topology = 0; // 0: 0n0n
-    if (isZNA && !isZNC) topology = 1; // 1: Xn0n (A-side only)
-    else if (!isZNA && isZNC) topology = 2; // 2: 0nXn (C-side only)
-    else if (isZNA && isZNC) topology = 3; // 3: XnXn (both)
-    registry.fill(HIST("hTopologyCounter"), topology);
 
     // absorber end selection
     if (tr1.rAtAbsorberEnd() < 17.6 || tr1.rAtAbsorberEnd() > 89.5)
@@ -242,30 +196,12 @@ struct MyUPCTask {
       registry.fill(HIST("hSelectionCounter"), 11);
       registry.fill(HIST("MMuonUnlike"), p.M());
       registry.fill(HIST("PtMuonUnlike"), p.Pt());
-      registry.fill(HIST("MassVsPtUnlike"), p.M(), p.Pt());
-      
-      // Fill Topology specific 2D histograms
-      if (topology == 0) registry.fill(HIST("MassVsPtUnlike_0n0n"), p.M(), p.Pt());
-      else if (topology == 1) registry.fill(HIST("MassVsPtUnlike_Xn0n"), p.M(), p.Pt());
-      else if (topology == 2) registry.fill(HIST("MassVsPtUnlike_0nXn"), p.M(), p.Pt());
-      else if (topology == 3) registry.fill(HIST("MassVsPtUnlike_XnXn"), p.M(), p.Pt());
-
-      if (p.M() >= massMin && p.M() <= massMax) {
-        // Fill single muon pT for both tracks if the pair mass is within the region
-        registry.fill(HIST("PtEachMuonUnlikeMassRegion"), p1.Pt());
-        registry.fill(HIST("PtEachMuonUnlikeMassRegion"), p2.Pt());
-      }
     }
 
     if (isLikeSign) {
       registry.fill(HIST("hSelectionCounter"), 12);
       registry.fill(HIST("MMuonLike"), p.M());
       registry.fill(HIST("PtMuonLike"), p.Pt());
-      registry.fill(HIST("MassVsPtLike"), p.M(), p.Pt());
-      if (p.M() >= massMin && p.M() <= massMax) {
-        registry.fill(HIST("PtEachMuonLikeMassRegion"), p1.Pt());
-        registry.fill(HIST("PtEachMuonLikeMassRegion"), p2.Pt());
-      }
     }
   }
 
@@ -288,17 +224,10 @@ struct MyUPCTask {
 
   // process candidates with forward tracks
   void process(UDCollisionsFwd const& eventCandidates,
-               fwdtraks const& fwdTracks,
-               aod::UDZdcsReduced const& zdcs)
+               fwdtraks const& fwdTracks)
   {
     std::unordered_map<int32_t, std::vector<int32_t>> tracksPerCand;
     collectCandIDs(tracksPerCand, fwdTracks);
-
-    // Build a map for fast lookup of ZDC entries by collision ID
-    std::unordered_map<int32_t, int32_t> collisionToZdcMap;
-    for (const auto& zdc : zdcs) {
-        collisionToZdcMap[zdc.udCollisionId()] = zdc.index();
-    }
 
     // Iterate through candidates. Avoid crashes when not exactly 2 tracks.
     for (const auto& item : tracksPerCand) {
@@ -309,16 +238,6 @@ struct MyUPCTask {
       int32_t candID = item.first;
       const auto& collision = eventCandidates.iteratorAt(candID);
       
-      // Look up ZDC energies for this collision
-      float E_ZNA = 0.0f;
-      float E_ZNC = 0.0f;
-      auto itZdc = collisionToZdcMap.find(candID);
-      if (itZdc != collisionToZdcMap.end()) {
-          const auto& zdc = zdcs.iteratorAt(itZdc->second);
-          E_ZNA = zdc.energyCommonZNA();
-          E_ZNC = zdc.energyCommonZNC();
-      }
-      
       // Iterate over pairs if there are >= 2 tracks (or just first 2 like UDTutorial_06)
       for (size_t i = 0; i < item.second.size() - 1; ++i) {
         for (size_t j = i + 1; j < item.second.size(); ++j) {
@@ -326,7 +245,7 @@ struct MyUPCTask {
           int32_t trId2 = item.second[j];
           const auto& tr1 = fwdTracks.iteratorAt(trId1);
           const auto& tr2 = fwdTracks.iteratorAt(trId2);
-          processCandidate(collision, tr1, tr2, E_ZNA, E_ZNC);
+          processCandidate(collision, tr1, tr2);
         }
       }
     }
@@ -335,5 +254,5 @@ struct MyUPCTask {
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
-    adaptAnalysisTask<MyUPCTask>(cfgc, TaskName{"my-upc-01"})};
+    adaptAnalysisTask<MyUPCMass01Task>(cfgc, TaskName{"my-upc-mass-01"})};
 }

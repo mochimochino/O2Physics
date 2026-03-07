@@ -11,7 +11,7 @@ void AnalysisMassReal() {
     gStyle->SetTitleFontSize(0.04); // タイトルの文字サイズを小さくして被りを防ぐ
     
     // ROOTファイルを開く
-    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/AnalysisResults.root", "READ");
+    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/0305withoutpTtask.root", "READ");
     if (!f || f->IsZombie()) {
         std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
         return;
@@ -108,7 +108,7 @@ void AnalysisMassReal() {
     // 凡例の設定（右上にピッタリ配置）
     TLegend* leg2 = new TLegend(0.65, 0.85, 0.95, 0.95);
     leg2->SetBorderSize(1);
-    leg2->AddEntry(hSignal, "Signal Extracted", "lep");
+    leg2->AddEntry(hSignal, "Unlike - bkg", "lep");
     leg2->Draw();
 
     c2->SaveAs("Unlike_bkg.png");

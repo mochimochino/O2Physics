@@ -6,21 +6,17 @@
 #include <iostream>
 
 void AnalysisMassReal() {
-    // グラフのグローバルスタイル設定
-    gStyle->SetOptStat(0); // 統計ボックスは非表示
-    gStyle->SetTitleFontSize(0.04); // タイトルの文字サイズを小さくして被りを防ぐ
+    gStyle->SetOptStat(0);
+    gStyle->SetTitleFontSize(0.04);
     
-    // ROOTファイルを開く
-    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/0305withoutpTtask.root", "READ");
+    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/AnalysisResults.root", "READ");
     if (!f || f->IsZombie()) {
         std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
         return;
     }
 
-    // ヒストグラムが保存されているディレクトリのパス（MyUPCTask.cxxの定義に対応）
-    TString dir = "my-upc-01/";
+    TString dir = "my-upc-mass-01/";
     
-    // 不変質量分布のヒストグラムを取得
     TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "MMuonUnlike"));
     TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "MMuonLike"));
 

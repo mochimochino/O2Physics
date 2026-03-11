@@ -1,111 +1,114 @@
+#include "TCanvas.h"
 #include "TFile.h"
 #include "TH1.h"
-#include "TCanvas.h"
 #include "TLegend.h"
 #include "TStyle.h"
+
 #include <iostream>
 
-void AnalysisMassReal() {
-    gStyle->SetOptStat(0);
-    gStyle->SetTitleFontSize(0.04);
-    
-    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/LHC23zzh_apass4/AnalysisResults.root", "READ");
-    if (!f || f->IsZombie()) {
-        std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
-        return;
-    }
+void AnalysisMassReal()
+{
+  gStyle->SetOptStat(0);
+  gStyle->SetTitleFontSize(0.04);
 
-    TString dir = "my-upc-mass-jpsi/";
-    
-    TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "MMuonUnlike"));
-    TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "MMuonLike"));
+  TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/AnalysisResults.root", "READ");
+  if (!f || f->IsZombie()) {
+    std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
+    return;
+  }
 
-    if (!hUnlike || !hLike) {
-        std::cerr << "Error: Histograms not found. Check the directory structure inside the root file." << std::endl;
-        f->ls();
-        return;
-    }
+  TString dir = "my-upc-mass-01/";
 
-    // ==========================================
-    // 1. Raw Histograms (UnlikeとLikeを重ねて描画)
-    // ==========================================
-    TCanvas* c1 = new TCanvas("c1", "Raw Histograms", 800, 600);
-    c1->SetLeftMargin(0.12);
-    c1->SetRightMargin(0.05);
-    c1->SetTopMargin(0.05);
-    c1->SetBottomMargin(0.12);
-    
-    gPad->SetLogy(); // y軸をログスケールに
-    gPad->SetGrid(); // グリッドを表示
+  TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "MMuonUnlike"));
+  TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "MMuonLike"));
 
-    // 落ち着いた色合いの定義（HEXコード）
-    int colUnlike = TColor::GetColor("#2e8b57"); // SeaGreen（落ち着いた緑）
-    int colLike   = TColor::GetColor("#d2691e"); // Chocolate（落ち着いたオレンジ）
+  if (!hUnlike || !hLike) {
+    std::cerr << "Error: Histograms not found. Check the directory structure inside the root file." << std::endl;
+    f->ls();
+    return;
+  }
 
-    // Unlike Sign の描画設定
-    hUnlike->SetTitle("Dimuon Invariant Mass ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
-    hUnlike->SetLineColor(colUnlike);
-    hUnlike->SetMarkerColor(colUnlike);
-    hUnlike->SetLineWidth(2);
-    hUnlike->SetMarkerStyle(21); // 21: Full Square
-    hUnlike->GetYaxis()->SetRangeUser(0.8, hUnlike->GetMaximum() * 5.0);
-    hUnlike->GetYaxis()->SetTitleOffset(1.2);
-    hUnlike->Draw("E");
+  // ==========================================
+  // 1. Raw Histograms (UnlikeとLikeを重ねて描画)
+  // ==========================================
+  TCanvas* c1 = new TCanvas("c1", "Raw Histograms", 800, 600);
+  c1->SetLeftMargin(0.12);
+  c1->SetRightMargin(0.05);
+  c1->SetTopMargin(0.05);
+  c1->SetBottomMargin(0.12);
 
-    // Like Sign の描画設定
-    hLike->SetLineColor(colLike);
-    hLike->SetMarkerColor(colLike);
-    hLike->SetLineWidth(2);
-    hLike->SetMarkerStyle(25); // 25: Open Square
-    hLike->Draw("E SAME");
+  gPad->SetLogy(); // y軸をログスケールに
+  gPad->SetGrid(); // グリッドを表示
 
-    // 凡例の設定（右上にピッタリ配置）
-    TLegend* leg = new TLegend(0.65, 0.80, 0.95, 0.95);
-    leg->SetBorderSize(1);
-    leg->AddEntry(hUnlike, "Unlike Sign (+-)", "lep");
-    leg->AddEntry(hLike, "Like Sign (++ & --)", "lep");
-    leg->Draw();
+  // 落ち着いた色合いの定義（HEXコード）
+  int colUnlike = TColor::GetColor("#2e8b57"); // SeaGreen（落ち着いた緑）
+  int colLike = TColor::GetColor("#d2691e");   // Chocolate（落ち着いたオレンジ）
 
-    c1->SaveAs("RawMass_ALL.png");
+  // Unlike Sign の描画設定
+  hUnlike->SetTitle("Dimuon Invariant Mass ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
+  hUnlike->SetLineColor(colUnlike);
+  hUnlike->SetMarkerColor(colUnlike);
+  hUnlike->SetLineWidth(2);
+  hUnlike->SetMarkerStyle(21); // 21: Full Square
+  hUnlike->GetYaxis()->SetRangeUser(0.8, hUnlike->GetMaximum() * 5.0);
+  hUnlike->GetYaxis()->SetTitleOffset(1.2);
+  hUnlike->Draw("E");
 
-    // ==================================================
-    // 2. Signal Extraction (Unlike - Like のバックグラウンド引き去り)
-    // ==================================================
-    TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
-    hSignal->SetTitle("Signal (Unlike - Like) ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
-    
-    // Background
-    hSignal->Add(hLike, -1.0);
+  // Like Sign の描画設定
+  hLike->SetLineColor(colLike);
+  hLike->SetMarkerColor(colLike);
+  hLike->SetLineWidth(2);
+  hLike->SetMarkerStyle(25); // 25: Open Square
+  hLike->Draw("E SAME");
 
-    TCanvas* c2 = new TCanvas("c2", "Signal Extraction", 800, 600);
-    c2->SetLeftMargin(0.12);
-    c2->SetRightMargin(0.05);
-    c2->SetTopMargin(0.05);
-    c2->SetBottomMargin(0.12);
-    
-    gPad->SetGrid();
+  // 凡例の設定（右上にピッタリ配置）
+  TLegend* leg = new TLegend(0.65, 0.80, 0.95, 0.95);
+  leg->SetBorderSize(1);
+  leg->AddEntry(hUnlike, "Unlike Sign (+-)", "lep");
+  leg->AddEntry(hLike, "Like Sign (++ & --)", "lep");
+  leg->Draw();
 
-    double ymin = hSignal->GetMinimum();
-    if (ymin > 0) ymin = 0;
-    
-    int colSignal = TColor::GetColor("#2e8b57");
-    
-    hSignal->SetLineColor(colSignal);
-    hSignal->SetMarkerColor(colSignal);
-    hSignal->SetLineWidth(2);
-    hSignal->SetMarkerStyle(21); // 21: Full Square
-    hSignal->GetYaxis()->SetRangeUser(ymin * 1.2, hSignal->GetMaximum() * 1.5);
-    hSignal->GetYaxis()->SetTitleOffset(1.2);
-    hSignal->Draw("E");
+  c1->SaveAs("RawMass_ALL.png");
 
-    // 凡例の設定（右上にピッタリ配置）
-    TLegend* leg2 = new TLegend(0.65, 0.85, 0.95, 0.95);
-    leg2->SetBorderSize(1);
-    leg2->AddEntry(hSignal, "Unlike - bkg", "lep");
-    leg2->Draw();
+  // ==================================================
+  // 2. Signal Extraction (Unlike - Like のバックグラウンド引き去り)
+  // ==================================================
+  TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
+  hSignal->SetTitle("Signal (Unlike - Like) ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
 
-    c2->SaveAs("Unlike_bkg_ALL.png");
+  // Background
+  hSignal->Add(hLike, -1.0);
 
-    // ファイルを閉じる
-    f->Close();
+  TCanvas* c2 = new TCanvas("c2", "Signal Extraction", 800, 600);
+  c2->SetLeftMargin(0.12);
+  c2->SetRightMargin(0.05);
+  c2->SetTopMargin(0.05);
+  c2->SetBottomMargin(0.12);
+
+  gPad->SetGrid();
+
+  double ymin = hSignal->GetMinimum();
+  if (ymin > 0)
+    ymin = 0;
+
+  int colSignal = TColor::GetColor("#2e8b57");
+
+  hSignal->SetLineColor(colSignal);
+  hSignal->SetMarkerColor(colSignal);
+  hSignal->SetLineWidth(2);
+  hSignal->SetMarkerStyle(21); // 21: Full Square
+  hSignal->GetYaxis()->SetRangeUser(ymin * 1.2, hSignal->GetMaximum() * 1.5);
+  hSignal->GetYaxis()->SetTitleOffset(1.2);
+  hSignal->Draw("E");
+
+  // 凡例の設定（右上にピッタリ配置）
+  TLegend* leg2 = new TLegend(0.65, 0.85, 0.95, 0.95);
+  leg2->SetBorderSize(1);
+  leg2->AddEntry(hSignal, "Unlike - bkg", "lep");
+  leg2->Draw();
+
+  c2->SaveAs("Unlike_bkg_ALL.png");
+
+  // ファイルを閉じる
+  f->Close();
 }

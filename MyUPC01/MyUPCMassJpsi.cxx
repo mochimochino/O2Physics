@@ -14,22 +14,23 @@
 /// \date 2026
 
 // O2 headers
-#include "Framework/runDataProcessing.h"
-#include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
+#include "Framework/AnalysisTask.h"
+#include "Framework/runDataProcessing.h"
 
 // O2Physics headers
-#include "PWGUD/DataModel/UDTables.h"
 #include "PWGUD/Core/UDHelpers.h"
+#include "PWGUD/DataModel/UDTables.h"
+
 #include "CCDB/BasicCCDBManager.h"
-#include "DataFormatsParameters/GRPLHCIFData.h"
 #include "DataFormatsParameters/GRPECSObject.h"
+#include "DataFormatsParameters/GRPLHCIFData.h"
 
 // ROOT headers
-#include "TSystem.h"
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
+#include "TSystem.h"
 
 using namespace o2;
 using namespace o2::framework;
@@ -46,9 +47,9 @@ struct MyUPCMassJpsiTask {
   Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
   Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};
   // targetTopology: 0 = 0n0n, 1 = Xn0n, 2 = 0nXn, 3 = XnXn, -1 = No Cut
-  Configurable<int> targetTopology{"targetTopology", 1, "Required neutron topology (3 for XnXn)"};
+  Configurable<int> targetTopology{"targetTopology", -1, "Required neutron topology (3 for XnXn)"};
 
-  using UDCollisionsFwd = o2::aod::UDCollisions; //Removed UDCollisionsSels and SelsFwd to run without helper task
+  using UDCollisionsFwd = o2::aod::UDCollisions; // Removed UDCollisionsSels and SelsFwd to run without helper task
   using fwdtraks = soa::Join<aod::UDFwdTracks, aod::UDFwdTracksExtra>;
 
   void init(InitContext const&)
@@ -56,7 +57,7 @@ struct MyUPCMassJpsiTask {
     // define axes you want to use
     const AxisSpec axisCounter{1, 0, +1, ""};
     const AxisSpec axisEta{80, -5.0, -2.0, "#eta"};
-    const AxisSpec axisPt{nBinsPt, 0.0, 2.0, "p_{T}"}; // Increased resolution for low pT
+    const AxisSpec axisPt{nBinsPt, 0.0, 2.0, "p_{T}"};     // Increased resolution for low pT
     const AxisSpec axisM{nBinsMass, 2.8, 3.4, "M_{mumu}"}; // Focused on J/psi region
     const AxisSpec axisPhi{120, -TMath::Pi(), -TMath::Pi(), "#phi"};
     const AxisSpec axisRapidity{80, -5.0, -2.0, "#it{y}"};
@@ -118,8 +119,10 @@ struct MyUPCMassJpsiTask {
     auto checkPDCA = [](auto& tr) {
       double r = tr.rAtAbsorberEnd();
       double pdca = tr.pDca();
-      if (r < 26.5) return pdca < 350.0;
-      else return pdca < 200.0;
+      if (r < 26.5)
+        return pdca < 350.0;
+      else
+        return pdca < 200.0;
     };
     if (!checkPDCA(tr1) || !checkPDCA(tr2))
       return;
@@ -220,20 +223,24 @@ struct MyUPCMassJpsiTask {
 
       // ZDC topology selection
       if (candID >= zdcs.size()) {
-         continue; 
+        continue;
       }
       const auto& zdc = zdcs.iteratorAt(candID);
-      
+
       float eZNA = zdc.energyCommonZNA();
       float eZNC = zdc.energyCommonZNC();
       bool hasZNA = eZNA > static_cast<float>(cutZNAEnergy);
       bool hasZNC = eZNC > static_cast<float>(cutZNCEnergy);
 
       int currentTopology = 0;
-      if      (!hasZNA && !hasZNC) currentTopology = 0; // 0n0n
-      else if ( hasZNA && !hasZNC) currentTopology = 1; // Xn0n
-      else if (!hasZNA &&  hasZNC) currentTopology = 2; // 0nXn
-      else                         currentTopology = 3; // XnXn
+      if (!hasZNA && !hasZNC)
+        currentTopology = 0; // 0n0n
+      else if (hasZNA && !hasZNC)
+        currentTopology = 1; // Xn0n
+      else if (!hasZNA && hasZNC)
+        currentTopology = 2; // 0nXn
+      else
+        currentTopology = 3; // XnXn
 
       if (targetTopology > -1 && currentTopology != targetTopology) {
         continue;
@@ -241,7 +248,7 @@ struct MyUPCMassJpsiTask {
       // --------------------------------------------------
 
       const auto& collision = eventCandidates.iteratorAt(candID);
-      
+
       // Iterate over pairs if there are >= 2 tracks (or just first 2 like UDTutorial_06)
       for (size_t i = 0; i < item.second.size() - 1; ++i) {
         for (size_t j = i + 1; j < item.second.size(); ++j) {

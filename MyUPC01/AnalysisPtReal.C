@@ -1,97 +1,111 @@
+#include "TFile.h"
+#include "TH1.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "TStyle.h"
+#include "TColor.h"
+#include <iostream>
+
 void AnalysisPtReal() {
-    // 1. Open the file
-    TFile *fIn = TFile::Open("AnalysisResults.root");
-    if (!fIn || fIn->IsZombie()) {
-        std::cerr << "Error: Cannot open AnalysisResults.root!" << std::endl;
-        return;
-    }
+    gStyle->SetOptStat(0);
+    gStyle->SetTitleFontSize(0.04);
     
-    // 2. Access the directory where histograms are stored by task
-    TDirectoryFile *dir = (TDirectoryFile*)fIn->Get("my-upc-mass-01");
-    if (!dir) {
-        std::cerr << "Error: Directory 'my-upc-01' not found!" << std::endl;
-        return;
-    }
-    
-    // 3. Retrieve the 2D Histograms
-    TH2D *h2Unlike = (TH2D*)dir->Get("MassVsPtUnlike");
-    TH2D *h2Like   = (TH2D*)dir->Get("MassVsPtLike");
-    if (!h2Unlike || !h2Like) {
-        std::cerr << "Error: 2D histograms not found!" << std::endl;
+    // Open the file
+    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/LHC23zzh_apass4/AnalysisResults.root", "READ");
+    if (!f || f->IsZombie()) {
+        std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
         return;
     }
 
-    //---------------------------------------------------------
-    // Set the Mass Window Selection (e.g., J/psi region)
-    //---------------------------------------------------------
-    double massMin = 2.8; 
-    double massMax = 3.4;
-
-    // Convert mass values to bin numbers of the X-axis
-    int binMin = h2Unlike->GetXaxis()->FindBin(massMin);
-    int binMax = h2Unlike->GetXaxis()->FindBin(massMax);
-
-    // 4. Project onto the Y-axis (Pt) for the specified X (Mass) bins
-    // This creates 1D Pt histograms
-    TH1D *hPtUnlikeRegion = h2Unlike->ProjectionY("hPtUnlikeRegion", binMin, binMax);
-    TH1D *hPtLikeRegion   = h2Like->ProjectionY("hPtLikeRegion", binMin, binMax);
-
-    // Styling
-    hPtUnlikeRegion->SetLineColor(kBlack);
-    hPtUnlikeRegion->SetMarkerColor(kBlack);
-    hPtUnlikeRegion->SetMarkerStyle(20);
-    hPtUnlikeRegion->SetMarkerSize(0.8);
-    hPtUnlikeRegion->SetTitle(Form("Dimuon p_{T} (%.1f < M_{#mu#mu} < %.1f GeV/c^{2})", massMin, massMax));
-    hPtUnlikeRegion->GetXaxis()->SetTitle("p_{T} (GeV/c)");
-    hPtUnlikeRegion->GetYaxis()->SetTitle(Form("Counts / %.3f GeV/c", hPtUnlikeRegion->GetBinWidth(1)));
-
-    hPtLikeRegion->SetLineColor(kRed);
-    hPtLikeRegion->SetFillColorAlpha(kRed, 0.3); // Semi-transparent red for background
-    hPtLikeRegion->SetFillStyle(1001);
+    TString dir = "my-upc-mass-jpsi/";
     
-    // 5. Calculate the Signal (Unlike - Like)
-    TH1D *hPtSignal = (TH1D*)hPtUnlikeRegion->Clone("hPtSignal");
-    hPtSignal->Add(hPtLikeRegion, -1.0); // signal = Unlike - Like
-    hPtSignal->SetLineColor(kBlue);
-    hPtSignal->SetMarkerColor(kBlue);
-    hPtSignal->SetMarkerStyle(21);
-    
-    //---------------------------------------------------------
-    // Draw raw histograms (Unlike and Like together)
-    //---------------------------------------------------------
-    TCanvas *cRaw = new TCanvas("cRawPt", "Raw Dimuon pT", 800, 600);
-    gPad->SetLogy(); // pT spectra typically fall exponentially, log scale is good
-    
-    hPtUnlikeRegion->Draw("E");
-    hPtLikeRegion->Draw("HIST SAME");
-    
-    TLegend *leg1 = new TLegend(0.6, 0.7, 0.9, 0.9);
-    leg1->AddEntry(hPtUnlikeRegion, "Unlike Sign (+-)", "lep");
-    leg1->AddEntry(hPtLikeRegion, "Like Sign (++, --)", "f");
-    leg1->Draw();
-    
-    cRaw->SaveAs("RawPt_MassRegion.png");
+    TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "PtMuonUnlike"));
+    TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "PtMuonLike"));
 
-    //---------------------------------------------------------
-    // Draw Signal histogram (Unlike - Like)
-    //---------------------------------------------------------
-    TCanvas *cSig = new TCanvas("cSignalPt", "Signal Dimuon pT", 800, 600);
+    if (!hUnlike || !hLike) {
+        std::cerr << "Error: Histograms PtMuonUnlike or PtMuonLike not found in " << dir << std::endl;
+        f->ls();
+        return;
+    }
+
+    // Colors from AnalysisMassReal.C
+    int colUnlike = TColor::GetColor("#2e8b57"); // SeaGreen
+    int colLike   = TColor::GetColor("#d2691e"); // Chocolate
+
+    // ==========================================
+    // 1. Raw Histograms (Unlike and Like Overlaid)
+    // ==========================================
+    TCanvas* c1 = new TCanvas("c1", "Raw Dimuon pT", 800, 600);
+    c1->SetLeftMargin(0.12);
+    c1->SetRightMargin(0.05);
+    c1->SetTopMargin(0.05);
+    c1->SetBottomMargin(0.12);
+    
+    //gPad->SetLogy(); // y-axis to log scale
+    gPad->SetGrid(); // show grid
+
+    // Unlike Sign settings
+    hUnlike->SetTitle("Dimuon p_{T} Xn0n; p_{T} [GeV/c]; Counts");
+    hUnlike->SetLineColor(colUnlike);
+    hUnlike->SetMarkerColor(colUnlike);
+    hUnlike->SetLineWidth(2);
+    hUnlike->SetMarkerStyle(21); // Full Square
+    hUnlike->GetYaxis()->SetTitleOffset(1.2);
+    hUnlike->GetXaxis()->SetRangeUser(0.0, 1.5);
+    hUnlike->GetYaxis()->SetRangeUser(0.8, hUnlike->GetMaximum() * 5.0);
+    hUnlike->Draw("E");
+
+    // Like Sign settings
+    hLike->SetLineColor(colLike);
+    hLike->SetMarkerColor(colLike);
+    hLike->SetLineWidth(2);
+    hLike->SetMarkerStyle(25); // Open Square
+    hLike->Draw("E SAME");
+
+    // Legend
+    TLegend* leg = new TLegend(0.65, 0.80, 0.95, 0.95);
+    leg->SetBorderSize(1);
+    leg->AddEntry(hUnlike, "Unlike Sign (+-)", "lep");
+    leg->AddEntry(hLike, "Like Sign (++, --)", "lep");
+    leg->Draw();
+
+    c1->SaveAs("RawPt_Dimuon_Xn0n.png");
+
+    // ==========================================
+    // 2. Signal Extraction (Unlike - Like)
+    // ==========================================
+    TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
+    hSignal->SetTitle("Signal Dimuon p_{T} Xn0n; p_{T} [GeV/c]; Counts");
+    hSignal->Add(hLike, -1.0);
+
+    TCanvas* c2 = new TCanvas("c2", "Signal Dimuon pT", 800, 600);
+    c2->SetLeftMargin(0.12);
+    c2->SetRightMargin(0.05);
+    c2->SetTopMargin(0.05);
+    c2->SetBottomMargin(0.12);
+    
+    gPad->SetGrid();
     gPad->SetLogy();
+
+    double ymin = hSignal->GetMinimum();
+    if (ymin < 0.1) ymin = 0.1;
     
-    hPtSignal->SetTitle(Form("Signal Dimuon p_{T} (%.1f < M_{#mu#mu} < %.1f GeV/c^{2})", massMin, massMax));
-    // To avoid problems drawing Logy with negative bins after subtraction
-    hPtSignal->SetMinimum(0.1); 
-    hPtSignal->Draw("E");
-    
-    TLegend *leg2 = new TLegend(0.6, 0.8, 0.9, 0.9);
-    leg2->AddEntry(hPtSignal, "Signal (Unlike - Like)", "lep");
+    hSignal->SetLineColor(colUnlike);
+    hSignal->SetMarkerColor(colUnlike);
+    hSignal->SetLineWidth(2);
+    hSignal->SetMarkerStyle(21);
+    hSignal->GetYaxis()->SetRangeUser(ymin, hSignal->GetMaximum() * 2.0);
+    hSignal->GetXaxis()->SetRangeUser(0.0, 1.5);
+    hSignal->Draw("E");
+
+    TLegend* leg2 = new TLegend(0.65, 0.85, 0.95, 0.95);
+    leg2->SetBorderSize(1);
+    leg2->AddEntry(hSignal, "Unlike - Like", "lep");
     leg2->Draw();
 
-    cSig->SaveAs("SignalPt_MassRegion.png");
+    c2->SaveAs("SignalPt_Dimuon_Xn0n.png");
 
-    // Print some quick stats
-    std::cout << "--- Yield in Region [" << massMin << ", " << massMax << "] GeV/c^2 ---" << std::endl;
-    std::cout << "Unlike Sign : " << hPtUnlikeRegion->Integral() << std::endl;
-    std::cout << "Like Sign   : " << hPtLikeRegion->Integral() << std::endl;
-    std::cout << "Signal      : " << hPtSignal->Integral() << std::endl;
+    std::cout << "Done. Saved plots to RawPt_Dimuon_ALL.png and SignalPt_Dimuon_ALL.png" << std::endl;
+
+    f->Close();
 }

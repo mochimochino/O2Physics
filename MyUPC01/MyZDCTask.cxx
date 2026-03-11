@@ -58,8 +58,8 @@ struct MyZDCTask {
 
   // Energy threshold to classify a ZDC side as "active" (neutron detected)
   // The default is 1.0 TeV - adjust based on your specific analysis
-  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV] for neutron detection"};
-  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV] for neutron detection"};
+  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 2.0f, "ZNA energy threshold [TeV] for neutron detection"};
+  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 2.0f, "ZNC energy threshold [TeV] for neutron detection"};
 
   void process(aod::UDZdcsReduced const& zdcs)
   {

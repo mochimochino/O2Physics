@@ -11,13 +11,13 @@ void AnalysisSinglePt() {
     gStyle->SetTitleFontSize(0.04);
     
     // Using the same file path as in AnalysisMassReal.C
-    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/0305withoutpTtask.root", "READ");
+    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/AnalysisResults.root", "READ");
     if (!f || f->IsZombie()) {
         std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
         return;
     }
 
-    TString dir = "my-upc-01/";
+    TString dir = "my-upc-mass-01/";
     
     TH1* hPt1 = dynamic_cast<TH1*>(f->Get(dir + "ptMuon1"));
     TH1* hPt2 = dynamic_cast<TH1*>(f->Get(dir + "ptMuon2"));
@@ -45,7 +45,7 @@ void AnalysisSinglePt() {
     int col2 = TColor::GetColor("#d2691e"); // Chocolate
 
     // Muon 1 Pt settings
-    hPt1->SetTitle("DiMuon p_{T}; p_{T} [GeV/c]; Counts");
+    hPt1->SetTitle("DiMuon p_{T} ALL; p_{T} [GeV/c]; Counts");
     hPt1->SetLineColor(col1);
     hPt1->SetMarkerColor(col1);
     hPt1->SetLineWidth(2);
@@ -74,7 +74,7 @@ void AnalysisSinglePt() {
     leg->AddEntry(hPt2, "Muon 2", "lep");
     leg->Draw();
 
-    c1->SaveAs("DiMuonPt.png");
+    c1->SaveAs("DiMuonPt_ALL.png");
 
     std::cout << "Done. Saved plot to DiMuonPt.png" << std::endl;
 

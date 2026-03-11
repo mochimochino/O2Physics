@@ -43,6 +43,11 @@ struct MyUPCMass01Task {
   Configurable<int> nBinsPt{"nBinsPt", 500, "N bins in pT histo"};
   Configurable<int> nBinsMass{"nBinsMass", 200, "N bins in InvMass histo (50 MeV/c^2 per bin)"};
 
+  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
+  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};
+  // targetTopology: 0 = 0n0n, 1 = Xn0n, 2 = 0nXn, 3 = XnXn, -1 = No Cut
+  Configurable<int> targetTopology{"targetTopology", -1, "Required neutron topology (3 for XnXn)"};
+
   using UDCollisionsFwd = o2::aod::UDCollisions; // Option 2: Removed UDCollisionsSels and SelsFwd to run without helper task
   using fwdtraks = soa::Join<aod::UDFwdTracks, aod::UDFwdTracksExtra>;
 
@@ -224,7 +229,8 @@ struct MyUPCMass01Task {
 
   // process candidates with forward tracks
   void process(UDCollisionsFwd const& eventCandidates,
-               fwdtraks const& fwdTracks)
+               fwdtraks const& fwdTracks,
+               aod::UDZdcsReduced const& zdcs)
   {
     std::unordered_map<int32_t, std::vector<int32_t>> tracksPerCand;
     collectCandIDs(tracksPerCand, fwdTracks);
@@ -236,6 +242,30 @@ struct MyUPCMass01Task {
       }
 
       int32_t candID = item.first;
+
+
+      if (candID >= zdcs.size()) {
+         continue; // データが存在しないインデックスの場合はスキップ
+      }
+      // ZDC topology selection
+      const auto& zdc = zdcs.iteratorAt(candID);
+      
+      float eZNA = zdc.energyCommonZNA();
+      float eZNC = zdc.energyCommonZNC();
+      bool hasZNA = eZNA > static_cast<float>(cutZNAEnergy);
+      bool hasZNC = eZNC > static_cast<float>(cutZNCEnergy);
+
+      int currentTopology = 0;
+      if      (!hasZNA && !hasZNC) currentTopology = 0; // 0n0n
+      else if ( hasZNA && !hasZNC) currentTopology = 1; // Xn0n
+      else if (!hasZNA &&  hasZNC) currentTopology = 2; // 0nXn
+      else                         currentTopology = 3; // XnXn
+
+      if (targetTopology > -1 && currentTopology != targetTopology) {
+        continue;
+      }
+      // --------------------------------------------------
+
       const auto& collision = eventCandidates.iteratorAt(candID);
       
       // Iterate over pairs if there are >= 2 tracks (or just first 2 like UDTutorial_06)

@@ -24,3 +24,8 @@ o2physics_add_dpl_workflow(my-zdc-01
                            SOURCES MyZDCTask.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(my-upc-mass-jpsi
+                           SOURCES MyUPCMassJpsi.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)

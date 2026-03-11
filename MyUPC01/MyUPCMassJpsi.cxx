@@ -9,7 +9,7 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 ///
-/// \brief Custom task to compute invariant mass of dimuon at forward rapidity for UPC events.
+/// \brief Custom task to compute invariant mass of dimuon at forward rapidity for UPC events (J/psi selection).
 /// \author Takuma
 /// \date 2026
 
@@ -36,19 +36,19 @@ using namespace o2::framework;
 using namespace o2::framework::expressions;
 using namespace std;
 
-struct MyUPCMass01Task {
+struct MyUPCMassJpsiTask {
 
   // Histogram registry: an object to hold your histograms
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
-  Configurable<int> nBinsPt{"nBinsPt", 500, "N bins in pT histo"};
-  Configurable<int> nBinsMass{"nBinsMass", 200, "N bins in InvMass histo (50 MeV/c^2 per bin)"};
+  Configurable<int> nBinsPt{"nBinsPt", 100, "N bins in pT histo"};
+  Configurable<int> nBinsMass{"nBinsMass", 60, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
 
   Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
   Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};
   // targetTopology: 0 = 0n0n, 1 = Xn0n, 2 = 0nXn, 3 = XnXn, -1 = No Cut
-  Configurable<int> targetTopology{"targetTopology", -1, "Required neutron topology (3 for XnXn)"};
+  Configurable<int> targetTopology{"targetTopology", 1, "Required neutron topology (3 for XnXn)"};
 
-  using UDCollisionsFwd = o2::aod::UDCollisions; // Option 2: Removed UDCollisionsSels and SelsFwd to run without helper task
+  using UDCollisionsFwd = o2::aod::UDCollisions; //Removed UDCollisionsSels and SelsFwd to run without helper task
   using fwdtraks = soa::Join<aod::UDFwdTracks, aod::UDFwdTracksExtra>;
 
   void init(InitContext const&)
@@ -56,8 +56,8 @@ struct MyUPCMass01Task {
     // define axes you want to use
     const AxisSpec axisCounter{1, 0, +1, ""};
     const AxisSpec axisEta{80, -5.0, -2.0, "#eta"};
-    const AxisSpec axisPt{nBinsPt, 0.0, 10.0, "p_{T}"};
-    const AxisSpec axisM{nBinsMass, 0.0, 10.0, "M_{mumu}"};
+    const AxisSpec axisPt{nBinsPt, 0.0, 2.0, "p_{T}"}; // Increased resolution for low pT
+    const AxisSpec axisM{nBinsMass, 2.8, 3.4, "M_{mumu}"}; // Focused on J/psi region
     const AxisSpec axisPhi{120, -TMath::Pi(), -TMath::Pi(), "#phi"};
     const AxisSpec axisRapidity{80, -5.0, -2.0, "#it{y}"};
 
@@ -104,30 +104,6 @@ struct MyUPCMass01Task {
     registry.fill(HIST("hTracks2"), tr2.size());
     registry.fill(HIST("hSelectionCounter"), 0);
 
-    // V0A selection (Commented out for Option 2 since it requires UDCollisionsSelsFwd)
-    /*
-    const auto& ampsV0A = collision.amplitudesV0A();
-    const auto& ampsRelBCsV0A = collision.ampRelBCsV0A();
-    for (unsigned int i = 0; i < ampsV0A.size(); ++i) {
-      if (std::abs(ampsRelBCsV0A[i]) <= 1) {
-        if (ampsV0A[i] > 100.)
-          return;
-      }
-    }
-    */
-
-    // T0A selection (Commented out for Option 2 since it requires UDCollisionsSelsFwd)
-    /*
-    const auto& ampsT0A = collision.amplitudesT0A();
-    const auto& ampsRelBCsT0A = collision.ampRelBCsT0A();
-    for (unsigned int i = 0; i < ampsT0A.size(); ++i) {
-      if (std::abs(ampsRelBCsT0A[i]) <= 1) {
-        if (ampsT0A[i] > 100.)
-          return;
-      }
-    }
-    */
-
     registry.fill(HIST("hSelectionCounter"), 1);
 
     // absorber end selection
@@ -171,8 +147,8 @@ struct MyUPCMass01Task {
       return;
     registry.fill(HIST("hSelectionCounter"), 7);
 
-    // pair pt cut (pT < 0.25 GeV/c)
-    if (p.Pt() >= 0.25)
+    // pair pt cut (pT < 1.0 GeV/c for J/psi region)
+    if (p.Pt() >= 1.0)
       return;
     registry.fill(HIST("hSelectionCounter"), 8);
 
@@ -181,9 +157,8 @@ struct MyUPCMass01Task {
       return;
     registry.fill(HIST("hSelectionCounter"), 9);
 
-    // cuts on pair kinematics (modify this range depending on J/psi or generic mu-mu)
-    // For general mu-mu, we might want to relax this cut or keep it wide
-    if (!(p.M() > 1.0 && p.M() < 10.0))
+    // cuts on pair kinematics (J/psi region: 2.8 - 3.4 GeV/c^2)
+    if (!(p.M() > 2.8 && p.M() < 3.4))
       return;
     registry.fill(HIST("hSelectionCounter"), 10);
 
@@ -243,11 +218,10 @@ struct MyUPCMass01Task {
 
       int32_t candID = item.first;
 
-
-      if (candID >= zdcs.size()) {
-         continue; // データが存在しないインデックスの場合はスキップ
-      }
       // ZDC topology selection
+      if (candID >= zdcs.size()) {
+         continue; 
+      }
       const auto& zdc = zdcs.iteratorAt(candID);
       
       float eZNA = zdc.energyCommonZNA();
@@ -284,5 +258,5 @@ struct MyUPCMass01Task {
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)
 {
   return WorkflowSpec{
-    adaptAnalysisTask<MyUPCMass01Task>(cfgc, TaskName{"my-upc-mass-01"})};
+    adaptAnalysisTask<MyUPCMassJpsiTask>(cfgc, TaskName{"my-upc-mass-jpsi"})};
 }

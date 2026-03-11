@@ -9,13 +9,13 @@ void AnalysisMassReal() {
     gStyle->SetOptStat(0);
     gStyle->SetTitleFontSize(0.04);
     
-    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/AnalysisResults.root", "READ");
+    TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/LHC23zzh_apass4/AnalysisResults.root", "READ");
     if (!f || f->IsZombie()) {
         std::cerr << "Error: Cannot open AnalysisResults.root" << std::endl;
         return;
     }
 
-    TString dir = "my-upc-mass-01/";
+    TString dir = "my-upc-mass-jpsi/";
     
     TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "MMuonUnlike"));
     TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "MMuonLike"));
@@ -29,7 +29,6 @@ void AnalysisMassReal() {
     // ==========================================
     // 1. Raw Histograms (UnlikeとLikeを重ねて描画)
     // ==========================================
-    // キャンバスのマージンを調整し、グラフが占める割合を増やす
     TCanvas* c1 = new TCanvas("c1", "Raw Histograms", 800, 600);
     c1->SetLeftMargin(0.12);
     c1->SetRightMargin(0.05);
@@ -44,14 +43,14 @@ void AnalysisMassReal() {
     int colLike   = TColor::GetColor("#d2691e"); // Chocolate（落ち着いたオレンジ）
 
     // Unlike Sign の描画設定
-    hUnlike->SetTitle("Dimuon Invariant Mass; M_{#mu#mu} [GeV/c^{2}]; Counts");
+    hUnlike->SetTitle("Dimuon Invariant Mass ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
     hUnlike->SetLineColor(colUnlike);
     hUnlike->SetMarkerColor(colUnlike);
     hUnlike->SetLineWidth(2);
     hUnlike->SetMarkerStyle(21); // 21: Full Square
     hUnlike->GetYaxis()->SetRangeUser(0.8, hUnlike->GetMaximum() * 5.0);
     hUnlike->GetYaxis()->SetTitleOffset(1.2);
-    hUnlike->Draw("E"); // 最初に描画したものの統計ボックスが表示される
+    hUnlike->Draw("E");
 
     // Like Sign の描画設定
     hLike->SetLineColor(colLike);
@@ -67,18 +66,17 @@ void AnalysisMassReal() {
     leg->AddEntry(hLike, "Like Sign (++ & --)", "lep");
     leg->Draw();
 
-    c1->SaveAs("RawMass.png");
+    c1->SaveAs("RawMass_ALL.png");
 
     // ==================================================
     // 2. Signal Extraction (Unlike - Like のバックグラウンド引き去り)
     // ==================================================
     TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
-    hSignal->SetTitle("Signal (Unlike - Like); M_{#mu#mu} [GeV/c^{2}]; Counts");
+    hSignal->SetTitle("Signal (Unlike - Like) ALL; M_{#mu#mu} [GeV/c^{2}]; Counts");
     
-    // Backgroundを引く (Like Signそのものをバックグラウンドとして減算)
+    // Background
     hSignal->Add(hLike, -1.0);
 
-    // キャンバス2の設定
     TCanvas* c2 = new TCanvas("c2", "Signal Extraction", 800, 600);
     c2->SetLeftMargin(0.12);
     c2->SetRightMargin(0.05);
@@ -87,11 +85,10 @@ void AnalysisMassReal() {
     
     gPad->SetGrid();
 
-    // 負の値があるかもしれないのでy軸の範囲を調整
     double ymin = hSignal->GetMinimum();
     if (ymin > 0) ymin = 0;
     
-    int colSignal = TColor::GetColor("#2e8b57"); // シグナルも落ち着いた緑に
+    int colSignal = TColor::GetColor("#2e8b57");
     
     hSignal->SetLineColor(colSignal);
     hSignal->SetMarkerColor(colSignal);
@@ -107,7 +104,7 @@ void AnalysisMassReal() {
     leg2->AddEntry(hSignal, "Unlike - bkg", "lep");
     leg2->Draw();
 
-    c2->SaveAs("Unlike_bkg.png");
+    c2->SaveAs("Unlike_bkg_ALL.png");
 
     // ファイルを閉じる
     f->Close();

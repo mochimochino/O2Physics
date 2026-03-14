@@ -403,7 +403,6 @@ void Massfit_crystal()
   TH1D* hRatio = (TH1D*)hSignal->Clone("hRatio");
   hRatio->SetTitle("");
 
-
   for (int i = 1; i <= hRatio->GetNbinsX(); i++) {
     double xc     = hRatio->GetBinCenter(i);
     if (xc >= drawMin && xc <= drawMax) {

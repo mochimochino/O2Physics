@@ -41,7 +41,9 @@ struct MyUPCMass01Task {
   // Histogram registry: an object to hold your histograms
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
   Configurable<int> nBinsPt{"nBinsPt", 500, "N bins in pT histo"};
-  Configurable<int> nBinsMass{"nBinsMass", 200, "N bins in InvMass histo (50 MeV/c^2 per bin)"};
+  // Configurable<int> nBinsMass{"nBinsMass", 200, "N bins in InvMass histo (50 MeV/c^2 per bin)"};
+  // (10 MeV/c^2)
+  Configurable<int> nBinsMass{"nBinsMass", 1000, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
 
   Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
   Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};

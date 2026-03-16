@@ -41,8 +41,8 @@ struct MyUPCMassJpsiTask {
 
   // Histogram registry: an object to hold your histograms
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject};
-  Configurable<int> nBinsPt{"nBinsPt", 100, "N bins in pT histo"};
-  Configurable<int> nBinsMass{"nBinsMass", 60, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
+  Configurable<int> nBinsPt{"nBinsPt", 270, "N bins in pT histo (10 MeV/c per bin)"};
+  Configurable<int> nBinsMass{"nBinsMass", 500, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
 
   Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
   Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};
@@ -57,8 +57,8 @@ struct MyUPCMassJpsiTask {
     // define axes you want to use
     const AxisSpec axisCounter{1, 0, +1, ""};
     const AxisSpec axisEta{80, -5.0, -2.0, "#eta"};
-    const AxisSpec axisPt{nBinsPt, 0.0, 2.0, "p_{T}"};     // Increased resolution for low pT
-    const AxisSpec axisM{nBinsMass, 2.8, 3.4, "M_{mumu}"}; // Focused on J/psi region
+    const AxisSpec axisPt{nBinsPt, 0.0, 2.7, "p_{T}"};     // Increased resolution for low pT
+    const AxisSpec axisM{nBinsMass, 2.8, 3.3, "M_{mumu}"}; // Focused on J/psi region
     const AxisSpec axisPhi{120, -TMath::Pi(), -TMath::Pi(), "#phi"};
     const AxisSpec axisRapidity{80, -5.0, -2.0, "#it{y}"};
 
@@ -151,7 +151,7 @@ struct MyUPCMassJpsiTask {
     registry.fill(HIST("hSelectionCounter"), 7);
 
     // pair pt cut (pT < 1.0 GeV/c for J/psi region)
-    if (p.Pt() >= 1.0)
+    if (p.Pt() >= 3.0)
       return;
     registry.fill(HIST("hSelectionCounter"), 8);
 
@@ -160,8 +160,8 @@ struct MyUPCMassJpsiTask {
       return;
     registry.fill(HIST("hSelectionCounter"), 9);
 
-    // cuts on pair kinematics (J/psi region: 2.8 - 3.4 GeV/c^2)
-    if (!(p.M() > 2.8 && p.M() < 3.4))
+    // cuts on pair kinematics (J/psi region: 2.8 - 3.3 GeV/c^2)
+    if (!(p.M() > 2.8 && p.M() < 3.3))
       return;
     registry.fill(HIST("hSelectionCounter"), 10);
 

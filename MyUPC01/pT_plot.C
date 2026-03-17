@@ -43,10 +43,10 @@ void pT_plot()
 
   // 3. Signal Extraction (Unlike - Like)
   TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
-  hSignal->Add(hLike, -1.0);
+  // hSignal->Add(hLike, -1.0);
 
   double binWidth = hSignal->GetXaxis()->GetBinWidth(1);
-  hSignal->SetTitle(Form("Signal p_{T} (Unlike - Like); p_{T} [GeV/c]; Counts / (%.3f GeV/c)", binWidth));
+  hSignal->SetTitle(Form("Signal p_{T} (Unlike); p_{T} [GeV/c]; Counts / (%.3f GeV/c)", binWidth));
   hSignal->SetLineColor(kBlack);
   hSignal->SetMarkerColor(kBlack);
   hSignal->SetLineWidth(2);

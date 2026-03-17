@@ -29,3 +29,17 @@ o2physics_add_dpl_workflow(my-upc-mass-jpsi
                            SOURCES MyUPCMassJpsi.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(my-upc-rapitity
+                           SOURCES MyUPC_rapidity.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(my-upc-rapitity-jpsi
+                           SOURCES MyUPC_rapidity_Jpsi.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+o2physics_add_dpl_workflow(my-upc-luminosity
+                           SOURCES MyUPC_Luminosity.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)

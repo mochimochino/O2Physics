@@ -14,22 +14,23 @@
 /// \date 2026
 
 // O2 headers
-#include "Framework/runDataProcessing.h"
-#include "Framework/AnalysisTask.h"
 #include "Framework/AnalysisDataModel.h"
+#include "Framework/AnalysisTask.h"
+#include "Framework/runDataProcessing.h"
 
 // O2Physics headers
-#include "PWGUD/DataModel/UDTables.h"
 #include "PWGUD/Core/UDHelpers.h"
+#include "PWGUD/DataModel/UDTables.h"
+
 #include "CCDB/BasicCCDBManager.h"
-#include "DataFormatsParameters/GRPLHCIFData.h"
 #include "DataFormatsParameters/GRPECSObject.h"
+#include "DataFormatsParameters/GRPLHCIFData.h"
 
 // ROOT headers
-#include "TSystem.h"
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
+#include "TSystem.h"
 
 using namespace o2;
 using namespace o2::framework;
@@ -144,8 +145,10 @@ struct MyUPCMass01Task {
     auto checkPDCA = [](auto& tr) {
       double r = tr.rAtAbsorberEnd();
       double pdca = tr.pDca();
-      if (r < 26.5) return pdca < 350.0;
-      else return pdca < 200.0;
+      if (r < 26.5)
+        return pdca < 350.0;
+      else
+        return pdca < 200.0;
     };
     if (!checkPDCA(tr1) || !checkPDCA(tr2))
       return;
@@ -245,31 +248,40 @@ struct MyUPCMass01Task {
 
       int32_t candID = item.first;
 
-
-      if (candID >= zdcs.size()) {
-         continue; // データが存在しないインデックスの場合はスキップ
-      }
       // ZDC topology selection
-      const auto& zdc = zdcs.iteratorAt(candID);
-      
-      float eZNA = zdc.energyCommonZNA();
-      float eZNC = zdc.energyCommonZNC();
-      bool hasZNA = eZNA > static_cast<float>(cutZNAEnergy);
-      bool hasZNC = eZNC > static_cast<float>(cutZNCEnergy);
+      // targetTopology が -1 (No Cut) の場合はこのブロックを完全にスキップする
+      if (targetTopology > -1) {
+        // ZDCカットが必要な場合のみ、データの存在を確認する
+        if (candID >= zdcs.size()) {
+          continue; // ZDCデータが存在しないため、要求されたトポロジーを満たせないとしてスキップ
+        }
 
-      int currentTopology = 0;
-      if      (!hasZNA && !hasZNC) currentTopology = 0; // 0n0n
-      else if ( hasZNA && !hasZNC) currentTopology = 1; // Xn0n
-      else if (!hasZNA &&  hasZNC) currentTopology = 2; // 0nXn
-      else                         currentTopology = 3; // XnXn
+        const auto& zdc = zdcs.iteratorAt(candID);
 
-      if (targetTopology > -1 && currentTopology != targetTopology) {
-        continue;
+        float eZNA = zdc.energyCommonZNA();
+        float eZNC = zdc.energyCommonZNC();
+        bool hasZNA = eZNA > static_cast<float>(cutZNAEnergy);
+        bool hasZNC = eZNC > static_cast<float>(cutZNCEnergy);
+
+        int currentTopology = 0;
+        if (!hasZNA && !hasZNC)
+          currentTopology = 0; // 0n0n
+        else if (hasZNA && !hasZNC)
+          currentTopology = 1; // Xn0n
+        else if (!hasZNA && hasZNC)
+          currentTopology = 2; // 0nXn
+        else
+          currentTopology = 3; // XnXn
+
+        // 指定されたトポロジーと異なる場合はスキップ
+        if (currentTopology != targetTopology) {
+          continue;
+        }
       }
       // --------------------------------------------------
 
       const auto& collision = eventCandidates.iteratorAt(candID);
-      
+
       // Iterate over pairs if there are >= 2 tracks (or just first 2 like UDTutorial_06)
       for (size_t i = 0; i < item.second.size() - 1; ++i) {
         for (size_t j = i + 1; j < item.second.size(); ++j) {

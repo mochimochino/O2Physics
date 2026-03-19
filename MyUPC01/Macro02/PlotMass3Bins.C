@@ -50,7 +50,7 @@ void PlotMass3Bins(const char* filename = "AnalysisResults.root")
   for (int i = 0; i < 3; ++i) {
     pads[i]->cd();
 
-    gPad->SetMargin(0.15, 0.07, 0.15, 0.07);
+    gPad->SetMargin(0.18, 0.04, 0.15, 0.07);
 
     double ymin = y_bins[i];
     double ymax = y_bins[i + 1];
@@ -82,7 +82,7 @@ void PlotMass3Bins(const char* filename = "AnalysisResults.root")
     hUnlike->GetXaxis()->SetLabelSize(0.045);
     hUnlike->GetYaxis()->SetLabelSize(0.045);
 
-    hUnlike->GetYaxis()->SetTitleOffset(1.4);
+    hUnlike->GetYaxis()->SetTitleOffset(1.8);
 
     hUnlike->Draw("PE");
 

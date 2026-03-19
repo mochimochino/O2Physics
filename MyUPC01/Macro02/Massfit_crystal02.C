@@ -12,6 +12,28 @@
 #include <iostream>
 
 // ==========================================
+// Global Constants & MC Parameters
+// ==========================================
+const double PDG_M_JPSI = 3.09691;
+const double PDG_M_PSI2S = 3.68609;
+const double DELTA_M = PDG_M_PSI2S - PDG_M_JPSI;
+
+// --- MCから得られる予定のパラメータ（判明したらここを更新してください） ---
+const double MC_WIDTH_RATIO = 1.0; // J/psi と psi(2S) の Width Ratio
+
+// J/psi Tails (MC)
+const double MC_JPSI_A1 = 1.0; // Left tail alpha
+const double MC_JPSI_N1 = 2.0; // Left tail n
+const double MC_JPSI_A2 = 2.5; // Right tail alpha (Negligible impact, fixed)
+const double MC_JPSI_N2 = 3.0; // Right tail n (Negligible impact, fixed)
+
+// psi(2S) Tails (MC) -> All fixed
+const double MC_PSI2S_A1 = 1.0;
+const double MC_PSI2S_N1 = 2.0;
+const double MC_PSI2S_A2 = 2.5;
+const double MC_PSI2S_N2 = 3.0;
+
+// ==========================================
 // Function definitions
 // ==========================================
 
@@ -44,14 +66,12 @@ Double_t DSCB(Double_t* x, Double_t* par)
 }
 
 // ------------------------------------------
-// Dimuon Continuum: Expo3
+// Background Functions
 // ------------------------------------------
 Double_t Expo3(Double_t* x, Double_t* par)
 {
-  double m = x[0];
-  return par[0] * TMath::Exp(par[1] * m + par[2] * m * m);
+  return par[0] * TMath::Exp(par[1] * x[0] + par[2] * x[0] * x[0]);
 }
-
 Double_t Expo3Sideband(Double_t* x, Double_t* par)
 {
   if ((x[0] > 2.9 && x[0] < 3.3) || (x[0] > 3.55 && x[0] < 3.8)) {
@@ -61,79 +81,88 @@ Double_t Expo3Sideband(Double_t* x, Double_t* par)
   return par[0] * TMath::Exp(par[1] * x[0] + par[2] * x[0] * x[0]);
 }
 
-// ------------------------------------------
-// Background: ExpoPol4
-// ------------------------------------------
 Double_t ExpoPol4(Double_t* x, Double_t* par)
 {
-  double m = x[0];
-  double poly = par[2] + par[3] * m + par[4] * m * m + par[5] * m * m * m + par[6] * m * m * m * m;
-  return par[0] * TMath::Exp(par[1] * m) * poly;
+  double poly = par[2] + par[3] * x[0] + par[4] * x[0] * x[0] + par[5] * x[0] * x[0] * x[0] + par[6] * x[0] * x[0] * x[0] * x[0];
+  return par[0] * TMath::Exp(par[1] * x[0]) * poly;
 }
-
 Double_t ExpoPol4Sideband(Double_t* x, Double_t* par)
 {
   if ((x[0] > 2.9 && x[0] < 3.3) || (x[0] > 3.55 && x[0] < 3.8)) {
     TF1::RejectPoint();
     return 0;
   }
-  double m = x[0];
-  double poly = par[2] + par[3] * m + par[4] * m * m + par[5] * m * m * m + par[6] * m * m * m * m;
-  return par[0] * TMath::Exp(par[1] * m) * poly;
+  return ExpoPol4(x, par);
 }
 
-// ------------------------------------------
-// Background: VMG
-// ------------------------------------------
-Double_t VMG(Double_t* x, Double_t* par)
+Double_t VWG(Double_t* x, Double_t* par)
 {
-  double m = x[0];
   double mbar = par[1];
-  double sigma = par[2] + par[3] * (m - mbar) / mbar;
+  double sigma = par[2] + par[3] * (x[0] - mbar) / mbar;
   if (sigma <= 0)
     return 0;
-  return par[0] * TMath::Exp(-(m - mbar) * (m - mbar) / (2.0 * sigma * sigma));
+  return par[0] * TMath::Exp(-(x[0] - mbar) * (x[0] - mbar) / (2.0 * sigma * sigma));
 }
 
-// ------------------------------------------
-// Background: ExpoPol2
-// ------------------------------------------
 Double_t ExpoPol2(Double_t* x, Double_t* par)
 {
-  double m = x[0];
-  double poly = par[2] + par[3] * m + par[4] * m * m;
-  return par[0] * TMath::Exp(par[1] * m) * poly;
+  double poly = par[2] + par[3] * x[0] + par[4] * x[0] * x[0];
+  return par[0] * TMath::Exp(par[1] * x[0]) * poly;
 }
-
 Double_t ExpoPol2Sideband(Double_t* x, Double_t* par)
 {
   if ((x[0] > 2.9 && x[0] < 3.3) || (x[0] > 3.55 && x[0] < 3.8)) {
     TF1::RejectPoint();
     return 0;
   }
-  double m = x[0];
-  double poly = par[2] + par[3] * m + par[4] * m * m;
-  return par[0] * TMath::Exp(par[1] * m) * poly;
+  return ExpoPol2(x, par);
 }
 
 // ------------------------------------------
-// Total Fit Functions
+// Total Fit Functions (Strict Parameter Tying)
 // ------------------------------------------
+// Parameter mapping (0-12):
+// 0: N_Jpsi, 1: m_Jpsi, 2: sigma_Jpsi, 3: a1_Jpsi, 4: n1_Jpsi, 5: a2_Jpsi, 6: n2_Jpsi
+// 7: N_psi2s, 8: a1_psi2s, 9: n1_psi2s, 10: a2_psi2s, 11: n2_psi2s
+// 12: MC_WIDTH_RATIO (Fixed, varied for systematics)
+// 13+: Background parameters
+void SetTiedParameters(Double_t* par, double* parJpsi, double* parPsi2s)
+{
+  for (int i = 0; i < 7; i++)
+    parJpsi[i] = par[i];
+  double width_ratio = par[12];
+  parPsi2s[0] = par[7];
+  parPsi2s[1] = par[1] + DELTA_M;           // Tied Mass
+  parPsi2s[2] = par[2] * 1.1 * width_ratio; // Tied Sigma
+  parPsi2s[3] = par[8];
+  parPsi2s[4] = par[9];
+  parPsi2s[5] = par[10];
+  parPsi2s[6] = par[11];
+}
+
 Double_t TotalFit_Main(Double_t* x, Double_t* par)
 {
-  return DSCB(x, &par[0]) + DSCB(x, &par[7]) + Expo3(x, &par[14]);
+  double parJpsi[7], parPsi2s[7];
+  SetTiedParameters(par, parJpsi, parPsi2s);
+  return DSCB(x, parJpsi) + DSCB(x, parPsi2s) + Expo3(x, &par[13]);
 }
 Double_t TotalFit_Sys_ExpoPol4(Double_t* x, Double_t* par)
 {
-  return DSCB(x, &par[0]) + DSCB(x, &par[7]) + ExpoPol4(x, &par[14]);
+  double parJpsi[7], parPsi2s[7];
+  SetTiedParameters(par, parJpsi, parPsi2s);
+  return DSCB(x, parJpsi) + DSCB(x, parPsi2s) + ExpoPol4(x, &par[13]);
 }
 Double_t TotalFit_Sys_VWG(Double_t* x, Double_t* par)
 {
-  return DSCB(x, &par[0]) + DSCB(x, &par[7]) + VMG(x, &par[14]);
+  double parJpsi[7], parPsi2s[7];
+  SetTiedParameters(par, parJpsi, parPsi2s);
+  return DSCB(x, parJpsi) + DSCB(x, parPsi2s) + VWG(x, &par[13]);
 }
 Double_t TotalFit_Sys_ExpoPol2(Double_t* x, Double_t* par)
 {
-  return DSCB(x, &par[0]) + DSCB(x, &par[7]) + ExpoPol2(x, &par[14]);
+  double parJpsi[7], parPsi2s[7];
+  SetTiedParameters(par, parJpsi, parPsi2s);
+  return DSCB(x, parJpsi) + DSCB(x, parPsi2s) + ExpoPol2(x, &par[13]);
 }
 
 // ==========================================
@@ -148,41 +177,26 @@ void Massfit_crystal02()
 
   TFile* f = TFile::Open("/media/takuma/ESD-EAWA/Data/UPCcandMuon/test/0318/AnalysisResults.root", "READ");
   if (!f || f->IsZombie()) {
-    std::cerr << "ERROR: Cannot open Analysis file" << std::endl;
+    std::cerr << "ERROR: Cannot open Analysis file\n";
     return;
   }
 
-  // 02タスクのディレクトリ名
   TString dir = "my-upc-mass-02/registry/";
-
   TH1* hUnlike = dynamic_cast<TH1*>(f->Get(dir + "hMassUnlike"));
-  // 修正: 02タスクの定義に合わせて "hMassLike" (Lが大文字) に変更
-  TH1* hLike = dynamic_cast<TH1*>(f->Get(dir + "hMassLike"));
-
   if (!hUnlike) {
-    std::cerr << "ERROR: Cannot get histogram: hMassUnlike" << std::endl;
-    return;
-  }
-  if (!hLike) {
-    std::cerr << "ERROR: Cannot get histogram: hMassLike" << std::endl;
+    std::cerr << "ERROR: Cannot get histogram\n";
     return;
   }
 
-  // 10 MeV/bin -> 30 MeV/bin
-  hUnlike->Rebin(3);
-  hLike->Rebin(3);
+  hUnlike->Rebin(25); // 10 MeV -> 25 MeV
 
-  double drawMin = 1.75;
-  double drawMax = 6.0;
-  double fitRangeMin = 1.75;
-  double fitRangeMax = 6.0;
+  double drawMin = 2.0;
+  double drawMax = 4.5;
+  double fitRangeMin = 2.5;
+  double fitRangeMax = 4.5;
 
-  // ========================================
-  // Signal Extraction Don't use Like-sign method
-  // ========================================
   TH1* hSignal = (TH1*)hUnlike->Clone("hSignal");
-  hSignal->SetTitle("Signal (Unlike) ALL; m_{#mu#mu} [GeV/c^{2}]; Counts / (30 MeV/c^{2})");
-  // hSignal->Add(hLike, -1.0); // 現在Like-sign減算はコメントアウト
+  hSignal->SetTitle("Signal (Unlike) ALL; m_{#mu#mu} [GeV/c^{2}]; Counts");
   double ymin = hSignal->GetMinimum();
   if (ymin > 0)
     ymin = 0;
@@ -193,9 +207,17 @@ void Massfit_crystal02()
   hSignal->GetXaxis()->SetRangeUser(drawMin, drawMax);
   hSignal->GetYaxis()->SetRangeUser(ymin * 1.2, hSignal->GetMaximum() * 1.5);
 
-  // =======================================
-  // Background Sideband Fits
-  // =======================================
+  double binWidth = hSignal->GetXaxis()->GetBinWidth(1);
+
+  // --- Raw Continuum Outside Fit Region ---
+  int binMinFit = hSignal->GetXaxis()->FindBin(fitRangeMin);
+  int binMaxFit = hSignal->GetXaxis()->FindBin(fitRangeMax) - 1;
+  double rawYieldLow = hSignal->Integral(1, binMinFit - 1);
+  double rawYieldHigh = hSignal->Integral(binMaxFit + 1, hSignal->GetNbinsX());
+  double rawContinuumOutside = rawYieldLow + rawYieldHigh;
+  double errRawContinuumOutside = TMath::Sqrt(rawContinuumOutside);
+
+  // --- Sideband Fits ---
   double initScale = hSignal->GetBinContent(hSignal->FindBin(fitRangeMin));
   if (initScale <= 0)
     initScale = 100.0;
@@ -215,308 +237,201 @@ void Massfit_crystal02()
   hSignal->Fit("fExpoPol2Sideband", "R0Q");
 
   double maxValJpsi = hSignal->GetMaximum();
-  double binWidth = hSignal->GetXaxis()->GetBinWidth(1);
+
+  // Helper lambda to setup base parameters for any TotalFit
+  auto setupBaseParams = [&](TF1* f) {
+    f->SetParameter(0, maxValJpsi);
+    f->SetParLimits(0, 0.0, maxValJpsi * 5.0); // N_Jpsi
+    f->SetParameter(1, PDG_M_JPSI);
+    f->SetParLimits(1, 3.05, 3.15); // m_Jpsi (Free)
+    f->SetParameter(2, 0.08);
+    f->SetParLimits(2, 0.05, 0.12); // sigma_Jpsi (Free)
+
+    f->SetParameter(3, MC_JPSI_A1); // J/psi a1 (Free in Nominal)
+    f->SetParameter(4, MC_JPSI_N1); // J/psi n1 (Free in Nominal)
+
+    f->FixParameter(5, MC_JPSI_A2); // J/psi a2 (Fixed)
+    f->FixParameter(6, MC_JPSI_N2); // J/psi n2 (Fixed)
+
+    f->SetParameter(7, maxValJpsi * 0.02);
+    f->SetParLimits(7, 0.0, maxValJpsi); // N_psi2s
+
+    f->FixParameter(8, MC_PSI2S_A1); // psi(2S) tails (All Fixed)
+    f->FixParameter(9, MC_PSI2S_N1);
+    f->FixParameter(10, MC_PSI2S_A2);
+    f->FixParameter(11, MC_PSI2S_N2);
+
+    f->FixParameter(12, MC_WIDTH_RATIO); // Width Ratio (Fixed in Nominal)
+  };
 
   // =======================================
-  // Nominal Fit (Expo3 - Psi2S Fixed)
+  // 0. Nominal Fit (Expo3)
   // =======================================
-  TF1* fitFunc = new TF1("fitFunc", TotalFit_Main, fitRangeMin, fitRangeMax, 17);
-  fitFunc->SetParameter(0, maxValJpsi);
-  fitFunc->SetParameter(1, 3.075);
-  fitFunc->SetParameter(2, 0.08);
-  fitFunc->SetParLimits(0, 0.0, maxValJpsi * 5.0);
-  fitFunc->SetParLimits(1, 3.05, 3.10);
-  fitFunc->SetParLimits(2, 0.05, 0.12);
-  fitFunc->FixParameter(3, 1.5);
-  fitFunc->FixParameter(4, 3.0);
-  fitFunc->FixParameter(5, 1.5);
-  fitFunc->FixParameter(6, 3.0);
+  TF1* fitFunc = new TF1("fitFunc", TotalFit_Main, fitRangeMin, fitRangeMax, 16);
+  setupBaseParams(fitFunc);
+  fitFunc->SetParameter(13, fExpo3Sideband->GetParameter(0));
+  fitFunc->SetParameter(14, fExpo3Sideband->GetParameter(1));
+  fitFunc->SetParameter(15, fExpo3Sideband->GetParameter(2));
 
-  fitFunc->SetParameter(7, maxValJpsi * 0.02);
-  fitFunc->SetParLimits(7, 0.0, maxValJpsi);
-  fitFunc->FixParameter(8, 3.664);
-  fitFunc->FixParameter(9, 0.095);
-  fitFunc->FixParameter(10, 1.5);
-  fitFunc->FixParameter(11, 3.0);
-  fitFunc->FixParameter(12, 1.5);
-  fitFunc->FixParameter(13, 3.0);
-
-  fitFunc->SetParameter(14, fExpo3Sideband->GetParameter(0));
-  fitFunc->SetParameter(15, fExpo3Sideband->GetParameter(1));
-  fitFunc->SetParameter(16, fExpo3Sideband->GetParameter(2));
-
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Nominal Fit (Expo3, Psi2S Fixed) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Nominal Fit (Expo3) ===" << std::endl;
   hSignal->Fit("fitFunc", "RM0");
-
-  TF1* fitSigJpsi_Main = new TF1("fitSigJpsi_Main", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Main->SetParameter(i, fitFunc->GetParameter(i));
-  double yieldJpsi_Main = fitSigJpsi_Main->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Main = yieldJpsi_Main * (fitFunc->GetParError(0) / fitFunc->GetParameter(0));
-
-  TF1* fitSigPsi2s_Main = new TF1("fitSigPsi2s_Main", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Main->SetParameter(i, fitFunc->GetParameter(7 + i));
-  double yieldPsi2s_Main = fitSigPsi2s_Main->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Main = yieldPsi2s_Main * (fitFunc->GetParError(7) / fitFunc->GetParameter(7));
+  double yieldJpsi_Main = fitFunc->GetParameter(0) / binWidth; // 簡易収量
+  double yieldPsi2s_Main = fitFunc->GetParameter(7) / binWidth;
+  TF1* fBkg0 = new TF1("fBkg0", Expo3, drawMin, drawMax, 3);
+  for (int i = 0; i < 3; i++)
+    fBkg0->SetParameter(i, fitFunc->GetParameter(13 + i));
+  double totalContinuum_Main = rawContinuumOutside + fBkg0->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
   // Sys1 Fit (ExpoPol4)
   // =======================================
-  TF1* fitFunc_Sys1 = new TF1("fitFunc_Sys1", TotalFit_Sys_ExpoPol4, fitRangeMin, fitRangeMax, 21);
-  for (int i = 0; i < 14; i++) {
-    fitFunc_Sys1->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 3 || i == 4 || i == 5 || i == 6 || i == 8 || i == 9 || i == 10 || i == 11 || i == 12 || i == 13) {
-      fitFunc_Sys1->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys1->SetParLimits(i, pmin, pmax);
-    }
+  TF1* fitFunc_Sys1 = new TF1("fitFunc_Sys1", TotalFit_Sys_ExpoPol4, fitRangeMin, fitRangeMax, 20);
+  setupBaseParams(fitFunc_Sys1);
+  for (int i = 0; i < 7; i++) {
+    double sb_val = fExpoPol4Sideband->GetParameter(i);
+    fitFunc_Sys1->SetParameter(13 + i, sb_val);
+    if (i > 2)
+      fitFunc_Sys1->SetParLimits(13 + i, sb_val - std::abs(sb_val) * 5.0 - 0.1, sb_val + std::abs(sb_val) * 5.0 + 0.1);
   }
-  for (int i = 0; i < 7; i++)
-    fitFunc_Sys1->SetParameter(14 + i, fExpoPol4Sideband->GetParameter(i));
-  fitFunc_Sys1->FixParameter(14 + 2, 1.0);
+  fitFunc_Sys1->FixParameter(13 + 2, 1.0);
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 1 (ExpoPol4) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys1: ExpoPol4 ===" << std::endl;
   hSignal->Fit("fitFunc_Sys1", "RM0");
-
-  TF1* fitSigJpsi_Sys1 = new TF1("fitSigJpsi_Sys1", DSCB, fitRangeMin, fitRangeMax, 7);
+  double yieldJpsi_Sys1 = fitFunc_Sys1->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys1 = fitFunc_Sys1->GetParameter(7) / binWidth;
+  TF1* fBkg1 = new TF1("fBkg1", ExpoPol4, drawMin, drawMax, 7);
   for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys1->SetParameter(i, fitFunc_Sys1->GetParameter(i));
-  double yieldJpsi_Sys1 = fitSigJpsi_Sys1->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys1 = yieldJpsi_Sys1 * (fitFunc_Sys1->GetParError(0) / fitFunc_Sys1->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys1 = new TF1("fitSigPsi2s_Sys1", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys1->SetParameter(i, fitFunc_Sys1->GetParameter(7 + i));
-  double yieldPsi2s_Sys1 = fitSigPsi2s_Sys1->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys1 = yieldPsi2s_Sys1 * (fitFunc_Sys1->GetParError(7) / fitFunc_Sys1->GetParameter(7));
+    fBkg1->SetParameter(i, fitFunc_Sys1->GetParameter(13 + i));
+  double totalContinuum_Sys1 = rawContinuumOutside + fBkg1->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
-  // Sys2 Fit (VMG)
+  // Sys2 Fit (VWG)
   // =======================================
-  TF1* fitFunc_Sys2 = new TF1("fitFunc_Sys2", TotalFit_Sys_VWG, fitRangeMin, fitRangeMax, 18);
-  for (int i = 0; i < 14; i++) {
-    fitFunc_Sys2->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 3 || i == 4 || i == 5 || i == 6 || i == 8 || i == 9 || i == 10 || i == 11 || i == 12 || i == 13) {
-      fitFunc_Sys2->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys2->SetParLimits(i, pmin, pmax);
-    }
-  }
-  fitFunc_Sys2->SetParameter(14, 100.0);
-  fitFunc_Sys2->SetParameter(15, 3.1);
-  fitFunc_Sys2->SetParameter(16, 1.0);
-  fitFunc_Sys2->SetParameter(17, 0.0);
+  TF1* fitFunc_Sys2 = new TF1("fitFunc_Sys2", TotalFit_Sys_VWG, fitRangeMin, fitRangeMax, 17);
+  setupBaseParams(fitFunc_Sys2);
+  fitFunc_Sys2->SetParameter(13, 100.0);
+  fitFunc_Sys2->SetParameter(14, 3.1);
+  fitFunc_Sys2->SetParameter(15, 1.0);
+  fitFunc_Sys2->SetParameter(16, 0.0);
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 2 (VMG) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys2: VWG ===" << std::endl;
   hSignal->Fit("fitFunc_Sys2", "RM0");
-
-  TF1* fitSigJpsi_Sys2 = new TF1("fitSigJpsi_Sys2", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys2->SetParameter(i, fitFunc_Sys2->GetParameter(i));
-  double yieldJpsi_Sys2 = fitSigJpsi_Sys2->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys2 = yieldJpsi_Sys2 * (fitFunc_Sys2->GetParError(0) / fitFunc_Sys2->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys2 = new TF1("fitSigPsi2s_Sys2", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys2->SetParameter(i, fitFunc_Sys2->GetParameter(7 + i));
-  double yieldPsi2s_Sys2 = fitSigPsi2s_Sys2->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys2 = yieldPsi2s_Sys2 * (fitFunc_Sys2->GetParError(7) / fitFunc_Sys2->GetParameter(7));
+  double yieldJpsi_Sys2 = fitFunc_Sys2->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys2 = fitFunc_Sys2->GetParameter(7) / binWidth;
+  TF1* fBkg2 = new TF1("fBkg2", VWG, drawMin, drawMax, 4);
+  for (int i = 0; i < 4; i++)
+    fBkg2->SetParameter(i, fitFunc_Sys2->GetParameter(13 + i));
+  double totalContinuum_Sys2 = rawContinuumOutside + fBkg2->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
   // Sys3 Fit (ExpoPol2)
   // =======================================
-  TF1* fitFunc_Sys3 = new TF1("fitFunc_Sys3", TotalFit_Sys_ExpoPol2, fitRangeMin, fitRangeMax, 19);
-  for (int i = 0; i < 14; i++) {
-    fitFunc_Sys3->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 3 || i == 4 || i == 5 || i == 6 || i == 8 || i == 9 || i == 10 || i == 11 || i == 12 || i == 13) {
-      fitFunc_Sys3->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys3->SetParLimits(i, pmin, pmax);
-    }
-  }
+  TF1* fitFunc_Sys3 = new TF1("fitFunc_Sys3", TotalFit_Sys_ExpoPol2, fitRangeMin, fitRangeMax, 18);
+  setupBaseParams(fitFunc_Sys3);
   for (int i = 0; i < 5; i++)
-    fitFunc_Sys3->SetParameter(14 + i, fExpoPol2Sideband->GetParameter(i));
-  fitFunc_Sys3->FixParameter(14 + 2, 1.0);
+    fitFunc_Sys3->SetParameter(13 + i, fExpoPol2Sideband->GetParameter(i));
+  fitFunc_Sys3->FixParameter(13 + 2, 1.0);
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 3 (ExpoPol2) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys3: ExpoPol2 ===" << std::endl;
   hSignal->Fit("fitFunc_Sys3", "RM0");
-
-  TF1* fitSigJpsi_Sys3 = new TF1("fitSigJpsi_Sys3", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys3->SetParameter(i, fitFunc_Sys3->GetParameter(i));
-  double yieldJpsi_Sys3 = fitSigJpsi_Sys3->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys3 = yieldJpsi_Sys3 * (fitFunc_Sys3->GetParError(0) / fitFunc_Sys3->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys3 = new TF1("fitSigPsi2s_Sys3", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys3->SetParameter(i, fitFunc_Sys3->GetParameter(7 + i));
-  double yieldPsi2s_Sys3 = fitSigPsi2s_Sys3->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys3 = yieldPsi2s_Sys3 * (fitFunc_Sys3->GetParError(7) / fitFunc_Sys3->GetParameter(7));
+  double yieldJpsi_Sys3 = fitFunc_Sys3->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys3 = fitFunc_Sys3->GetParameter(7) / binWidth;
+  TF1* fBkg3 = new TF1("fBkg3", ExpoPol2, drawMin, drawMax, 5);
+  for (int i = 0; i < 5; i++)
+    fBkg3->SetParameter(i, fitFunc_Sys3->GetParameter(13 + i));
+  double totalContinuum_Sys3 = rawContinuumOutside + fBkg3->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
-  // Sys4 Fit (Expo3, Free Psi2S Mass/Sigma)
+  // Sys4 Fit (J/psi Left Tails Fixed to MC)
   // =======================================
-  TF1* fitFunc_Sys4 = new TF1("fitFunc_Sys4", TotalFit_Main, fitRangeMin, fitRangeMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fitFunc_Sys4->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 3 || i == 4 || i == 5 || i == 6 || i == 10 || i == 11 || i == 12 || i == 13) {
-      fitFunc_Sys4->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 8) {
-      fitFunc_Sys4->SetParLimits(i, 3.60, 3.75);
-    } else if (i == 9) {
-      fitFunc_Sys4->SetParLimits(i, 0.05, 0.15);
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys4->SetParLimits(i, pmin, pmax);
-    }
-  }
+  TF1* fitFunc_Sys4 = new TF1("fitFunc_Sys4", TotalFit_Main, fitRangeMin, fitRangeMax, 16);
+  setupBaseParams(fitFunc_Sys4);
+  fitFunc_Sys4->FixParameter(3, MC_JPSI_A1); // FIXED for Systematic check
+  fitFunc_Sys4->FixParameter(4, MC_JPSI_N1); // FIXED for Systematic check
+  for (int i = 0; i < 3; i++)
+    fitFunc_Sys4->SetParameter(13 + i, fExpo3Sideband->GetParameter(i));
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 4 (Expo3, Free Psi2S) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys4: J/psi Left Tails Fixed ===" << std::endl;
   hSignal->Fit("fitFunc_Sys4", "RM0");
-
-  TF1* fitSigJpsi_Sys4 = new TF1("fitSigJpsi_Sys4", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys4->SetParameter(i, fitFunc_Sys4->GetParameter(i));
-  double yieldJpsi_Sys4 = fitSigJpsi_Sys4->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys4 = yieldJpsi_Sys4 * (fitFunc_Sys4->GetParError(0) / fitFunc_Sys4->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys4 = new TF1("fitSigPsi2s_Sys4", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys4->SetParameter(i, fitFunc_Sys4->GetParameter(7 + i));
-  double yieldPsi2s_Sys4 = fitSigPsi2s_Sys4->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys4 = yieldPsi2s_Sys4 * (fitFunc_Sys4->GetParError(7) / fitFunc_Sys4->GetParameter(7));
+  double yieldJpsi_Sys4 = fitFunc_Sys4->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys4 = fitFunc_Sys4->GetParameter(7) / binWidth;
+  TF1* fBkg4 = new TF1("fBkg4", Expo3, drawMin, drawMax, 3);
+  for (int i = 0; i < 3; i++)
+    fBkg4->SetParameter(i, fitFunc_Sys4->GetParameter(13 + i));
+  double totalContinuum_Sys4 = rawContinuumOutside + fBkg4->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
-  // Sys5 Fit (Expo3, Tail Parameters Low)
+  // Sys5 Fit (Width Ratio + 0.1)
   // =======================================
-  TF1* fitFunc_Sys5 = new TF1("fitFunc_Sys5", TotalFit_Main, fitRangeMin, fitRangeMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fitFunc_Sys5->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 8 || i == 9) {
-      fitFunc_Sys5->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys5->SetParLimits(i, pmin, pmax);
-    }
-  }
-  fitFunc_Sys5->FixParameter(3, 1.2);
-  fitFunc_Sys5->FixParameter(4, 2.5);
-  fitFunc_Sys5->FixParameter(5, 1.2);
-  fitFunc_Sys5->FixParameter(6, 2.5);
-  fitFunc_Sys5->FixParameter(10, 1.2);
-  fitFunc_Sys5->FixParameter(11, 2.5);
-  fitFunc_Sys5->FixParameter(12, 1.2);
-  fitFunc_Sys5->FixParameter(13, 2.5);
+  TF1* fitFunc_Sys5 = new TF1("fitFunc_Sys5", TotalFit_Main, fitRangeMin, fitRangeMax, 16);
+  setupBaseParams(fitFunc_Sys5);
+  fitFunc_Sys5->FixParameter(12, MC_WIDTH_RATIO + 0.1); // Systematic Variation
+  for (int i = 0; i < 3; i++)
+    fitFunc_Sys5->SetParameter(13 + i, fExpo3Sideband->GetParameter(i));
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 5 (Expo3, Tail Low) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys5: Width Ratio + 0.1 ===" << std::endl;
   hSignal->Fit("fitFunc_Sys5", "RM0");
-
-  TF1* fitSigJpsi_Sys5 = new TF1("fitSigJpsi_Sys5", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys5->SetParameter(i, fitFunc_Sys5->GetParameter(i));
-  double yieldJpsi_Sys5 = fitSigJpsi_Sys5->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys5 = yieldJpsi_Sys5 * (fitFunc_Sys5->GetParError(0) / fitFunc_Sys5->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys5 = new TF1("fitSigPsi2s_Sys5", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys5->SetParameter(i, fitFunc_Sys5->GetParameter(7 + i));
-  double yieldPsi2s_Sys5 = fitSigPsi2s_Sys5->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys5 = yieldPsi2s_Sys5 * (fitFunc_Sys5->GetParError(7) / fitFunc_Sys5->GetParameter(7));
+  double yieldJpsi_Sys5 = fitFunc_Sys5->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys5 = fitFunc_Sys5->GetParameter(7) / binWidth;
+  TF1* fBkg5 = new TF1("fBkg5", Expo3, drawMin, drawMax, 3);
+  for (int i = 0; i < 3; i++)
+    fBkg5->SetParameter(i, fitFunc_Sys5->GetParameter(13 + i));
+  double totalContinuum_Sys5 = rawContinuumOutside + fBkg5->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
-  // Sys6 Fit (Expo3, Tail Parameters High)
+  // Sys6 Fit (Width Ratio - 0.1)
   // =======================================
-  TF1* fitFunc_Sys6 = new TF1("fitFunc_Sys6", TotalFit_Main, fitRangeMin, fitRangeMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fitFunc_Sys6->SetParameter(i, fitFunc->GetParameter(i));
-    if (i == 8 || i == 9) {
-      fitFunc_Sys6->FixParameter(i, fitFunc->GetParameter(i));
-    } else if (i == 0 || i == 1 || i == 2 || i == 7) {
-      double pmin, pmax;
-      fitFunc->GetParLimits(i, pmin, pmax);
-      if (pmin < pmax)
-        fitFunc_Sys6->SetParLimits(i, pmin, pmax);
-    }
-  }
-  fitFunc_Sys6->FixParameter(3, 1.8);
-  fitFunc_Sys6->FixParameter(4, 3.5);
-  fitFunc_Sys6->FixParameter(5, 1.8);
-  fitFunc_Sys6->FixParameter(6, 3.5);
-  fitFunc_Sys6->FixParameter(10, 1.8);
-  fitFunc_Sys6->FixParameter(11, 3.5);
-  fitFunc_Sys6->FixParameter(12, 1.8);
-  fitFunc_Sys6->FixParameter(13, 3.5);
+  TF1* fitFunc_Sys6 = new TF1("fitFunc_Sys6", TotalFit_Main, fitRangeMin, fitRangeMax, 16);
+  setupBaseParams(fitFunc_Sys6);
+  fitFunc_Sys6->FixParameter(12, MC_WIDTH_RATIO - 0.1); // Systematic Variation
+  for (int i = 0; i < 3; i++)
+    fitFunc_Sys6->SetParameter(13 + i, fExpo3Sideband->GetParameter(i));
 
-  std::cout << "\n==========================================" << std::endl;
-  std::cout << "=== Systematic Fit 6 (Expo3, Tail High) ===" << std::endl;
-  std::cout << "==========================================" << std::endl;
+  std::cout << "\n=== Sys6: Width Ratio - 0.1 ===" << std::endl;
   hSignal->Fit("fitFunc_Sys6", "RM0");
-
-  TF1* fitSigJpsi_Sys6 = new TF1("fitSigJpsi_Sys6", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigJpsi_Sys6->SetParameter(i, fitFunc_Sys6->GetParameter(i));
-  double yieldJpsi_Sys6 = fitSigJpsi_Sys6->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errJpsi_Sys6 = yieldJpsi_Sys6 * (fitFunc_Sys6->GetParError(0) / fitFunc_Sys6->GetParameter(0));
-
-  TF1* fitSigPsi2s_Sys6 = new TF1("fitSigPsi2s_Sys6", DSCB, fitRangeMin, fitRangeMax, 7);
-  for (int i = 0; i < 7; i++)
-    fitSigPsi2s_Sys6->SetParameter(i, fitFunc_Sys6->GetParameter(7 + i));
-  double yieldPsi2s_Sys6 = fitSigPsi2s_Sys6->Integral(fitRangeMin, fitRangeMax) / binWidth;
-  double errPsi2s_Sys6 = yieldPsi2s_Sys6 * (fitFunc_Sys6->GetParError(7) / fitFunc_Sys6->GetParameter(7));
+  double yieldJpsi_Sys6 = fitFunc_Sys6->GetParameter(0) / binWidth;
+  double yieldPsi2s_Sys6 = fitFunc_Sys6->GetParameter(7) / binWidth;
+  TF1* fBkg6 = new TF1("fBkg6", Expo3, drawMin, drawMax, 3);
+  for (int i = 0; i < 3; i++)
+    fBkg6->SetParameter(i, fitFunc_Sys6->GetParameter(13 + i));
+  double totalContinuum_Sys6 = rawContinuumOutside + fBkg6->Integral(fitRangeMin, fitRangeMax) / binWidth;
 
   // =======================================
   // Yield Summary Output
   // =======================================
   std::cout << "\n------------- YIELD SUMMARY --------------\n";
   std::cout << "--- J/psi Yield ---" << std::endl;
-  std::cout << Form(" Nominal (Expo3)     = %.1f +/- %.1f\n", yieldJpsi_Main, errJpsi_Main);
-  std::cout << Form(" Sys1 (ExpoPol4)     = %.1f +/- %.1f\n", yieldJpsi_Sys1, errJpsi_Sys1);
-  std::cout << Form(" Sys2 (VMG)          = %.1f +/- %.1f\n", yieldJpsi_Sys2, errJpsi_Sys2);
-  std::cout << Form(" Sys3 (ExpoPol2)     = %.1f +/- %.1f\n", yieldJpsi_Sys3, errJpsi_Sys3);
-  std::cout << Form(" Sys4 (Free Psi2S)   = %.1f +/- %.1f\n", yieldJpsi_Sys4, errJpsi_Sys4);
-  std::cout << Form(" Sys5 (Tail Low)     = %.1f +/- %.1f\n", yieldJpsi_Sys5, errJpsi_Sys5);
-  std::cout << Form(" Sys6 (Tail High)    = %.1f +/- %.1f\n", yieldJpsi_Sys6, errJpsi_Sys6);
+  std::cout << Form(" Nominal (Expo3)     = %.1f \n", yieldJpsi_Main);
+  std::cout << Form(" Sys1 (ExpoPol4)     = %.1f \n", yieldJpsi_Sys1);
+  std::cout << Form(" Sys2 (VWG)          = %.1f \n", yieldJpsi_Sys2);
+  std::cout << Form(" Sys3 (ExpoPol2)     = %.1f \n", yieldJpsi_Sys3);
+  std::cout << Form(" Sys4 (J/psi Tails Fix)= %.1f \n", yieldJpsi_Sys4);
+  std::cout << Form(" Sys5 (WidthRatio+0.1)= %.1f \n", yieldJpsi_Sys5);
+  std::cout << Form(" Sys6 (WidthRatio-0.1)= %.1f \n", yieldJpsi_Sys6);
 
   std::cout << "\n--- psi(2S) Yield ---" << std::endl;
-  std::cout << Form(" Nominal (Expo3)     = %.1f +/- %.1f\n", yieldPsi2s_Main, errPsi2s_Main);
-  std::cout << Form(" Sys1 (ExpoPol4)     = %.1f +/- %.1f\n", yieldPsi2s_Sys1, errPsi2s_Sys1);
-  std::cout << Form(" Sys2 (VMG)          = %.1f +/- %.1f\n", yieldPsi2s_Sys2, errPsi2s_Sys2);
-  std::cout << Form(" Sys3 (ExpoPol2)     = %.1f +/- %.1f\n", yieldPsi2s_Sys3, errPsi2s_Sys3);
-  std::cout << Form(" Sys4 (Free Psi2S)   = %.1f +/- %.1f\n", yieldPsi2s_Sys4, errPsi2s_Sys4);
-  std::cout << Form(" Sys5 (Tail Low)     = %.1f +/- %.1f\n", yieldPsi2s_Sys5, errPsi2s_Sys5);
-  std::cout << Form(" Sys6 (Tail High)    = %.1f +/- %.1f\n", yieldPsi2s_Sys6, errPsi2s_Sys6);
+  std::cout << Form(" Nominal (Expo3)     = %.1f \n", yieldPsi2s_Main);
+  std::cout << Form(" Sys1 (ExpoPol4)     = %.1f \n", yieldPsi2s_Sys1);
+  std::cout << Form(" Sys2 (VWG)          = %.1f \n", yieldPsi2s_Sys2);
+  std::cout << Form(" Sys3 (ExpoPol2)     = %.1f \n", yieldPsi2s_Sys3);
+  std::cout << Form(" Sys4 (J/psi Tails Fix)= %.1f \n", yieldPsi2s_Sys4);
+  std::cout << Form(" Sys5 (WidthRatio+0.1)= %.1f \n", yieldPsi2s_Sys5);
+  std::cout << Form(" Sys6 (WidthRatio-0.1)= %.1f \n", yieldPsi2s_Sys6);
+
+  std::cout << "\n--- Continuum Yield (Raw Outside + Fit Inside) ---" << std::endl;
+  std::cout << Form(" Nominal (Expo3)     = %.1f \n", totalContinuum_Main);
+  std::cout << Form(" Sys1 (ExpoPol4)     = %.1f \n", totalContinuum_Sys1);
+  std::cout << Form(" Sys2 (VWG)          = %.1f \n", totalContinuum_Sys2);
+  std::cout << Form(" Sys3 (ExpoPol2)     = %.1f \n", totalContinuum_Sys3);
+  std::cout << Form(" Sys4 (J/psi Tails Fix)= %.1f \n", totalContinuum_Sys4);
+  std::cout << Form(" Sys5 (WidthRatio+0.1)= %.1f \n", totalContinuum_Sys5);
+  std::cout << Form(" Sys6 (WidthRatio-0.1)= %.1f \n", totalContinuum_Sys6);
   std::cout << "------------------------------------------\n\n";
 
   // ===========================================
   // Draw Macros Helper Function
   // ===========================================
-  auto drawCanvas = [&](TString cname, TString title, TF1* fTot, TF1* fJpsi, TF1* fPsi2s, TF1* fBkg, double yJ, double eJ, double yP, double eP, double origChi2, int origNdf, TString bkgName, TString outName) {
+  auto drawCanvas = [&](TString cname, TString title, TF1* fTot, TF1* fBkg, TString bkgName, TString outName) {
     TCanvas* c = new TCanvas(cname, title, 800, 800);
     TPad* p1 = new TPad("p1_" + cname, "p1", 0, 0.3, 1, 1.0);
     p1->SetBottomMargin(0.02);
@@ -544,10 +459,19 @@ void Massfit_crystal02()
     fBkg->SetLineColor(kCyan);
     fBkg->SetLineStyle(3);
     fBkg->Draw("SAME");
+
+    // Recreate isolated Signal functions for drawing
+    double parJ[7], parP[7];
+    SetTiedParameters((Double_t*)fTot->GetParameters(), parJ, parP);
+    TF1* fJpsi = new TF1("fJpsi_" + cname, DSCB, drawMin, drawMax, 7);
+    fJpsi->SetParameters(parJ);
     fJpsi->SetLineColor(kMagenta);
     fJpsi->SetLineStyle(2);
     fJpsi->SetLineWidth(2);
     fJpsi->Draw("SAME");
+
+    TF1* fPsi2s = new TF1("fPsi2s_" + cname, DSCB, drawMin, drawMax, 7);
+    fPsi2s->SetParameters(parP);
     fPsi2s->SetLineColor(kRed);
     fPsi2s->SetLineStyle(2);
     fPsi2s->SetLineWidth(2);
@@ -564,35 +488,13 @@ void Massfit_crystal02()
     leg->AddEntry(fBkg, bkgName, "l");
     leg->Draw();
 
-    double chi2ndf = (origNdf > 0) ? origChi2 / origNdf : 0.0;
-
     TLatex* latex = new TLatex();
     latex->SetNDC();
     latex->SetTextSize(0.04);
-    latex->SetTextColor(kBlack);
     latex->SetTextFont(42);
-    latex->DrawLatex(0.60, 0.56, Form("p^{#mu#mu}_{T} < 0.25 GeV/c"));
-    latex->DrawLatex(0.60, 0.51, Form("-4.00 < y < -2.50")); // Rapidityの範囲もタスクに合わせて修正
-
-    latex->DrawLatex(0.60, 0.46, Form("#chi^{2}/ndf = %.1f / %d = %.2f", origChi2, origNdf, chi2ndf));
-
-    latex->DrawLatex(0.60, 0.41, Form("M_{J/#psi} = %.3f #pm %.3f GeV/c^{2}", fTot->GetParameter(1), fTot->GetParError(1)));
-    latex->DrawLatex(0.60, 0.36, Form("#sigma_{J/#psi} = %.3f #pm %.3f GeV/c^{2}", fTot->GetParameter(2), fTot->GetParError(2)));
-
-    if (fTot->GetParError(8) > 0) {
-      latex->DrawLatex(0.60, 0.31, Form("M_{#psi(2S)} = %.3f #pm %.3f GeV/c^{2}", fTot->GetParameter(8), fTot->GetParError(8)));
-    } else {
-      latex->DrawLatex(0.60, 0.31, Form("M_{#psi(2S)} = %.3f GeV/c^{2} (Fixed)", fTot->GetParameter(8)));
-    }
-    if (fTot->GetParError(9) > 0) {
-      latex->DrawLatex(0.60, 0.26, Form("#sigma_{#psi(2S)} = %.3f #pm %.3f GeV/c^{2}", fTot->GetParameter(9), fTot->GetParError(9)));
-    } else {
-      latex->DrawLatex(0.60, 0.26, Form("#sigma_{#psi(2S)} = %.3f GeV/c^{2} (Fixed)", fTot->GetParameter(9)));
-    }
-
-    latex->DrawLatex(0.60, 0.21, Form("N_{J/#psi} = %.0f #pm %.0f", yJ, eJ));
-    latex->DrawLatex(0.60, 0.16, Form("N_{#psi(2S)} = %.0f #pm %.0f", yP, eP));
-    latex->DrawLatex(0.60, 0.11, Form("N_{#psi(2S)}/N_{J/#psi} = %.3f #pm %.3f", yP / yJ, yP / yJ * TMath::Sqrt((eP / yP) * (eP / yP) + (eJ / yJ) * (eJ / yJ))));
+    latex->DrawLatex(0.60, 0.56, Form("#chi^{2}/ndf = %.1f / %d = %.2f", fTot->GetChisquare(), fTot->GetNDF(), fTot->GetChisquare() / fTot->GetNDF()));
+    latex->DrawLatex(0.60, 0.50, Form("M_{J/#psi} = %.3f #pm %.3f", fTot->GetParameter(1), fTot->GetParError(1)));
+    latex->DrawLatex(0.60, 0.44, Form("#sigma_{J/#psi} = %.3f #pm %.3f", fTot->GetParameter(2), fTot->GetParError(2)));
 
     p2->cd();
     gPad->SetGridy();
@@ -603,20 +505,14 @@ void Massfit_crystal02()
       if (xc >= drawMin && xc <= drawMax) {
         double d = hS->GetBinContent(i);
         double fv = fTot->Eval(xc);
-        if (fv > 0) {
-          hR->SetBinContent(i, (d - fv) / fv);
-          hR->SetBinError(i, hS->GetBinError(i) / fv);
-        } else {
-          hR->SetBinContent(i, 0);
-          hR->SetBinError(i, 0);
-        }
+        hR->SetBinContent(i, fv > 0 ? (d - fv) / fv : 0);
+        hR->SetBinError(i, fv > 0 ? hS->GetBinError(i) / fv : 0);
       } else {
         hR->SetBinContent(i, 0);
         hR->SetBinError(i, 0);
       }
     }
     hR->SetLineColor(kBlack);
-    hR->SetMarkerColor(kBlack);
     hR->SetMarkerStyle(20);
     hR->GetYaxis()->SetTitle("(Data-Fit)/Fit");
     hR->GetYaxis()->SetRangeUser(-1.5, 1.5);
@@ -639,76 +535,13 @@ void Massfit_crystal02()
   // ===========================================
   // Draw All Fits
   // ===========================================
-
-  TF1* fTot0 = new TF1("fTot0", TotalFit_Main, drawMin, drawMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fTot0->SetParameter(i, fitFunc->GetParameter(i));
-    fTot0->SetParError(i, fitFunc->GetParError(i));
-  }
-  TF1* fBkg0 = new TF1("fBkg0", Expo3, drawMin, drawMax, 3);
-  for (int i = 0; i < 3; i++)
-    fBkg0->SetParameter(i, fitFunc->GetParameter(14 + i));
-  drawCanvas("c2", "Nominal (Expo3)", fTot0, fitSigJpsi_Main, fitSigPsi2s_Main, fBkg0, yieldJpsi_Main, errJpsi_Main, yieldPsi2s_Main, errPsi2s_Main, fitFunc->GetChisquare(), fitFunc->GetNDF(), "Background (Expo3)", "Unlike_bkg_WideRange_crystal.png");
-
-  TF1* fTot1 = new TF1("fTot1", TotalFit_Sys_ExpoPol4, drawMin, drawMax, 21);
-  for (int i = 0; i < 21; i++) {
-    fTot1->SetParameter(i, fitFunc_Sys1->GetParameter(i));
-    fTot1->SetParError(i, fitFunc_Sys1->GetParError(i));
-  }
-  TF1* fBkg1 = new TF1("fBkg1", ExpoPol4, drawMin, drawMax, 7);
-  for (int i = 0; i < 7; i++)
-    fBkg1->SetParameter(i, fitFunc_Sys1->GetParameter(14 + i));
-  drawCanvas("c_sys1", "Sys1 (ExpoPol4)", fTot1, fitSigJpsi_Sys1, fitSigPsi2s_Sys1, fBkg1, yieldJpsi_Sys1, errJpsi_Sys1, yieldPsi2s_Sys1, errPsi2s_Sys1, fitFunc_Sys1->GetChisquare(), fitFunc_Sys1->GetNDF(), "Background (ExpoPol4)", "Unlike_bkg_WideRange_crystal_ExpoPol4.png");
-
-  TF1* fTot2 = new TF1("fTot2", TotalFit_Sys_VWG, drawMin, drawMax, 18);
-  for (int i = 0; i < 18; i++) {
-    fTot2->SetParameter(i, fitFunc_Sys2->GetParameter(i));
-    fTot2->SetParError(i, fitFunc_Sys2->GetParError(i));
-  }
-  TF1* fBkg2 = new TF1("fBkg2", VMG, drawMin, drawMax, 4);
-  for (int i = 0; i < 4; i++)
-    fBkg2->SetParameter(i, fitFunc_Sys2->GetParameter(14 + i));
-  drawCanvas("c_sys2", "Sys2 (VMG)", fTot2, fitSigJpsi_Sys2, fitSigPsi2s_Sys2, fBkg2, yieldJpsi_Sys2, errJpsi_Sys2, yieldPsi2s_Sys2, errPsi2s_Sys2, fitFunc_Sys2->GetChisquare(), fitFunc_Sys2->GetNDF(), "Background (VMG)", "Unlike_bkg_WideRange_crystal_VMG.png");
-
-  TF1* fTot3 = new TF1("fTot3", TotalFit_Sys_ExpoPol2, drawMin, drawMax, 19);
-  for (int i = 0; i < 19; i++) {
-    fTot3->SetParameter(i, fitFunc_Sys3->GetParameter(i));
-    fTot3->SetParError(i, fitFunc_Sys3->GetParError(i));
-  }
-  TF1* fBkg3 = new TF1("fBkg3", ExpoPol2, drawMin, drawMax, 5);
-  for (int i = 0; i < 5; i++)
-    fBkg3->SetParameter(i, fitFunc_Sys3->GetParameter(14 + i));
-  drawCanvas("c_sys3", "Sys3 (ExpoPol2)", fTot3, fitSigJpsi_Sys3, fitSigPsi2s_Sys3, fBkg3, yieldJpsi_Sys3, errJpsi_Sys3, yieldPsi2s_Sys3, errPsi2s_Sys3, fitFunc_Sys3->GetChisquare(), fitFunc_Sys3->GetNDF(), "Background (ExpoPol2)", "Unlike_bkg_WideRange_crystal_ExpoPol2.png");
-
-  TF1* fTot4 = new TF1("fTot4", TotalFit_Main, drawMin, drawMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fTot4->SetParameter(i, fitFunc_Sys4->GetParameter(i));
-    fTot4->SetParError(i, fitFunc_Sys4->GetParError(i));
-  }
-  TF1* fBkg4 = new TF1("fBkg4", Expo3, drawMin, drawMax, 3);
-  for (int i = 0; i < 3; i++)
-    fBkg4->SetParameter(i, fitFunc_Sys4->GetParameter(14 + i));
-  drawCanvas("c_sys4", "Sys4 (Free Psi2S)", fTot4, fitSigJpsi_Sys4, fitSigPsi2s_Sys4, fBkg4, yieldJpsi_Sys4, errJpsi_Sys4, yieldPsi2s_Sys4, errPsi2s_Sys4, fitFunc_Sys4->GetChisquare(), fitFunc_Sys4->GetNDF(), "Background (Expo3)", "Unlike_bkg_WideRange_crystal_FreePsi2S.png");
-
-  TF1* fTot5 = new TF1("fTot5", TotalFit_Main, drawMin, drawMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fTot5->SetParameter(i, fitFunc_Sys5->GetParameter(i));
-    fTot5->SetParError(i, fitFunc_Sys5->GetParError(i));
-  }
-  TF1* fBkg5 = new TF1("fBkg5", Expo3, drawMin, drawMax, 3);
-  for (int i = 0; i < 3; i++)
-    fBkg5->SetParameter(i, fitFunc_Sys5->GetParameter(14 + i));
-  drawCanvas("c_sys5", "Sys5 (Tail Low)", fTot5, fitSigJpsi_Sys5, fitSigPsi2s_Sys5, fBkg5, yieldJpsi_Sys5, errJpsi_Sys5, yieldPsi2s_Sys5, errPsi2s_Sys5, fitFunc_Sys5->GetChisquare(), fitFunc_Sys5->GetNDF(), "Background (Expo3)", "Unlike_bkg_WideRange_crystal_TailLow.png");
-
-  TF1* fTot6 = new TF1("fTot6", TotalFit_Main, drawMin, drawMax, 17);
-  for (int i = 0; i < 17; i++) {
-    fTot6->SetParameter(i, fitFunc_Sys6->GetParameter(i));
-    fTot6->SetParError(i, fitFunc_Sys6->GetParError(i));
-  }
-  TF1* fBkg6 = new TF1("fBkg6", Expo3, drawMin, drawMax, 3);
-  for (int i = 0; i < 3; i++)
-    fBkg6->SetParameter(i, fitFunc_Sys6->GetParameter(14 + i));
-  drawCanvas("c_sys6", "Sys6 (Tail High)", fTot6, fitSigJpsi_Sys6, fitSigPsi2s_Sys6, fBkg6, yieldJpsi_Sys6, errJpsi_Sys6, yieldPsi2s_Sys6, errPsi2s_Sys6, fitFunc_Sys6->GetChisquare(), fitFunc_Sys6->GetNDF(), "Background (Expo3)", "Unlike_bkg_WideRange_crystal_TailHigh.png");
+  drawCanvas("c_nom", "Nominal (Expo3)", fitFunc, fBkg0, "Background (Expo3)", "Fit_Nominal_Expo3.png");
+  drawCanvas("c_sys1", "Sys1 (ExpoPol4)", fitFunc_Sys1, fBkg1, "Background (ExpoPol4)", "Fit_Sys1_ExpoPol4.png");
+  drawCanvas("c_sys2", "Sys2 (VWG)", fitFunc_Sys2, fBkg2, "Background (VWG)", "Fit_Sys2_VWG.png");
+  drawCanvas("c_sys3", "Sys3 (ExpoPol2)", fitFunc_Sys3, fBkg3, "Background (ExpoPol2)", "Fit_Sys3_ExpoPol2.png");
+  drawCanvas("c_sys4", "Sys4 (Jpsi Tails Fixed)", fitFunc_Sys4, fBkg4, "Background (Expo3)", "Fit_Sys4_JpsiTails.png");
+  drawCanvas("c_sys5", "Sys5 (Width +0.1)", fitFunc_Sys5, fBkg5, "Background (Expo3)", "Fit_Sys5_WidthPlus.png");
+  drawCanvas("c_sys6", "Sys6 (Width -0.1)", fitFunc_Sys6, fBkg6, "Background (Expo3)", "Fit_Sys6_WidthMinus.png");
 
   f->Close();
 }

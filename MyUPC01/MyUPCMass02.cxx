@@ -176,10 +176,10 @@ struct MyUPCMass02 {
   Configurable<int> nBinsPt{"nBinsPt", 250, "N bins in pT histo"};
   Configurable<float> lowPt{"lowPt", 0.0f, "lower limit in pT histo [GeV/c]"};
   Configurable<float> highPt{"highPt", 0.25f, "upper limit in pT histo [GeV/c]"};
-  Configurable<int> nBinsMass{"nBinsMass", 900, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
+  Configurable<int> nBinsMass{"nBinsMass", 9000, "N bins in InvMass histo (10 MeV/c^2 per bin)"};
   Configurable<float> lowMass{"lowMass", 1.0f, "lower limit in mass histo [GeV/c^2]"};
   Configurable<float> highMass{"highMass", 10.0f, "upper limit in mass histo [GeV/c^2]"};
-  Configurable<int> nBinsRapidity{"nBinsRapidity", 250, "N bins in rapidity histo"};
+  Configurable<int> nBinsRapidity{"nBinsRapidity", 150, "N bins in rapidity histo"};
   Configurable<float> lowRapidity{"lowRapidity", -4.0f, "lower limit in rapidity histo"};
   Configurable<float> highRapidity{"highRapidity", -2.5f, "upper limit in rapidity histo"};
 
@@ -194,6 +194,7 @@ struct MyUPCMass02 {
     const AxisSpec axisMass{nBinsMass, lowMass, highMass, "m_{#mu#mu} GeV/#it{c}^{2}"};
     const AxisSpec axisRapidity{nBinsRapidity, lowRapidity, highRapidity, "Rapidity"};
     const AxisSpec axisCounter{1, 0, +1, ""};
+    const AxisSpec axisV0A{500, 0.0, 500.0, "Max V0A Amplitude (Same BC) [a.u.]"};
 
     // Add event counter
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
@@ -201,16 +202,21 @@ struct MyUPCMass02 {
     mcRecoRegistry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
 
     auto hSelectionCounter = registry.add<TH1>("hSelectionCounter", "Selection Cut Flow;;Candidates", HistType::kTH1I, {{15, 0., 15.}});
-    TString SelectionCuts[15] = {"AllPairs", "V0A_Skipped", "TopologySelected", "TrackEnd", "pDCA", "MatchMID", "MatchMFT", "EtaCut", "PairPtCut", "PairRapCut", "MassCut", "UnlikeSign", "LikeSign", "SavedToTree", "Filler"};
+    TString SelectionCuts[15] = {"AllPairs", "V0A_pass", "TopologySelected", "TrackEnd", "pDCA", "MatchMID", "MatchMFT", "EtaCut", "PairPtCut", "PairRapCut", "MassCut", "UnlikeSign", "LikeSign", "SavedToTree", "Filler"};
     for (int i = 0; i < 15; i++) {
       hSelectionCounter->GetXaxis()->SetBinLabel(i + 1, SelectionCuts[i].Data());
     }
+
+    // QA Histogram for V0A
+    registry.add("hV0A_Amp", "Maximum V0A Amplitude in Same BC;;#counts", kTH1D, {axisV0A});
 
     registry.add("hMassUnlike", "Invariant mass of Unlike-sign pairs;;#counts", kTH1D, {axisMass});
     registry.add("hPtUnlike", "Transverse momentum of Unlike-sign pairs;;#counts", kTH1D, {axisPt});
     registry.add("hMassLike", "Invariant mass of Like-sign pairs;;#counts", kTH1D, {axisMass});
     registry.add("hPtLike", "Transverse momentum of Like-sign pairs;;#counts", kTH1D, {axisPt});
     registry.add("hRapidity", "Rapidty of muon pairs;;#counts", kTH1D, {axisRapidity});
+
+    registry.add("hMassVsRapidityUnlike", "Invariant mass vs Rapidity of Unlike-sign pairs;Rapidity;m_{#mu#mu} GeV/#it{c}^{2}", kTH2D, {axisRapidity, axisMass});
 
     mcGenRegistry.add("hMass", "Invariant mass of muon pairs;;#counts", kTH1D, {axisMass});
     mcRecoRegistry.add("hMass", "Invariant mass of muon pairs;;#counts", kTH1D, {axisMass});
@@ -289,7 +295,29 @@ struct MyUPCMass02 {
   {
     registry.fill(HIST("hSelectionCounter"), 0); // 0: AllPairs
 
-    registry.fill(HIST("hSelectionCounter"), 1); // 1: V0A_Skipped
+    // V0A Amplitude cut: A(FV0) < 100 a.u. in the same BC & QA Histogram
+    const auto& ampsV0A = cand.amplitudesV0A();
+    const auto& ampsRelBCsV0A = cand.ampRelBCsV0A();
+    bool skipV0A = false;
+    float maxAmpV0A = 0.0f;
+    for (unsigned int i = 0; i < ampsV0A.size(); ++i) {
+      if (std::abs(ampsRelBCsV0A[i]) == 0) { // Same BC
+        if (ampsV0A[i] > maxAmpV0A) {
+          maxAmpV0A = ampsV0A[i];
+        }
+        if (ampsV0A[i] >= 100.0f) {
+          skipV0A = true;
+        }
+      }
+    }
+
+    // Fill QA histogram before cutting
+    registry.fill(HIST("hV0A_Amp"), maxAmpV0A);
+
+    if (skipV0A)
+      return;
+
+    registry.fill(HIST("hSelectionCounter"), 1); // 1: V0A_pass
 
     if (tr1.rAtAbsorberEnd() < 17.6f || tr1.rAtAbsorberEnd() > 89.5f ||
         tr2.rAtAbsorberEnd() < 17.6f || tr2.rAtAbsorberEnd() > 89.5f)
@@ -344,6 +372,7 @@ struct MyUPCMass02 {
       registry.fill(HIST("hMassUnlike"), p.M());
       registry.fill(HIST("hPtUnlike"), p.Pt());
       registry.fill(HIST("hRapidity"), p.Rapidity());
+      registry.fill(HIST("hMassVsRapidityUnlike"), p.Rapidity(), p.M());
     } else {
       registry.fill(HIST("hSelectionCounter"), 12); // 12: LikeSign
       registry.fill(HIST("hMassLike"), p.M());
@@ -411,6 +440,17 @@ struct MyUPCMass02 {
       if (item.second.size() < 2)
         continue;
 
+      // exactly two MCH-MID tracks cut
+      int nMatchMID = 0;
+      for (size_t k = 0; k < item.second.size(); ++k) {
+        auto tr = fwdTracks.iteratorAt(item.second[k]);
+        if (tr.chi2MatchMCHMID() > 0) {
+          nMatchMID++;
+        }
+      }
+      if (nMatchMID != 2)
+        continue;
+
       int32_t candID = item.first;
       auto cand = eventCandidates.iteratorAt(candID);
       ZDCinfo zdc = zdcPerCand.count(candID) ? zdcPerCand.at(candID) : ZDCinfo{-999, -999, -999, -999, -1};
@@ -419,7 +459,10 @@ struct MyUPCMass02 {
         for (size_t j = i + 1; j < item.second.size(); ++j) {
           auto tr1 = fwdTracks.iteratorAt(item.second[i]);
           auto tr2 = fwdTracks.iteratorAt(item.second[j]);
-          processCandidate(cand, tr1, tr2, zdc);
+
+          if (tr1.chi2MatchMCHMID() > 0 && tr2.chi2MatchMCHMID() > 0) {
+            processCandidate(cand, tr1, tr2, zdc);
+          }
         }
       }
     }
@@ -543,6 +586,17 @@ struct MyUPCMass02 {
       if (nPairsData < 2)
         continue;
 
+      // exactly two MCH-MID tracks cut
+      int nMatchMID = 0;
+      for (size_t k = 0; k < nPairsData; ++k) {
+        auto tr = fwdTracks.iteratorAt(item.second[k * 2]);
+        if (tr.chi2MatchMCHMID() > 0) {
+          nMatchMID++;
+        }
+      }
+      if (nMatchMID != 2)
+        continue;
+
       auto cand = eventCandidates.iteratorAt(item.first);
 
       for (size_t i = 0; i < nPairsData - 1; ++i) {
@@ -551,7 +605,10 @@ struct MyUPCMass02 {
           auto trMc1 = McParts.iteratorAt(item.second[i * 2 + 1]);
           auto tr2 = fwdTracks.iteratorAt(item.second[j * 2]);
           auto trMc2 = McParts.iteratorAt(item.second[j * 2 + 1]);
-          processMcRecoCand(cand, tr1, trMc1, tr2, trMc2);
+
+          if (tr1.chi2MatchMCHMID() > 0 && tr2.chi2MatchMCHMID() > 0) {
+            processMcRecoCand(cand, tr1, trMc1, tr2, trMc2);
+          }
         }
       }
     }

@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-void PlotMass3Bins(const char* filename = "AnalysisResults.root")
+void PlotMass2Bins(const char* filename = "AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
 
@@ -33,21 +33,18 @@ void PlotMass3Bins(const char* filename = "AnalysisResults.root")
     return;
   }
 
-  TCanvas* c1 = new TCanvas("c1", "Invariant Mass in Rapidity Bins", 800, 800);
-
-  TPad* pad1 = new TPad("pad1", "pad1", 0.00, 0.50, 0.50, 1.00);
-  TPad* pad2 = new TPad("pad2", "pad2", 0.50, 0.50, 1.00, 1.00);
-  TPad* pad3 = new TPad("pad3", "pad3", 0.25, 0.00, 0.75, 0.50);
+  TCanvas* c1 = new TCanvas("c1", "Invariant Mass in Rapidity Bins", 1000, 500);
+  TPad* pad1 = new TPad("pad1", "pad1", 0.00, 0.00, 0.50, 1.00);
+  TPad* pad2 = new TPad("pad2", "pad2", 0.50, 0.00, 1.00, 1.00);
 
   pad1->Draw();
   pad2->Draw();
-  pad3->Draw();
 
-  TPad* pads[3] = {pad1, pad2, pad3};
+  TPad* pads[2] = {pad1, pad2};
 
-  double y_bins[4] = {-4.00, -3.50, -3.00, -2.50};
+  double y_bins[3] = {-4.00, -3.25, -2.50};
 
-  for (int i = 0; i < 3; ++i) {
+  for (int i = 0; i < 2; ++i) {
     pads[i]->cd();
 
     gPad->SetMargin(0.18, 0.04, 0.15, 0.07);
@@ -92,9 +89,10 @@ void PlotMass3Bins(const char* filename = "AnalysisResults.root")
     latex.SetNDC(true);
     latex.SetTextFont(fontCode);
     latex.SetTextSize(0.045);
-    latex.DrawLatex(0.20, 0.86, Form("%.2f < y_{#mu#mu} < %.2f", ymin, ymax));
+
+    latex.DrawLatex(0.23, 0.86, Form("%.2f < y_{#mu#mu} < %.2f", ymin, ymax));
     latex.DrawLatex(0.60, 0.86, Form("Unlike = %.0f", counts));
   }
 
-  c1->SaveAs("Mass_Rapidity_3Bins.png");
+  c1->SaveAs("Mass_Rapidity_2Bins.png");
 }

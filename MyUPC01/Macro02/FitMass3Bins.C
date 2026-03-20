@@ -5,6 +5,7 @@
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TLatex.h"
+#include "TLegend.h"
 #include "TMath.h"
 #include "TPad.h"
 #include "TString.h"
@@ -20,26 +21,32 @@ struct FitConfig {
   double m_Jpsi_PDG = 3.0969;  // GeV/c^2
   double m_Psi2S_PDG = 3.6861; // GeV/c^2
 
-  // Tail parameters from MC
-  double mc_Jpsi_alpha2 = 2.0; // Right tail alpha
-  double mc_Jpsi_n2 = 3.0;     // Right tail n
+  // J/psi Tail parameters from MC
+  double mc_Jpsi_alpha1[3] = {1.0, 1.0, 1.0};  // Left tail alpha
+  double mc_Jpsi_n1[3] = {5.0, 5.0, 5.0};      // Left tail n
+  double mc_Jpsi_alpha2[3] = {3.5, 11.9, 3.6}; // Right tail alpha
+  double mc_Jpsi_n2[3] = {10.0, 3.0, 10.0};    // Right tail n
 
-  double mc_Psi2S_alpha1 = 1.5; // Left tail alpha
-  double mc_Psi2S_n1 = 2.0;     // Left tail n
-  double mc_Psi2S_alpha2 = 2.0; // Right tail alpha
-  double mc_Psi2S_n2 = 3.0;     // Right tail n
+  // Psi(2S) Tail parameters from MC
+  double mc_Psi2S_alpha1[3] = {1.1, 1.1, 1.0};
+  double mc_Psi2S_n1[3] = {2.0, 2.0, 2.0};
+  double mc_Psi2S_alpha2[3] = {7.0, 7.0, 100.0};
+  double mc_Psi2S_n2[3] = {3.0, 3.0, 3.0};
 
   // Resolution Parameters
-  double mc_sigma_ratio = 1.05; // (sigma_Psi2S / sigma_Jpsi)_MC
-  double sigma_factor = 1.1;
+  double mc_sigma_Jpsi[3] = {0.07, 0.07, 0.07};
+  double mc_sigma_Psi2S[3] = {0.07, 0.07, 0.07};
+  double mc_sigma_ratio[3] = {mc_sigma_Jpsi[0] / mc_sigma_Psi2S[0], mc_sigma_Jpsi[1] / mc_sigma_Psi2S[1], mc_sigma_Jpsi[2] / mc_sigma_Psi2S[2]};
+  double sigma_factor[3] = {1.1, 1.1, 1.1};
 
   // Fit range
   double fitMin = 2.5;
   double fitMax = 4.5;
 
   // Background function type (1: Expo3, 2: ExpoPol4, 3: VWG)
-  // Note: ExpoPol4 and VWG are not implemented yet.
   int bgType = 1;
+
+  int current_bin = 0;
 };
 
 FitConfig cfg;
@@ -98,28 +105,25 @@ double VWG(double* x, double* p)
   return N * TMath::Exp(-0.5 * TMath::Power((m - m_bar) / sigma, 2));
 }
 
-// -----------------------
-// ExpoPol4 Functions
-// To be added
-// -----------------------
-
 // J/psi + Psi(2S) Signal Functions
 double SignalJpsiPsi2s(double* x, double* p)
 {
   // J/psi parameters
   double p_Jpsi[7];
-  for (int i = 0; i < 7; i++)
-    p_Jpsi[i] = p[i];
+  for (int j = 0; j < 7; j++)
+    p_Jpsi[j] = p[j];
+
+  int bin = cfg.current_bin;
 
   // Psi(2S) parameters
   double p_Psi2S[7];
-  p_Psi2S[0] = p[7];                                              // Psi(2S) Yield N
-  p_Psi2S[1] = p_Jpsi[1] + (cfg.m_Psi2S_PDG - cfg.m_Jpsi_PDG);    // m0
-  p_Psi2S[2] = p_Jpsi[2] * cfg.sigma_factor * cfg.mc_sigma_ratio; // sigma
-  p_Psi2S[3] = cfg.mc_Psi2S_alpha1;
-  p_Psi2S[4] = cfg.mc_Psi2S_n1;
-  p_Psi2S[5] = cfg.mc_Psi2S_alpha2;
-  p_Psi2S[6] = cfg.mc_Psi2S_n2;
+  p_Psi2S[0] = p[7];
+  p_Psi2S[1] = p_Jpsi[1] + (cfg.m_Psi2S_PDG - cfg.m_Jpsi_PDG);
+  p_Psi2S[2] = p_Jpsi[2] * cfg.sigma_factor[bin] * cfg.mc_sigma_ratio[bin];
+  p_Psi2S[3] = cfg.mc_Psi2S_alpha1[bin];
+  p_Psi2S[4] = cfg.mc_Psi2S_n1[bin];
+  p_Psi2S[5] = cfg.mc_Psi2S_alpha2[bin];
+  p_Psi2S[6] = cfg.mc_Psi2S_n2[bin];
 
   return DSCB(x, p_Jpsi) + DSCB(x, p_Psi2S);
 }
@@ -130,24 +134,16 @@ double TotalFit(double* x, double* p)
   double signal = SignalJpsiPsi2s(x, p);
   double bg = 0;
 
-  if (cfg.bgType == 1) { // Expo3 (p[8], p[9], p[10])
+  if (cfg.bgType == 1) {
     bg = Expo3(x, &p[8]);
   }
-  // ExpoPol4
-  // if (cfg.bgType == 2) { // ExpoPol4 (p[8], p[9], p[10], p[11], p[12])
-  // bg = ExpoPol4(x, &p[8]);
-  // }
-  // VWG
-  // if (cfg.bgType == 3) { // VWG (p[8], p[9], p[10], p[11])
-  // bg = VWG(x, &p[8]);
-  // }
   return signal + bg;
 }
 
 // ======================================================================
 // Main macro
 // ======================================================================
-void FitMass3Bins(const char* filename = "AnalysisResults.root")
+void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/test/0319/AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
   int fontCode = 42;
@@ -176,6 +172,8 @@ void FitMass3Bins(const char* filename = "AnalysisResults.root")
   double y_bins[4] = {-4.00, -3.50, -3.00, -2.50};
 
   for (int i = 0; i < 3; ++i) {
+    cfg.current_bin = i;
+
     pads[i]->cd();
     gPad->SetMargin(0.18, 0.04, 0.15, 0.07);
 
@@ -196,61 +194,54 @@ void FitMass3Bins(const char* filename = "AnalysisResults.root")
     hUnlike->SetMarkerStyle(kFullCircle);
     hUnlike->SetMarkerSize(0.5);
     hUnlike->GetYaxis()->SetTitleOffset(1.8);
-    hUnlike->Draw("PE");
+
+    // ==========================================================
+    // Outside
+    // ==========================================================
+    TH1D* hOutside = (TH1D*)hUnlike->Clone(Form("hOutside_bin%d", i));
+    for (int b = 1; b <= hOutside->GetNbinsX(); ++b) {
+      double binCenter = hOutside->GetBinCenter(b);
+      if (binCenter >= cfg.fitMin && binCenter <= cfg.fitMax) {
+        hOutside->SetBinContent(b, 0);
+        hOutside->SetBinError(b, 0);
+      }
+    }
+    hOutside->SetFillColorAlpha(kGray + 1, 0.4);
+    hOutside->SetFillStyle(1001);
+    hOutside->SetLineColor(kGray + 1);
+    hOutside->SetMarkerSize(0);
 
     // ==========================================================
     // Fitting Setting and Execution
     // ==========================================================
-    // Number of parameters: J/psi(7) + Psi2S_N(1) + BG_Expo3(3) = 11
     TF1* fTotal = new TF1(Form("fTotal_bin%d", i), TotalFit, cfg.fitMin, cfg.fitMax, 11);
     fTotal->SetNpx(1000);
     fTotal->SetLineColor(kBlue);
     fTotal->SetLineWidth(1);
 
-    // Initial values
-    fTotal->SetParameter(0, hUnlike->GetMaximum()); // N_Jpsi Free parameter
-    fTotal->SetParameter(1, cfg.m_Jpsi_PDG);        // m0_Jpsi Free parameter
-    fTotal->SetParameter(2, 0.07);                  // sigma_Jpsi Free parameter
+    fTotal->SetParameter(0, hUnlike->GetMaximum());
+    fTotal->SetParameter(1, cfg.m_Jpsi_PDG);
+    fTotal->SetParameter(2, 0.07);
 
-    /*
-    fTotal->SetParLimits(0, 0.0, hUnlike->GetMaximum() * 2.0);
-    fTotal->SetParLimits(1, cfg.m_Jpsi_PDG - 0.1, cfg.m_Jpsi_PDG + 0.1);
-    fTotal->SetParLimits(2, 0.01, 0.20);
-    */
+    fTotal->SetParameter(3, cfg.mc_Jpsi_alpha1[i]);
+    fTotal->SetParameter(4, cfg.mc_Jpsi_n1[i]);
+    fTotal->FixParameter(5, cfg.mc_Jpsi_alpha2[i]);
+    fTotal->FixParameter(6, cfg.mc_Jpsi_n2[i]);
 
-    // J/psi Left tails (Free parameters)
-    fTotal->SetParameter(3, 1.0); // alpha1 Free parameter
-    fTotal->SetParameter(4, 5.0); // n1 Free parameter
-
-    /*
-    fTotal->SetParLimits(3, 0.0, 5.0);
-    fTotal->SetParLimits(4, 0.0, 50.0);
-    */
-
-    // J/psi Right tails (Fix from MC)
-    fTotal->FixParameter(5, cfg.mc_Jpsi_alpha2); // alpha2 Fix parameter
-    fTotal->FixParameter(6, cfg.mc_Jpsi_n2);     // n2 Fix parameter
-
-    /*
-    fTotal->SetParLimits(5, 0.0, 9999.0);
-    fTotal->SetParLimits(6, 0.0, 100.0);
-    */
-
-    // Psi(2S) Normalization (
     fTotal->SetParameter(7, hUnlike->GetMaximum() * 0.05);
-    // fTotal->SetParLimits(7, 0.0, hUnlike->GetMaximum() * 1.0);
 
-    // BG (Expo3)
     fTotal->SetParameter(8, 5.0);
     fTotal->SetParameter(9, -1.0);
     fTotal->SetParameter(10, 0.1);
 
-    // Fitting (L: Log-likelihood, R: Range, S: Save)
-    hUnlike->Fit(fTotal, "L R S");
+    hUnlike->Fit(fTotal, "L R S 0");
 
     // ==========================================================
-    // J/psi, Psi(2S), Background Drawing
+    // Draw
     // ==========================================================
+    hUnlike->Draw("PE");
+    hOutside->Draw("HIST SAME");
+    hUnlike->Draw("PE SAME");
 
     // Background Expo3
     TF1* fBg = new TF1(Form("fBg_bin%d", i), Expo3, cfg.fitMin, cfg.fitMax, 3);
@@ -272,13 +263,13 @@ void FitMass3Bins(const char* filename = "AnalysisResults.root")
 
     // Psi(2S) DSCB
     TF1* fPsi2S = new TF1(Form("fPsi2S_bin%d", i), DSCB, cfg.fitMin, cfg.fitMax, 7);
-    fPsi2S->SetParameter(0, fTotal->GetParameter(7));                                         // N
-    fPsi2S->SetParameter(1, fTotal->GetParameter(1) + (cfg.m_Psi2S_PDG - cfg.m_Jpsi_PDG));    // m0
-    fPsi2S->SetParameter(2, fTotal->GetParameter(2) * cfg.sigma_factor * cfg.mc_sigma_ratio); // sigma
-    fPsi2S->SetParameter(3, cfg.mc_Psi2S_alpha1);
-    fPsi2S->SetParameter(4, cfg.mc_Psi2S_n1);
-    fPsi2S->SetParameter(5, cfg.mc_Psi2S_alpha2);
-    fPsi2S->SetParameter(6, cfg.mc_Psi2S_n2);
+    fPsi2S->SetParameter(0, fTotal->GetParameter(7));
+    fPsi2S->SetParameter(1, fTotal->GetParameter(1) + (cfg.m_Psi2S_PDG - cfg.m_Jpsi_PDG));
+    fPsi2S->SetParameter(2, fTotal->GetParameter(2) * cfg.sigma_factor[i] * cfg.mc_sigma_ratio[i]);
+    fPsi2S->SetParameter(3, cfg.mc_Psi2S_alpha1[i]);
+    fPsi2S->SetParameter(4, cfg.mc_Psi2S_n1[i]);
+    fPsi2S->SetParameter(5, cfg.mc_Psi2S_alpha2[i]);
+    fPsi2S->SetParameter(6, cfg.mc_Psi2S_n2[i]);
     fPsi2S->SetLineColor(kRed);
     fPsi2S->SetLineStyle(1);
     fPsi2S->SetLineWidth(1);
@@ -296,13 +287,25 @@ void FitMass3Bins(const char* filename = "AnalysisResults.root")
     latex.DrawLatex(0.20, 0.86, Form("%.2f < y_{#mu#mu} < %.2f", ymin, ymax));
 
     double jpsi_yield = fTotal->GetParameter(0);
-    latex.DrawLatex(0.60, 0.86, Form("J/#psi N = %.0f", jpsi_yield));
+    latex.DrawLatex(0.60, 0.88, "p_{T}^{#mu#mu} < 0.25 GeV/c");
+    latex.DrawLatex(0.60, 0.82, Form("N_{J/#psi} = %.0f", jpsi_yield));
 
     double chi2 = fTotal->GetChisquare();
     int ndf = fTotal->GetNDF();
     double chi2_dof = (ndf > 0) ? chi2 / ndf : 0.0;
+    latex.DrawLatex(0.60, 0.76, Form("#chi^{2}/dof = %.2f", chi2_dof));
 
-    latex.DrawLatex(0.60, 0.80, Form("#chi^{2}/dof = %.2f", chi2_dof));
+    TLegend* legend = new TLegend(0.60, 0.30, 0.85, 0.63);
+    legend->SetBorderSize(0);
+    legend->SetTextFont(fontCode);
+    legend->SetTextSize(0.035);
+    legend->AddEntry(hUnlike, "Data", "P");
+    legend->AddEntry(hOutside, "Continuum (Raw)", "F");
+    legend->AddEntry(fJpsi, "J/#psi", "L");
+    legend->AddEntry(fPsi2S, "#psi(2S)", "L");
+    legend->AddEntry(fBg, "Background", "L");
+    legend->AddEntry(fTotal, "Total Fit", "L");
+    legend->Draw();
   }
 
   c1->SaveAs("Mass_Fit_3Bins.png");

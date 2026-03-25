@@ -34,8 +34,8 @@ struct FitConfig {
   double mc_Psi2S_n2[3] = {27.004, 9.630, 12.503};
 
   // Resolution Parameters
-  double mc_sigma_Jpsi[3] = {0.07, 0.07, 0.07};
-  double mc_sigma_Psi2S[3] = {0.07, 0.07, 0.07};
+  double mc_sigma_Jpsi[3] = {0.064, 0.065, 0.066};
+  double mc_sigma_Psi2S[3] = {0.07, 0.071, 0.072};
   double mc_sigma_ratio[3] = {mc_sigma_Jpsi[0] / mc_sigma_Psi2S[0], mc_sigma_Jpsi[1] / mc_sigma_Psi2S[1], mc_sigma_Jpsi[2] / mc_sigma_Psi2S[2]};
   double sigma_factor[3] = {1.1, 1.1, 1.1};
 
@@ -86,7 +86,14 @@ double DSCB(double* x, double* p)
 double Expo3(double* x, double* p)
 {
   double m = x[0];
-  return TMath::Exp(p[0] + p[1] * m + p[2] * m * m);
+  return p[0] * TMath::Exp(p[1] * m + p[2] * m * m);
+}
+
+// ExpoPol4 Functions
+double ExpoPol4(double* x, double* p)
+{
+  double m = x[0];
+  return p[0] * TMath::Exp((p[1] * m) * (p[2] + p[3] * m + p[4] * m * m + p[5] * m * m * m + p[6] * m * m * m * m));
 }
 
 // Variable Width Gaussian (VWG) Functions
@@ -174,6 +181,9 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
   double total_jpsi_yield = 0.0;
   double total_jpsi_err_sq = 0.0;
 
+  double total_psi2s_yield = 0.0;
+  double total_psi2s_err_sq = 0.0;
+
   for (int i = 0; i < 3; ++i) {
     cfg.current_bin = i;
 
@@ -209,8 +219,8 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
         hOutside->SetBinError(b, 0);
       }
     }
-    hOutside->SetFillColorAlpha(kGray + 1, 0.4);
-    hOutside->SetFillStyle(1001);
+    hOutside->SetFillColorAlpha(kGray + 1, 0.8);
+    hOutside->SetFillStyle(3004);
     hOutside->SetLineColor(kGray + 1);
     hOutside->SetMarkerSize(0);
 
@@ -222,11 +232,11 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     fTotal->SetLineColor(kBlue);
     fTotal->SetLineWidth(1);
 
+    // J/psi parameters
     fTotal->SetParameter(0, hUnlike->GetMaximum());
-    fTotal->SetParLimits(0, 0.0, hUnlike->GetMaximum() * 3.0);
     fTotal->SetParameter(1, cfg.m_Jpsi_PDG);
-    fTotal->SetParLimits(1, 3.0, 3.2);
-    fTotal->SetParameter(2, 0.07);
+    fTotal->SetParLimits(1, 2.9, 3.2);
+    fTotal->SetParameter(2, cfg.mc_sigma_Jpsi[i]);
     // fTotal->SetParLimits(2, 0.04, 0.15);
 
     fTotal->SetParameter(3, cfg.mc_Jpsi_alpha1[i]);
@@ -236,13 +246,14 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     fTotal->FixParameter(5, cfg.mc_Jpsi_alpha2[i]);
     fTotal->FixParameter(6, cfg.mc_Jpsi_n2[i]);
 
-    fTotal->SetParameter(7, hUnlike->GetMaximum() * 0.05);
+    // Psi(2S) parameters
+    fTotal->SetParameter(7, hUnlike->GetMaximum() * 0.1); // N
 
     // fTotal->SetParameter(8, 10.7128);
     // fTotal->SetParameter(9, -2.15838);
     // fTotal->SetParameter(10, 0.136308);
 
-    fTotal->SetParameter(8, 9.6);
+    fTotal->SetParameter(8, 15000.0);
     fTotal->SetParameter(9, -2.15838);
     fTotal->SetParameter(10, 0.136308);
 
@@ -303,6 +314,7 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     // latex.DrawLatex(0.60, 0.82, Form("N_{J/#psi} = %.0f", jpsi_yield));
 
     double binWidth = hUnlike->GetBinWidth(1);
+
     double jpsi_yield = fJpsi->Integral(cfg.fitMin, cfg.fitMax) / binWidth;
     double yield_err = jpsi_yield * (fTotal->GetParError(0) / fTotal->GetParameter(0));
     latex.DrawLatex(0.60, 0.82, Form("N_{J/#psi} = %.0f #pm %.0f", jpsi_yield, yield_err));
@@ -313,10 +325,20 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     total_jpsi_yield += jpsi_yield;
     total_jpsi_err_sq += (yield_err * yield_err);
 
+    double psi2s_yield = fPsi2S->Integral(cfg.fitMin, cfg.fitMax) / binWidth;
+    double psi2s_err = psi2s_yield * (fTotal->GetParError(7) / fTotal->GetParameter(7));
+    latex.DrawLatex(0.60, 0.76, Form("N_{#psi(2S)} = %.0f #pm %.0f", psi2s_yield, psi2s_err));
+    std::cout << Form("Bin %d (%.2f < y < %.2f): N_psi(2S) = %.1f +/- %.1f",
+                      i, ymin, ymax, psi2s_yield, psi2s_err)
+              << std::endl;
+
+    total_psi2s_yield += psi2s_yield;
+    total_psi2s_err_sq += (psi2s_err * psi2s_err);
+
     double chi2 = fTotal->GetChisquare();
     int ndf = fTotal->GetNDF();
     double chi2_dof = (ndf > 0) ? chi2 / ndf : 0.0;
-    latex.DrawLatex(0.60, 0.76, Form("#chi^{2}/dof = %.2f", chi2_dof));
+    latex.DrawLatex(0.60, 0.70, Form("#chi^{2}/dof = %.2f", chi2_dof));
 
     TLegend* legend = new TLegend(0.60, 0.30, 0.85, 0.63);
     legend->SetBorderSize(0);
@@ -326,15 +348,19 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     legend->AddEntry(hOutside, "Continuum (Raw)", "F");
     legend->AddEntry(fJpsi, "J/#psi", "L");
     legend->AddEntry(fPsi2S, "#psi(2S)", "L");
-    legend->AddEntry(fBg, "Background", "L");
+    legend->AddEntry(fBg, "Background (Expo3)", "L");
     legend->AddEntry(fTotal, "Total Fit", "L");
     legend->Draw();
   }
 
   c1->SaveAs("Mass_Fit_3Bins.png");
   double total_jpsi_err = TMath::Sqrt(total_jpsi_err_sq);
+  double total_psi2s_err = TMath::Sqrt(total_psi2s_err_sq);
   std::cout << "=========================================" << std::endl;
   std::cout << "Total J/psi Yield (Sum of 3 bins)" << std::endl;
   std::cout << Form("N_J/psi_total = %.1f +/- %.1f", total_jpsi_yield, total_jpsi_err) << std::endl;
+  std::cout << "=========================================" << std::endl;
+  std::cout << "Total Psi(2S) Yield (Sum of 3 bins)" << std::endl;
+  std::cout << Form("N_psi(2S)_total = %.1f +/- %.1f", total_psi2s_yield, total_psi2s_err) << std::endl;
   std::cout << "=========================================" << std::endl;
 }

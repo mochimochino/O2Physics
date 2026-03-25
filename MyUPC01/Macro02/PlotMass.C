@@ -38,8 +38,8 @@ void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/03
 
   double ymin = -4.00;
   double ymax = -2.50;
-  double drawMin = 2.0;
-  double drawMax = 5.0;
+  double drawMin = 1.5;
+  double drawMax = 7.0;
   int rebin = 25;
 
   int binMin = h2->GetXaxis()->FindBin(ymin + 1e-4);
@@ -76,7 +76,7 @@ void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/03
   latex.SetTextSize(0.05);
 
   latex.DrawLatex(0.20, 0.82, Form("%.2f < y_{#mu#mu} < %.2f", ymin, ymax));
-  latex.DrawLatex(0.20, 0.75, Form("Unlike = %.0f", counts));
+  latex.DrawLatex(0.20, 0.75, Form("Unlike entries = %.0f", counts));
 
   c1->SaveAs("Mass_Rapidity_Integrated.png");
 

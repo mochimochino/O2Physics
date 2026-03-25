@@ -18,8 +18,7 @@ const double PDG_M_JPSI = 3.09691;
 const double PDG_M_PSI2S = 3.68609;
 const double DELTA_M = PDG_M_PSI2S - PDG_M_JPSI;
 
-// --- MCから得られる予定のパラメータ（判明したらここを更新してください） ---
-const double MC_WIDTH_RATIO = 1.0; // J/psi と psi(2S) の Width Ratio
+const double MC_WIDTH_RATIO = 1.0;
 
 // J/psi Tails (MC)
 const double MC_JPSI_A1 = 1.0; // Left tail alpha
@@ -275,7 +274,7 @@ void Massfit_crystal02()
 
   std::cout << "\n=== Nominal Fit (Expo3) ===" << std::endl;
   hSignal->Fit("fitFunc", "RM0");
-  double yieldJpsi_Main = fitFunc->GetParameter(0) / binWidth; // 簡易収量
+  double yieldJpsi_Main = fitFunc->GetParameter(0) / binWidth;
   double yieldPsi2s_Main = fitFunc->GetParameter(7) / binWidth;
   TF1* fBkg0 = new TF1("fBkg0", Expo3, drawMin, drawMax, 3);
   for (int i = 0; i < 3; i++)

@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-void PlotMass(const char* filename = "AnalysisResults.root")
+void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/0324/AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
 
@@ -79,4 +79,10 @@ void PlotMass(const char* filename = "AnalysisResults.root")
   latex.DrawLatex(0.20, 0.75, Form("Unlike = %.0f", counts));
 
   c1->SaveAs("Mass_Rapidity_Integrated.png");
+
+  c1->SetLogy();
+  hUnlike->GetYaxis()->SetRangeUser(0.5, hUnlike->GetMaximum() * 10.0);
+
+  c1->Update();
+  c1->SaveAs("Mass_Rapidity_Integrated_Log.png");
 }

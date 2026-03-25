@@ -44,7 +44,7 @@ struct FitConfig {
   double fitMax = 4.5;
 
   // Background function type (1: Expo3, 2: ExpoPol4, 3: VWG)
-  int bgType = 1;
+  int bgType = 1; // Only use Expo3
 
   int current_bin = 0;
 };
@@ -150,7 +150,7 @@ double TotalFit(double* x, double* p)
 // ======================================================================
 // Main macro
 // ======================================================================
-void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/test/0319/AnalysisResults.root")
+void FitMass3Bins_Expo3(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/test/0319/AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
   int fontCode = 42;
@@ -353,7 +353,7 @@ void FitMass3Bins(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuo
     legend->Draw();
   }
 
-  c1->SaveAs("Mass_Fit_3Bins.png");
+  c1->SaveAs("Mass_Fit_3Bins_Expo3.png");
   double total_jpsi_err = TMath::Sqrt(total_jpsi_err_sq);
   double total_psi2s_err = TMath::Sqrt(total_psi2s_err_sq);
   std::cout << "=========================================" << std::endl;

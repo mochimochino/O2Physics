@@ -103,7 +103,7 @@ double TotalFit(double* x, double* p)
 // ======================================================================
 // Main macro
 // ======================================================================
-void FitMass6Bins_Expo3(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/test/0319/AnalysisResults.root")
+void FitMass6Bins_Expo3(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/0325/AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
   int fontCode = 42;
@@ -197,7 +197,7 @@ void FitMass6Bins_Expo3(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCc
     fTotal->SetParameter(7, hUnlike->GetMaximum() * 0.1);
 
     // Background parameters
-    fTotal->SetParameter(8, 7500.0);
+    fTotal->SetParameter(8, 500.0);
     fTotal->SetParLimits(8, 0.0, 50000.0);
     fTotal->SetParameter(9, -2.15838);
     fTotal->SetParameter(10, 0.136308);

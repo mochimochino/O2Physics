@@ -13,6 +13,7 @@
 // ======================================================================
 // Expo3 Background Function
 // ======================================================================
+/*
 double Expo3(double* x, double* p)
 {
   double m = x[0];
@@ -29,11 +30,39 @@ double Expo3_Sideband(double* x, double* p)
   }
   return TMath::Exp(p[0] + p[1] * m + p[2] * m * m);
 }
+*/
+
+// Variable Width Gaussian (VWG) Functions
+double VWG(double* x, double* p)
+{
+  double m = x[0];
+  double N = p[0];
+  double m_bar = p[1];
+  double A = p[2];
+  double B = p[3];
+
+  double sigma = A + B * (m - m_bar) / m_bar;
+  if (sigma <= 0)
+    return 0;
+
+  return N * TMath::Exp(-0.5 * TMath::Power((m - m_bar) / sigma, 2));
+}
+
+double VWG_Sideband(double* x, double* p)
+{
+  double m = x[0];
+  // J/psi (2.7 - 3.4) - Psi(2S) (3.5 - 3.9)
+  if ((m > 2.7 && m < 3.4) || (m > 3.5 && m < 3.9)) {
+    TF1::RejectPoint();
+    return 0;
+  }
+  return VWG(x, p);
+}
 
 // ======================================================================
 // Main macro
 // ======================================================================
-void FitMassBinCounting(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/0325/AnalysisResults.root")
+void FitMassBinCounting_VWG(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/0325/AnalysisResults.root")
 {
   gStyle->SetOptStat(0);
   int fontCode = 42;
@@ -69,11 +98,11 @@ void FitMassBinCounting(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCc
   // ==========================================================
   // Background Fit
   // ==========================================================
-  TF1* fBgFit = new TF1("fBgFit", Expo3_Sideband, fitMin, fitMax, 3);
+  TF1* fBgFit = new TF1("fBgFit", VWG_Sideband, fitMin, fitMax, 4);
   fBgFit->SetParameters(10.0, -2.0, 0.1);
   hUnlike->Fit(fBgFit, "L R S 0");
 
-  TF1* fBgDraw = new TF1("fBgDraw", Expo3, fitMin, fitMax, 3);
+  TF1* fBgDraw = new TF1("fBgDraw", VWG, fitMin, fitMax, 4);
   fBgDraw->SetParameters(fBgFit->GetParameters());
   fBgDraw->SetLineColor(kGreen + 2);
   fBgDraw->SetLineStyle(2);
@@ -155,13 +184,14 @@ void FitMassBinCounting(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCc
   leg->SetTextFont(fontCode);
   leg->AddEntry(hUnlike, "Data", "P");
   leg->AddEntry(hSignalRegion, "Signal Region", "F");
-  leg->AddEntry(fBgDraw, "Background Fit (Expo3)", "L");
+  leg->AddEntry(fBgDraw, "Background Fit (VWG)", "L");
   leg->Draw();
 
-  c1->SaveAs("Mass_BinCounting_Inclusive.png");
+  c1->SaveAs("Mass_BinCounting_VWG.png");
 
   std::cout << "=========================================" << std::endl;
   std::cout << "Bin Counting Results (17% Statistics)" << std::endl;
+  std::cout << "Max bin content: " << hUnlike->GetMaximum() << std::endl;
   std::cout << "N_Total : " << nTotal << std::endl;
   std::cout << "N_BG    : " << nBg << std::endl;
   std::cout << "N_J/psi : " << yieldJpsi << " +/- " << errJpsi << std::endl;

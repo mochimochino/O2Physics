@@ -275,10 +275,10 @@ void FitMass1Bin_VWG_Ratio(const char* filename = "/media/takuma/ESD-EAWA/Data/U
   double chi2_dof = (ndf > 0) ? chi2 / ndf : 0.0;
   latex.DrawLatex(0.65, 0.64, Form("#chi^{2}/dof = %.2f", chi2_dof));
 
-  TLegend* legend = new TLegend(0.55, 0.30, 0.80, 0.55);
+  TLegend* legend = new TLegend(0.65, 0.34, 0.89, 0.59);
   legend->SetBorderSize(0);
   legend->SetTextFont(fontCode);
-  legend->SetTextSize(0.04);
+  legend->SetTextSize(0.03);
   legend->AddEntry(hUnlike, "Data", "P");
   legend->AddEntry(hOutside, "Continuum", "F");
   legend->AddEntry(fJpsi, "J/#psi", "L");
@@ -339,6 +339,12 @@ void FitMass1Bin_VWG_Ratio(const char* filename = "/media/takuma/ESD-EAWA/Data/U
   line0->Draw("SAME");
 
   c1->SaveAs("Mass_Fit_1Bin_VWG_Ratio.png");
+
+  pad1->cd();
+  pad1->SetLogy();
+  hUnlike->GetYaxis()->SetRangeUser(10.0, hUnlike->GetMaximum() * 10.0);
+  pad1->Update();
+  c1->SaveAs("Mass_Fit_1Bin_VWG_Ratio_Log.png");
 
   // =========================================================
   // Error

@@ -526,8 +526,8 @@ struct UpcCandProducerMuon {
     fNewPartIDs.clear();
   }
 
-  PROCESS_SWITCH(UpcCandProducerMuon, processFwd, "Produce candidates in forward region", true);
-  PROCESS_SWITCH(UpcCandProducerMuon, processFwdMC, "Produce candidates in forward region with MC information", false);
+  PROCESS_SWITCH(UpcCandProducerMuon, processFwd, "Produce candidates in forward region", false);
+  PROCESS_SWITCH(UpcCandProducerMuon, processFwdMC, "Produce candidates in forward region with MC information", true);
 };
 
 WorkflowSpec defineDataProcessing(ConfigContext const& cfgc)

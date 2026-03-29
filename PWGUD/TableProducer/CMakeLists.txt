@@ -10,7 +10,7 @@
 # or submit itself to any jurisdiction.
 
 add_subdirectory(Converters)
-
+if(FALSE)
 o2physics_add_dpl_workflow(dg-cand-producer
                            SOURCES dgCandProducer.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::DGCutparHolder  O2Physics::AnalysisCCDB O2Physics::EventFilteringUtils
@@ -60,13 +60,16 @@ o2physics_add_dpl_workflow(tau-three-prong-event-table-producer
                            SOURCES tauThreeProngEventTableProducer.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+endif()
 
 o2physics_add_dpl_workflow(upc-cand-producer-muon
                            SOURCES upcCandProducerMuon.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
                            COMPONENT_NAME Analysis)
 
+if(FALSE)
 o2physics_add_dpl_workflow(upc-cand-producer-global-muon
         SOURCES upcCandProducerGlobalMuon.cxx
         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
         COMPONENT_NAME Analysis)
+endif()

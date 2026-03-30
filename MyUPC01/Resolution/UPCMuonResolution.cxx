@@ -10,12 +10,9 @@
 // or submit itself to any jurisdiction.
 
 /// \file   UPCMuonResolution.cxx
-/// \brief  pT resolution analysis for forward muons in UPC events.
-///         Reads MC reco information (udFwdTracks + udMcParticles) and fills
-///         two 2D histograms:
-///           1) hPtResoVsPtTrue  : (pTreco - pTtrue) / pTtrue  vs  pTtrue
-///           2) hResponseMatrix  : pTreco  vs  pTtrue  (for unfolding)
-/// \author Takuma Matsumoto
+/// \brief  Resolution analysis for forward muons (pT, eta, phi, mass) in UPC events.
+///         Includes configurable kinematics cuts, cut-flow, and post-cut single muon resolutions.
+/// \author Takuma Matsumoto (Modified)
 
 #include "PWGUD/DataModel/UDTables.h"
 
@@ -25,7 +22,9 @@
 #include "Framework/runDataProcessing.h"
 
 #include "TLorentzVector.h"
+#include "TDatabasePDG.h"
 #include "TMath.h"
+#include "TString.h"
 
 #include <unordered_map>
 #include <vector>
@@ -49,53 +48,114 @@ struct UPCMuonResolution {
   // Histogram registries  -----------------------------------------------------
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject, true, true};
 
-  // Configurables  ------------------------------------------------------------
+  // ===========================================================================
+  // Configurables (Cut conditions managed here)
+  // ===========================================================================
+  // Event Level
+  Configurable<int>   reqMatchMID{"reqMatchMID", 2, "Required number of MCH-MID matched tracks (use 2 for exact match)"};
+  
+  // Single Track Level
   Configurable<float> etaMin{"etaMin", -4.0f, "Minimum pseudorapidity for muon tracks"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum pseudorapidity for muon tracks"};
   Configurable<float> rAbsMin{"rAbsMin", 17.6f, "Minimum R at absorber end [cm]"};
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
-  Configurable<int>   nBinsPtTrue{"nBinsPtTrue", 100, "Number of bins on the pT_true axis"};
-  Configurable<float> ptTrueMax{"ptTrueMax", 10.0f, "Maximum pT_true [GeV/c]"};
-  Configurable<int>   nBinsRelRes{"nBinsRelRes", 200, "Number of bins on the relative-resolution axis"};
-  Configurable<float> relResMax{"relResMax", 0.5f, "Half-range of relative-resolution axis"};
-  Configurable<int>   nBinsPtReco{"nBinsPtReco", 100, "Number of bins on the pT_reco axis"};
-  Configurable<float> ptRecoMax{"ptRecoMax", 10.0f, "Maximum pT_reco [GeV/c]"};
+  
+  // Dimuon Pair Level
+  Configurable<float> pairPtMax{"pairPtMax", 0.25f, "Maximum dimuon pair pT [GeV/c]"};
+  Configurable<float> pairRapidityMin{"pairRapidityMin", -4.0f, "Minimum dimuon pair rapidity"};
+  Configurable<float> pairRapidityMax{"pairRapidityMax", -2.5f, "Maximum dimuon pair rapidity"};
+  Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
+  Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
+
+  // Histogram Binning Settings
+  Configurable<int>   nBinsPt{"nBinsPt", 1000, "Number of bins on pT axis"};
+  Configurable<float> ptMax{"ptMax", 10.0f, "Maximum single pT [GeV/c]"};
+  Configurable<int>   nBinsMass{"nBinsMass", 200, "Number of bins on Mass axis"};
 
   static constexpr int kMuonPDG = 13;
+  float mMu = 0.0f; 
 
   // ---------------------------------------------------------------------------
   void init(InitContext&)
   {
+    auto* particle = TDatabasePDG::Instance()->GetParticle(kMuonPDG);
+    mMu = particle ? particle->Mass() : 0.105658f; 
+
+    // --- Cut Flow Histogram ---
+    auto hCutFlow = registry.add<TH1>("hCutFlow", "Selection Cut Flow;;Counts", HistType::kTH1I, {{15, 0., 15.}});
+    TString CutNames[15] = {
+      "0: All Cand",             // 0
+      "1: Pass Exact MatchMID",  // 1
+      "2: Track All",            // 2
+      "3: Track Pass rAbs",      // 3
+      "4: Track Pass pDCA",      // 4
+      "5: Track Pass MatchMID",  // 5
+      "6: Track Pass Eta",       // 6
+      "7: Pair All",             // 7
+      "8: Pair Unlike-sign",     // 8
+      "9: Pair Both MC Muon",    // 9
+      "10: Pair Pass Pt",        // 10
+      "11: Pair Pass Rapidity",  // 11
+      "12: Pair Pass Mass",      // 12
+      "13: Filler",              // 13
+      "14: Filler"               // 14
+    };
+    for (int i = 0; i < 15; i++) {
+      hCutFlow->GetXaxis()->SetBinLabel(i + 1, CutNames[i].Data());
+    }
+
     // --- Axis definitions ---
-    // X axis: pT_true
-    const AxisSpec axisPtTrue{nBinsPtTrue, 0.f, ptTrueMax, "#it{p}_{T}^{true} (GeV/#it{c})"};
-    // Y axis for resolution histogram: (pTreco - pTtrue) / pTtrue
-    const AxisSpec axisRelRes{nBinsRelRes, -relResMax, relResMax, "(#it{p}_{T}^{reco} - #it{p}_{T}^{true}) / #it{p}_{T}^{true}"};
-    // Y axis for response matrix: pT_reco
-    const AxisSpec axisPtReco{nBinsPtReco, 0.f, ptRecoMax, "#it{p}_{T}^{reco} (GeV/#it{c})"};
+    const AxisSpec axisPtTrue{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{true} (GeV/#it{c})"};
+    const AxisSpec axisPtReco{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{reco} (GeV/#it{c})"};
+    const AxisSpec axisPtRelRes{200, -0.5f, 0.5f, "(#it{p}_{T}^{reco} - #it{p}_{T}^{true}) / #it{p}_{T}^{true}"};
 
-    // Event counter
+    const AxisSpec axisEtaTrue{100, -4.5f, -2.0f, "#eta^{true}"};
+    const AxisSpec axisEtaReco{100, -4.5f, -2.0f, "#eta^{reco}"};
+    const AxisSpec axisEtaRes{100, -0.25f, 0.25f, "#eta^{reco} - #eta^{true}"};
+
+    const AxisSpec axisPhiTrue{100, -TMath::Pi(), TMath::Pi(), "#varphi^{true} (rad)"};
+    const AxisSpec axisPhiReco{100, -TMath::Pi(), TMath::Pi(), "#varphi^{reco} (rad)"};
+    const AxisSpec axisPhiRes{100, -0.25f, 0.25f, "#varphi^{reco} - #varphi^{true}"};
+
+    const AxisSpec axisMassTrue{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu}^{true} (GeV/#it{c}^{2})"};
+    const AxisSpec axisMassReco{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})"};
+    const AxisSpec axisMassRelRes{200, -0.2f, 0.2f, "(#it{M}^{reco} - #it{M}^{true}) / #it{M}^{true}"};
+
     const AxisSpec axisCounter{1, 0., 1., ""};
-    registry.add("eventCounter", "Processed Events (MC Reco)", kTH1F, {axisCounter});
+    registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
 
-    // --- 2D Histograms ---
-    // (1) Resolution: Y = (pTreco - pTtrue) / pTtrue  vs  X = pTtrue
-    registry.add("hPtResoVsPtTrue",
-                 "pT Resolution;#it{p}_{T}^{true} (GeV/#it{c});(#it{p}_{T}^{reco} - #it{p}_{T}^{true}) / #it{p}_{T}^{true}",
-                 kTH2F, {axisPtTrue, axisRelRes});
+    // --- 1D & 2D Histograms (Single Muon - Before Pair Cuts) ---
+    registry.add("hPtTrue",  "pT True",  kTH1F, {axisPtTrue});
+    registry.add("hPtReco",  "pT Reco",  kTH1F, {axisPtReco});
+    registry.add("hEtaTrue", "Eta True", kTH1F, {axisEtaTrue});
+    registry.add("hEtaReco", "Eta Reco", kTH1F, {axisEtaReco});
+    registry.add("hPhiTrue", "Phi True", kTH1F, {axisPhiTrue});
+    registry.add("hPhiReco", "Phi Reco", kTH1F, {axisPhiReco});
 
-    // (2) Response matrix: Y = pTreco  vs  X = pTtrue
-    registry.add("hResponseMatrix",
-                 "Response Matrix;#it{p}_{T}^{true} (GeV/#it{c});#it{p}_{T}^{reco} (GeV/#it{c})",
-                 kTH2F, {axisPtTrue, axisPtReco});
+    registry.add("hPtResoVsPtTrue",  "pT Resolution",  kTH2F, {axisPtTrue, axisPtRelRes});
+    registry.add("hEtaResoVspTTrue", "Eta Resolution", kTH2F, {axisPtTrue, axisEtaRes});
+    
+    registry.add("hPhiResoVsPtTrue",     "Phi Resolution (All)",      kTH2F, {axisPtTrue, axisPhiRes});
+    registry.add("hPhiResoVsPtTrue_Pos", "Phi Resolution (Positive)", kTH2F, {axisPtTrue, axisPhiRes});
+    registry.add("hPhiResoVsPtTrue_Neg", "Phi Resolution (Negative)", kTH2F, {axisPtTrue, axisPhiRes});
+    
+    registry.add("hResponseMatrixPt",  "pT Response",  kTH2F, {axisPtTrue, axisPtReco});
+    registry.add("hResponseMatrixEta", "Eta Response", kTH2F, {axisEtaTrue, axisEtaReco});
+    registry.add("hResponseMatrixPhi", "Phi Response", kTH2F, {axisPhiTrue, axisPhiReco});
 
-    // 1D projections for quick inspection
-    registry.add("hPtTrue",  "pT True;#it{p}_{T}^{true} (GeV/#it{c});Counts",  kTH1F, {axisPtTrue});
-    registry.add("hPtReco",  "pT Reco;#it{p}_{T}^{reco} (GeV/#it{c});Counts",  kTH1F, {axisPtReco});
+    // --- 2D Histograms (Single Muon - AFTER Pair Cuts) ---
+    registry.add("hPtResoVsPtTrue_PostCut",  "pT Resolution (Post Pair Cuts)",  kTH2F, {axisPtTrue, axisPtRelRes});
+    registry.add("hEtaResoVspTTrue_PostCut", "Eta Resolution (Post Pair Cuts)", kTH2F, {axisPtTrue, axisEtaRes});
+    registry.add("hPhiResoVsPtTrue_PostCut", "Phi Resolution (Post Pair Cuts)", kTH2F, {axisPtTrue, axisPhiRes});
+
+    // --- Histograms (Unlike-sign Dimuon Mass) ---
+    registry.add("hMassTrue", "Dimuon Mass True", kTH1F, {axisMassTrue});
+    registry.add("hMassReco", "Dimuon Mass Reco", kTH1F, {axisMassReco});
+    registry.add("hMassResoVsMassTrue", "Mass Resolution", kTH2F, {axisMassTrue, axisMassRelRes});
+    registry.add("hResponseMatrixMass", "Mass Response",   kTH2F, {axisMassTrue, axisMassReco});
   }
 
   // ---------------------------------------------------------------------------
-  /// Collect track global-indices per UDCollision ID
   template <typename TTracks>
   void collectCandIDs(std::unordered_map<int32_t, std::vector<int32_t>>& tracksPerCand, TTracks& tracks)
   {
@@ -108,100 +168,175 @@ struct UPCMuonResolution {
   }
 
   // ---------------------------------------------------------------------------
-  /// Apply quality cuts on a single track
   template <typename TTrack>
   bool passTrackCuts(const TTrack& tr)
   {
-    // R at absorber end
+    registry.fill(HIST("hCutFlow"), 2); // 2: Track All
+
     float rAbs = tr.rAtAbsorberEnd();
-    if (rAbs < rAbsMin || rAbs > rAbsMax)
-      return false;
+    if (rAbs < rAbsMin || rAbs > rAbsMax) return false;
+    registry.fill(HIST("hCutFlow"), 3); // 3: Track Pass rAbs
 
-    // pDCA cut
     float pDcaMax = (rAbs < 26.5f) ? 350.0f : 200.0f;
-    if (tr.pDca() > pDcaMax)
-      return false;
+    if (tr.pDca() > pDcaMax) return false;
+    registry.fill(HIST("hCutFlow"), 4); // 4: Track Pass pDCA
 
-    // MCH-MID match required
-    if (tr.chi2MatchMCHMID() <= 0)
-      return false;
+    if (tr.chi2MatchMCHMID() <= 0) return false;
+    registry.fill(HIST("hCutFlow"), 5); // 5: Track Pass MatchMID
+
+    TLorentzVector recoVec;
+    recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
+    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax) return false;
+    registry.fill(HIST("hCutFlow"), 6); // 6: Track Pass Eta
 
     return true;
-  }
-
-  // ---------------------------------------------------------------------------
-  /// Fill resolution histograms for a single (reco, mc) track pair
-  template <typename TTrack, typename TMcPart>
-  void fillResolution(const TTrack& tr, const TMcPart& mc)
-  {
-    // Verify the MC particle is a muon
-    if (std::abs(mc.pdgCode()) != kMuonPDG)
-      return;
-
-    // Build 4-vectors
-    const float mMu = 0.10566f; // muon mass in GeV
-    TLorentzVector recoVec, trueVec;
-    recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
-    trueVec.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
-
-    float etaReco = recoVec.Eta();
-    if (etaReco <= etaMin || etaReco >= etaMax)
-      return;
-
-    float ptTrue = trueVec.Pt();
-    float ptReco = recoVec.Pt();
-
-    if (ptTrue <= 0.f)
-      return;
-
-    float relRes = (ptReco - ptTrue) / ptTrue;
-
-    // Fill histograms
-    registry.fill(HIST("hPtResoVsPtTrue"), ptTrue, relRes);
-    registry.fill(HIST("hResponseMatrix"), ptTrue, ptReco);
-    registry.fill(HIST("hPtTrue"), ptTrue);
-    registry.fill(HIST("hPtReco"), ptReco);
   }
 
   // ---------------------------------------------------------------------------
   void processMcReco(CandidatesFwd const& eventCandidates,
                      CompleteFwdTracks const& fwdTracks,
                      o2::aod::UDMcCollisions const&,
-                     o2::aod::UDMcParticles const& /*McParts*/)
+                     o2::aod::UDMcParticles const&)
   {
     registry.fill(HIST("eventCounter"), 0.5);
 
-    // Collect tracks (with MC truth link) per candidate
     std::unordered_map<int32_t, std::vector<int32_t>> tracksPerCand;
     collectCandIDs(tracksPerCand, fwdTracks);
 
     for (const auto& item : tracksPerCand) {
       int32_t candId = item.first;
       const auto& trkIds = item.second;
-      if (trkIds.size() < 1)
-        continue;
+      if (trkIds.size() < 1) continue;
 
-      // Count MCH-MID matched tracks (quality requirement for the event)
+      registry.fill(HIST("hCutFlow"), 0); // 0: All Cand
+
       int nMchMid = 0;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
-        if (tr.chi2MatchMCHMID() > 0)
-          nMchMid++;
+        if (tr.chi2MatchMCHMID() > 0) nMchMid++;
       }
-      // Require exactly 2 MCH-MID tracks for dimuon candidates
-      if (nMchMid < 2)
-        continue;
+      if (nMchMid != reqMatchMID) continue;
+      
+      registry.fill(HIST("hCutFlow"), 1); // 1: Pass Exact MatchMID
 
-      // Loop over individual tracks
+      std::vector<int32_t> goodTrkIds;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
-        if (!passTrackCuts(tr))
-          continue;
-        const auto& mc = tr.udMcParticle();
-        fillResolution(tr, mc);
+        if (passTrackCuts(tr)) {
+          goodTrkIds.push_back(idx);
+        }
       }
 
-      (void)candId; // suppress unused-variable warning
+      // 1. Single Muon Processing (Before Pair Cuts)
+      for (auto idx : goodTrkIds) {
+        auto tr = fwdTracks.iteratorAt(idx);
+        const auto& mc = tr.udMcParticle();
+        if (std::abs(mc.pdgCode()) == kMuonPDG) {
+          TLorentzVector recoVec, trueVec;
+          recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
+          trueVec.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
+
+          if (trueVec.Pt() > 0.f) {
+            float ptTrue = trueVec.Pt(), ptReco = recoVec.Pt();
+            float etaTrue = trueVec.Eta(), etaReco = recoVec.Eta();
+            float phiTrue = trueVec.Phi(), phiReco = recoVec.Phi();
+
+            registry.fill(HIST("hPtTrue"), ptTrue);
+            registry.fill(HIST("hPtReco"), ptReco);
+            registry.fill(HIST("hEtaTrue"), etaTrue);
+            registry.fill(HIST("hEtaReco"), etaReco);
+            registry.fill(HIST("hPhiTrue"), phiTrue);
+            registry.fill(HIST("hPhiReco"), phiReco);
+
+            registry.fill(HIST("hPtResoVsPtTrue"), ptTrue, (ptReco - ptTrue) / ptTrue);
+            registry.fill(HIST("hResponseMatrixPt"), ptTrue, ptReco);
+            registry.fill(HIST("hEtaResoVspTTrue"), ptTrue, etaReco - etaTrue);
+            registry.fill(HIST("hResponseMatrixEta"), etaTrue, etaReco);
+
+            float dPhi = phiReco - phiTrue;
+            if (dPhi > TMath::Pi()) dPhi -= 2 * TMath::Pi();
+            if (dPhi < -TMath::Pi()) dPhi += 2 * TMath::Pi();
+            
+            registry.fill(HIST("hPhiResoVsPtTrue"), ptTrue, dPhi);
+            if (tr.sign() > 0) registry.fill(HIST("hPhiResoVsPtTrue_Pos"), ptTrue, dPhi);
+            else if (tr.sign() < 0) registry.fill(HIST("hPhiResoVsPtTrue_Neg"), ptTrue, dPhi);
+            
+            registry.fill(HIST("hResponseMatrixPhi"), phiTrue, phiReco);
+          }
+        }
+      }
+
+      // 2. Dimuon Processing
+      for (size_t i = 0; i < goodTrkIds.size(); ++i) {
+        auto tr1 = fwdTracks.iteratorAt(goodTrkIds[i]);
+        const auto& mc1 = tr1.udMcParticle();
+
+        for (size_t j = i + 1; j < goodTrkIds.size(); ++j) {
+          auto tr2 = fwdTracks.iteratorAt(goodTrkIds[j]);
+          const auto& mc2 = tr2.udMcParticle();
+
+          registry.fill(HIST("hCutFlow"), 7); // 7: Pair All
+
+          if (tr1.sign() * tr2.sign() >= 0) continue;
+          registry.fill(HIST("hCutFlow"), 8); // 8: Pair Unlike-sign
+
+          if (std::abs(mc1.pdgCode()) != kMuonPDG || std::abs(mc2.pdgCode()) != kMuonPDG) continue;
+          registry.fill(HIST("hCutFlow"), 9); // 9: Pair Both MC Muon
+
+          TLorentzVector recoVec1, recoVec2;
+          recoVec1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
+          recoVec2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
+          TLorentzVector pairReco = recoVec1 + recoVec2;
+
+          // Kinematic Cuts on Pair
+          if (pairReco.Pt() >= pairPtMax) continue;
+          registry.fill(HIST("hCutFlow"), 10); // 10: Pair Pass Pt
+
+          if (pairReco.Rapidity() <= pairRapidityMin || pairReco.Rapidity() >= pairRapidityMax) continue;
+          registry.fill(HIST("hCutFlow"), 11); // 11: Pair Pass Rapidity
+
+          if (pairReco.M() <= pairMassMin || pairReco.M() >= pairMassMax) continue;
+          registry.fill(HIST("hCutFlow"), 12); // 12: Pair Pass Mass
+
+          // ===================================================================
+          // If passed all cuts, fill Post-Cut Single Muon Resolutions
+          // ===================================================================
+          auto fillPostCutReso = [&](const auto& tr, const auto& mc) {
+            TLorentzVector rVec, tVec;
+            rVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
+            tVec.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
+            if (tVec.Pt() > 0.f) {
+              float pT_T = tVec.Pt(), pT_R = rVec.Pt();
+              float dEta = rVec.Eta() - tVec.Eta();
+              float dPhi = rVec.Phi() - tVec.Phi();
+              if (dPhi > TMath::Pi()) dPhi -= 2 * TMath::Pi();
+              if (dPhi < -TMath::Pi()) dPhi += 2 * TMath::Pi();
+
+              registry.fill(HIST("hPtResoVsPtTrue_PostCut"), pT_T, (pT_R - pT_T) / pT_T);
+              registry.fill(HIST("hEtaResoVspTTrue_PostCut"), pT_T, dEta);
+              registry.fill(HIST("hPhiResoVsPtTrue_PostCut"), pT_T, dPhi);
+            }
+          };
+          fillPostCutReso(tr1, mc1);
+          fillPostCutReso(tr2, mc2);
+
+          // Calculate True pair and fill Mass Resolution
+          TLorentzVector trueVec1, trueVec2;
+          trueVec1.SetXYZM(mc1.px(), mc1.py(), mc1.pz(), mMu);
+          trueVec2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
+          float massTrue = (trueVec1 + trueVec2).M();
+          float massReco = pairReco.M();
+
+          registry.fill(HIST("hMassTrue"), massTrue);
+          registry.fill(HIST("hMassReco"), massReco);
+          if (massTrue > 0.f) {
+            registry.fill(HIST("hMassResoVsMassTrue"), massTrue, (massReco - massTrue) / massTrue);
+          }
+          registry.fill(HIST("hResponseMatrixMass"), massTrue, massReco);
+        }
+      }
+
+      (void)candId; 
       (void)eventCandidates;
     }
   }

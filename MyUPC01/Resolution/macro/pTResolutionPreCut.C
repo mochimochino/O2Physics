@@ -10,7 +10,7 @@
 #include "TStyle.h"
 #include "TLatex.h"
 
-void FitAndOverlayResolution() {
+void pTResolutionPreCut() {
     // ==========================================
     // Setting
     // ==========================================
@@ -22,7 +22,7 @@ void FitAndOverlayResolution() {
     double drawYmin = -0.5;
     double drawYmax =  0.5;
 
-    double ptBins[] = {0.0, 0.5, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 3.0, 5.0, 10.0};
+    double ptBins[] = {0.0, 0.25, 0.5, 0.75, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 3.0, 5.0, 10.0};
     int nBinsX = sizeof(ptBins)/sizeof(double) - 1;
     // ==========================================
 
@@ -38,14 +38,23 @@ void FitAndOverlayResolution() {
         return;
     }
 
-    gStyle->SetPalette(kBird);
     gStyle->SetOptStat(0);
+    int fontCode = 42;
+    gStyle->SetLabelFont(fontCode, "XYZ");
+    gStyle->SetTitleFont(fontCode, "XYZ");
+    gStyle->SetTextFont(fontCode);
+    gStyle->SetLegendFont(fontCode);
+    gStyle->SetTitleSize(0.04, "XYZ");
+    gStyle->SetLabelSize(0.03, "XYZ");
+    
+
+    gStyle->SetPalette(kBird);
     int nBinsY = h2Pre->GetNbinsY();
     double yMin = h2Pre->GetYaxis()->GetXmin();
     double yMax = h2Pre->GetYaxis()->GetXmax();
 
     TH2D *h2Rebinned = new TH2D("h2Rebinned", 
-                                "pT Resolution vs True pT; p_{T}^{true} (GeV/c);Resolution (p_{T}^{reco} - p_{T}^{true}) / p_{T}^{true}", 
+                                "p_{T} Resolution Pre Cut; p_{T}^{true} (GeV/c);Resolution (p_{T}^{reco} - p_{T}^{true}) / p_{T}^{true}", 
                                 nBinsX, ptBins, nBinsY, yMin, yMax);
 
     for (int ix = 1; ix <= h2Pre->GetNbinsX(); ++ix) {
@@ -105,6 +114,7 @@ void FitAndOverlayResolution() {
     }
 
     TCanvas *c1 = new TCanvas("c1", "pT Resolution Fit Overlay", 800, 600);
+    c1->SetTopMargin(0.08);
     c1->SetRightMargin(0.05);
     c1->SetGrid();
 
@@ -112,7 +122,7 @@ void FitAndOverlayResolution() {
     h2Rebinned->GetYaxis()->SetRangeUser(drawYmin, drawYmax);
 
     // Color Map
-    h2Rebinned->Draw("COL");
+    h2Rebinned->Draw("COL"); // COL looks good
 
     grFitResult->SetMarkerStyle(20);
     grFitResult->SetMarkerSize(1.2);
@@ -121,9 +131,15 @@ void FitAndOverlayResolution() {
     grFitResult->SetLineWidth(2);
     grFitResult->Draw("P SAME");
 
+    TLatex tex;
+    tex.SetNDC();
+    tex.SetTextFont(fontCode);
+    tex.SetTextSize(0.04);
+    tex.DrawLatex(0.65, 0.88, Form("Entries: %.0f", h2Pre->GetEntries()));
+
     //TLegend *leg = new TLegend(0.65, 0.70, 0.95, 0.95);
     //leg->AddEntry(grFitResult, "Fit: #mu #pm 1.5#sigma", "pe");
     //leg->Draw();
 
-    c1->SaveAs("Resolution_FitOverlay_PreCut_Rebinned.png");
+    c1->SaveAs("pTResolution_PreCut.png");
 }

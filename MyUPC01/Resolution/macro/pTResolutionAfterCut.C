@@ -14,7 +14,7 @@ void pTResolutionAfterCut() {
     // ==========================================
     // Setting
     // ==========================================
-    TString fileName = "AnalysisResults.root"; 
+    TString fileName = "psi2s-incoh.root"; 
     TString histPathPre = "my-upc-muon-resolution/registry/hPtResoVsPtTrue_PostCut"; 
 
     double drawXmin = 0.0;

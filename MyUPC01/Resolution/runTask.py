@@ -3,9 +3,9 @@ import json
 import glob
 import subprocess
 
-template_json_path = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/conf/jpsi-incoh-conf.json"  # Change
+template_json_path = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/conf/psi2s-incoh-fd-conf.json"  # Change
 
-list_files = glob.glob("/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/jpsi-incoh/jpsi-incoh-*.txt") # Change
+list_files = glob.glob("/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/psi2s-incoh-fd/psi2s-incoh-fd-*.txt") # Change
 
 
 failed_log_path = "failed_tasks.log"

@@ -108,6 +108,8 @@ struct UPCMuonResolution {
     const AxisSpec axisPtTrue{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{true} (GeV/#it{c})"};
     const AxisSpec axisPtReco{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{reco} (GeV/#it{c})"};
     const AxisSpec axisPtRelRes{200, -0.5f, 0.5f, "(#it{p}_{T}^{reco} - #it{p}_{T}^{true}) / #it{p}_{T}^{true}"};
+    const AxisSpec axisPairPtPreCut{500, 0.f, 5.0f, "#it{p}_{T,#mu#mu} (GeV/#it{c})"};
+    const AxisSpec axisPairPtReco{nBinsPt, 0.f, pairPtMax, "#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c})"};
 
     const AxisSpec axisEtaTrue{100, -4.5f, -2.0f, "#eta^{true}"};
     const AxisSpec axisEtaReco{100, -4.5f, -2.0f, "#eta^{reco}"};
@@ -153,6 +155,12 @@ struct UPCMuonResolution {
     registry.add("hMassReco", "Dimuon Mass Reco", kTH1F, {axisMassReco});
     registry.add("hMassResoVsMassTrue", "Mass Resolution", kTH2F, {axisMassTrue, axisMassRelRes});
     registry.add("hResponseMatrixMass", "Mass Response",   kTH2F, {axisMassTrue, axisMassReco});
+
+    // --- Dimuon Pair pT ---
+    registry.add("hPairPtMC_PreCut", "Dimuon Pair pT True (Pre Pair Cuts)", kTH1F, {axisPairPtPreCut});
+    registry.add("hPairPtReco_PreCut", "Dimuon Pair pT Reco (Pre Pair Cuts)", kTH1F, {axisPairPtPreCut});
+    registry.add("hPairPtReco_PostCut", "Dimuon Pair pT Reco (Post Pair Cuts)", kTH1F, {axisPairPtReco});
+    registry.add("hSingleMuonPtReco_PostCut", "Single Muon pT Reco (Post Pair Cuts)", kTH1F, {axisPtReco});
   }
 
   // ---------------------------------------------------------------------------
@@ -288,6 +296,14 @@ struct UPCMuonResolution {
           recoVec2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
           TLorentzVector pairReco = recoVec1 + recoVec2;
 
+          TLorentzVector mcVec1, mcVec2;
+          mcVec1.SetXYZM(mc1.px(), mc1.py(), mc1.pz(), mMu);
+          mcVec2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
+          TLorentzVector pairMC = mcVec1 + mcVec2;
+
+          registry.fill(HIST("hPairPtMC_PreCut"), pairMC.Pt());
+          registry.fill(HIST("hPairPtReco_PreCut"), pairReco.Pt());
+
           // Kinematic Cuts on Pair
           if (pairReco.Pt() >= pairPtMax) continue;
           registry.fill(HIST("hCutFlow"), 10); // 10: Pair Pass Pt
@@ -301,6 +317,7 @@ struct UPCMuonResolution {
           // ===================================================================
           // If passed all cuts, fill Post-Cut Single Muon Resolutions
           // ===================================================================
+          registry.fill(HIST("hPairPtReco_PostCut"), pairReco.Pt());
           auto fillPostCutReso = [&](const auto& tr, const auto& mc) {
             TLorentzVector rVec, tVec;
             rVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
@@ -315,6 +332,7 @@ struct UPCMuonResolution {
               registry.fill(HIST("hPtResoVsPtTrue_PostCut"), pT_T, (pT_R - pT_T) / pT_T);
               registry.fill(HIST("hEtaResoVspTTrue_PostCut"), pT_T, dEta);
               registry.fill(HIST("hPhiResoVsPtTrue_PostCut"), pT_T, dPhi);
+              registry.fill(HIST("hSingleMuonPtReco_PostCut"), pT_R);
             }
           };
           fillPostCutReso(tr1, mc1);

@@ -3,8 +3,8 @@ import json
 import subprocess
 
 failed_log_path = "failed_tasks.log"
-template_json_path = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/conf/mumu-mid-conf.json"
-list_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/mumu-mid"
+template_json_path = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/conf/psi2s-incoh-fd-conf.json" # Change
+list_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/psi2s-incoh-fd" # Change
 
 max_files_per_retry_list = 10
 retry_failed_log_path = "failed_tasks_retry.log"

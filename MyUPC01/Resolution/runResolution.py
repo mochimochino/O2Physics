@@ -2,12 +2,12 @@ import os
 import glob
 import subprocess
 
-target_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/jpsi-coh" #Change
+target_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/psi2s-incoh" #Change
 
 list_filename = "skimmed_aod_list.txt"
 
 
-search_pattern = os.path.join(target_dir, "jpsi-coh-*.root") #Change
+search_pattern = os.path.join(target_dir, "psi2s-incoh-*.root") #Change
 root_files = glob.glob(search_pattern)
 
 if not root_files:

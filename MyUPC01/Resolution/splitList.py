@@ -1,8 +1,8 @@
 import os
 import re
 
-input_file = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/mumu_mid_list.txt" #Change
-output_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/mumu-mid" #Change
+input_file = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/jpsi_incoh_list.txt" #Change
+output_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/jpsi-incoh" #Change
 max_files_per_list = 50
 
 if not os.path.exists(output_dir):
@@ -16,7 +16,7 @@ with open(input_file, "r") as f:
         if not path:
             continue
         
-        match = re.search(r'mumu_mid/(\d+)/', path) # change
+        match = re.search(r'jpsi_incoh/(\d+)/', path) # change
         if match:
             run_number = match.group(1)
             if run_number not in run_dict:
@@ -32,7 +32,7 @@ for run_number, paths in run_dict.items():
         chunk = paths[i:i + max_files_per_list]
         
         suffix = f"_{i // max_files_per_list}" if total_files > max_files_per_list else ""
-        output_filename = os.path.join(output_dir, f"mumu-mid-{run_number}{suffix}.txt") # Change
+        output_filename = os.path.join(output_dir, f"jpsi-incoh-{run_number}{suffix}.txt") # Change
         
         with open(output_filename, "w") as out_f:
             for p in chunk:

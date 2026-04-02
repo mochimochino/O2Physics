@@ -69,7 +69,9 @@ struct UPCMuonResolution {
 
   // Histogram Binning Settings
   Configurable<int>   nBinsPt{"nBinsPt", 1000, "Number of bins on pT axis"};
+  Configurable<int>   nBinsPt2{"nBinsPt2", 1000, "Number of bins on pT^2 axis"};
   Configurable<float> ptMax{"ptMax", 10.0f, "Maximum single pT [GeV/c]"};
+  Configurable<float> pt2Max{"pt2Max", 1.0f, "Maximum single pT^2 [GeV^2/c^2]"};
   Configurable<int>   nBinsMass{"nBinsMass", 200, "Number of bins on Mass axis"};
 
   static constexpr int kMuonPDG = 13;
@@ -123,6 +125,9 @@ struct UPCMuonResolution {
     const AxisSpec axisMassReco{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})"};
     const AxisSpec axisMassRelRes{200, -0.2f, 0.2f, "(#it{M}^{reco} - #it{M}^{true}) / #it{M}^{true}"};
 
+    const AxisSpec axisPt2True{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,true}^{2} (GeV^{2}/#it{c}^{2})"};
+    const AxisSpec axisPt2RelRes{nBinsPt2, -5.0f, 30.0f, "(#it{p}_{T,reco}^{2} - #it{p}_{T,true}^{2}) / #it{p}_{T,true}^{2}"};
+
     const AxisSpec axisCounter{1, 0., 1., ""};
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
 
@@ -161,6 +166,8 @@ struct UPCMuonResolution {
     registry.add("hPairPtReco_PreCut", "Dimuon Pair pT Reco (Pre Pair Cuts)", kTH1F, {axisPairPtPreCut});
     registry.add("hPairPtReco_PostCut", "Dimuon Pair pT Reco (Post Pair Cuts)", kTH1F, {axisPairPtReco});
     registry.add("hSingleMuonPtReco_PostCut", "Single Muon pT Reco (Post Pair Cuts)", kTH1F, {axisPtReco});
+
+    registry.add("hPairPt2ResoVsPt2True", "pT2 Resolution", kTH2F, {axisPt2True, axisPt2RelRes});
   }
 
   // ---------------------------------------------------------------------------
@@ -351,6 +358,14 @@ struct UPCMuonResolution {
             registry.fill(HIST("hMassResoVsMassTrue"), massTrue, (massReco - massTrue) / massTrue);
           }
           registry.fill(HIST("hResponseMatrixMass"), massTrue, massReco);
+
+          float pairPt2True = pairMC.Pt() * pairMC.Pt();
+          float pairPt2Reco = pairReco.Pt() * pairReco.Pt();
+
+          if (pairPt2True > 0.f) {
+            float pairPt2RelRes = (pairPt2Reco - pairPt2True) / pairPt2True;
+            registry.fill(HIST("hPairPt2ResoVsPt2True"), pairPt2True, pairPt2RelRes);
+}
         }
       }
 

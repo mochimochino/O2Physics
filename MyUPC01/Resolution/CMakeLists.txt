@@ -13,3 +13,8 @@ o2physics_add_dpl_workflow(my-upc-muon-resolution
                            SOURCES UPCMuonResolution.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(my-upc-muon-pair-resolution
+                           SOURCES UPCMuonPairResolution.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)

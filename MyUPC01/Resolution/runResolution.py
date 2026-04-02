@@ -24,8 +24,9 @@ print(f"対象ファイル数: {len(root_files)}")
 print(f"リストファイル: {list_filepath}\n")
 
 cmd = [
-    "o2-analysis-my-upc-muon-resolution",
+    "o2-analysis-my-upc-muon-pair-resolution",
     "--aod-file", f"@{list_filepath}",
+    "--shm-segment-size", "10000000000",
     "-b"
 ]
 

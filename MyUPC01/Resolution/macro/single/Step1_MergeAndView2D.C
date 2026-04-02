@@ -82,7 +82,7 @@ double ptBins[] = {0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
         ";p_{T}^{true} (GeV/c);Resolution (p_{T}^{reco} - p_{T}^{true}) / p_{T}^{true}",
         nBinsX, ptBins, nBinsY, yMin, yMax);
 
-    for (int ix = 1; ix <= h2Raw->GetNbinsX(); ++ix) {
+    /*for (int ix = 1; ix <= h2Raw->GetNbinsX(); ++ix) {
         for (int iy = 1; iy <= h2Raw->GetNbinsY(); ++iy) {
             double content = h2Raw->GetBinContent(ix, iy);
             if (content > 0) {
@@ -91,7 +91,30 @@ double ptBins[] = {0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
                 h2Rebinned->Fill(xc, yc, content);
             }
         }
+    }*/
+    for (int ix = 1; ix <= h2Raw->GetNbinsX(); ++ix) {
+        for (int iy = 1; iy <= h2Raw->GetNbinsY(); ++iy) {
+        double content = h2Raw->GetBinContent(ix, iy);
+        if (content > 0) {
+            double xc = h2Raw->GetXaxis()->GetBinCenter(ix);
+            double yc = h2Raw->GetYaxis()->GetBinCenter(iy);
+            
+            // 移行先のビン番号を取得
+            int outBinX = h2Rebinned->GetXaxis()->FindBin(xc);
+            int outBinY = h2Rebinned->GetYaxis()->FindBin(yc);
+            
+            // 現在のカウントと誤差を取得し、加算する
+            double currentContent = h2Rebinned->GetBinContent(outBinX, outBinY);
+            double currentError   = h2Rebinned->GetBinError(outBinX, outBinY);
+            double addError       = h2Raw->GetBinError(ix, iy);
+            
+            h2Rebinned->SetBinContent(outBinX, outBinY, currentContent + content);
+            // 誤差は独立なので、二乗和の平方根で伝播
+            h2Rebinned->SetBinError(outBinX, outBinY, std::sqrt(currentError*currentError + addError*addError));
+            }
+        }
     }
+
 
     // ----------------------------------------------------------
     // Drawing the rebinned histogram
@@ -131,6 +154,7 @@ double ptBins[] = {0.0, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0,
 
     c1->SaveAs("/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/pairpT/Step1_2D_Merged.png");
     std::cout << "[Info] Saved: /media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/pairpT/Step1_2D_Merged.png" << std::endl;
+
 
     // ----------------------------------------------------------
     // Save the merged histogram for future use (e.g., fitting in Step 2)

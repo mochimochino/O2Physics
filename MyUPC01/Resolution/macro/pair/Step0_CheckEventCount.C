@@ -18,7 +18,7 @@ void Step0_CheckEventCount()
     // ----------------------------------------------------------
     // Settings
     // ----------------------------------------------------------
-    const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0402/withoutCut000001/";
+    const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/";
     const TString taskReg = "my-upc-muon-pair-resolution/registry/";
     const TString outDir  = dataDir;
     
@@ -126,7 +126,7 @@ void Step0_CheckEventCount()
         // Axis
         double ymax = std::max(hMC->GetMaximum(), hReco->GetMaximum());
         hMC->GetYaxis()->SetRangeUser(1e0, ymax * 100.0);
-        hMC->GetXaxis()->SetRangeUser(0.0, 5.0);
+        hMC->GetXaxis()->SetRangeUser(0.0, 3.5);
         hMC->GetXaxis()->SetTitle(xTitle);
         hMC->GetYaxis()->SetTitle("Counts");
 
@@ -216,6 +216,7 @@ void Step0_CheckEventCount()
 
             if (firstDraw) {
                 h->GetYaxis()->SetRangeUser(1e0, overallMax * 100.0);
+                h->GetXaxis()->SetRangeUser(0.0, 3.5);
                 h->Draw("HIST");
                 firstDraw = false;
             } else {

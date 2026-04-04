@@ -18,7 +18,7 @@ import sys
 INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0402/withoutCut000001/"
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/"
 
 # 解析タスク名
 TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution"

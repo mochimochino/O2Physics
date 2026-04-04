@@ -71,7 +71,7 @@ struct UPCMuonPairResolution {
   Configurable<float> pairMassMax{"pairMassMax",   10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
 
   // Histogram Binning
-  Configurable<int>   nBinsPt{"nBinsPt",   100,  "Number of bins on pT axis"};
+  Configurable<int>   nBinsPt{"nBinsPt",   1000,  "Number of bins on pT axis"};
   Configurable<float> ptMax{"ptMax",        5.0f, "Upper edge of pT axis [GeV/c]"};
   Configurable<int>   nBinsPt2{"nBinsPt2", 5000,  "Number of bins on pT^2 axis"};
   Configurable<float> pt2Max{"pt2Max",      2.5f, "Upper edge of pT^2 axis [GeV^2/c^2]"};

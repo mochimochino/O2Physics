@@ -17,7 +17,7 @@
 // ==========================================================
 // Top-down binning
 // ==========================================================
-std::vector<double> AutoDetermineBinningTopDown(TH2F* hMatrixFine, double targetPurity, double targetStability, double maxPt2) {
+std::vector<double> AutoDetermineBinningTopDown(TH2F* hMatrixFine, double targetPurity, double targetStability, double minStats, double maxPt2) {
     std::vector<double> edges;
     edges.push_back(maxPt2);
 
@@ -26,7 +26,6 @@ std::vector<double> AutoDetermineBinningTopDown(TH2F* hMatrixFine, double target
 
     for (int lowerBin = maxBinFine; lowerBin >= 1; --lowerBin) {
         
-        // ★ 進捗の表示 (100ビンごとに更新して負荷を下げる)
         if (lowerBin % 100 == 0 || lowerBin == 1) {
             int progress = 100 - (int)(100.0 * lowerBin / maxBinFine);
             std::cout << "\r[1/4] Auto Binning... " << progress << "% completed" << std::flush;
@@ -41,7 +40,8 @@ std::vector<double> AutoDetermineBinningTopDown(TH2F* hMatrixFine, double target
         double purity = diag / sumReco;
         double stability = diag / sumTrue;
 
-        if (purity >= targetPurity && stability >= targetStability) {
+        if (purity >= targetPurity && stability >= targetStability && 
+            sumReco >= minStats && sumTrue >= minStats) {
             double lowerEdge = hMatrixFine->GetXaxis()->GetBinLowEdge(lowerBin);
             if (lowerBin > 1 && lowerEdge > 0.0) {
                 edges.push_back(lowerEdge);
@@ -61,7 +61,7 @@ void Step2_DetermineBinning()
     // ----------------------------------------------------------
     // Settings
     // ----------------------------------------------------------
-    const TString inDir   = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0402/withoutCut000001/";
+    const TString inDir   = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0402/cohenretCut/";
     const TString inFile  = inDir + "Step1_merged.root";
     const TString outDir  = inDir;
 
@@ -78,11 +78,12 @@ void Step2_DetermineBinning()
         return;
     }
 
-    double targetPurity = 0.50;    // 50%
-    double targetStability = 0.50; // 50%
-    double maxPt2 = 2.50;
+    double targetPurity = 0.40;    // 50%
+    double targetStability = 0.40; // 50%
+    double maxPt2 = 0.065;
+    double minStats = 100;
     
-    std::vector<double> pt2Bins = AutoDetermineBinningTopDown(hMatrixFine, targetPurity, targetStability, maxPt2);
+    std::vector<double> pt2Bins = AutoDetermineBinningTopDown(hMatrixFine, targetPurity, targetStability, minStats, maxPt2);
     const int nBins = pt2Bins.size() - 1;
 
     std::cout << "[Auto Binning Top-Down] Generated " << nBins << " bins: {";
@@ -153,37 +154,36 @@ void Step2_DetermineBinning()
             }
         }
     }
-    std::cout << "\r[3/4] Rebinning Matrix... 100% completed!" << std::endl; // ★ 完了
+    std::cout << "\r[3/4] Rebinning Matrix... 100% completed!" << std::endl;
 
-// ==========================================================
-    // 描画用のパーセント行列 (Percentage Matrix) の作成
+    // ==========================================================
+    // Percentage Matrix
     // ==========================================================
     TH2D* hMatrixPercentage = (TH2D*)hMatrixRebinned->Clone("hMatrixPercentage");
     hMatrixPercentage->SetTitle("Rebinned Response Matrix (Reco + Gen)/Gen in %);True p_{T}^{2};Reco p_{T}^{2}");
     
-    // TEXTで表示する数字のフォーマットを指定 (例: 小数点第1位まで "95.2")
+    // Text format
     gStyle->SetPaintTextFormat(".1f");
 
     for (int ix = 1; ix <= hMatrixRebinned->GetNbinsX(); ++ix) {
         std::cout << "\r[4/4] Purity & Stability... " << (int)(100.0 * ix / hMatrixRebinned->GetNbinsX()) << "%" << std::flush;
-        // Gen (Trueビンの合計) を計算
+        // Gen
         double sumGen = hMatrixRebinned->Integral(ix, ix, 1, hMatrixRebinned->GetNbinsY());
         
         for (int iy = 1; iy <= hMatrixRebinned->GetNbinsY(); ++iy) {
-            double content = hMatrixRebinned->GetBinContent(ix, iy);
+            double content = hMatrixRebinned->GetBinContent(ix, iy); // Rec + Gen
             if (sumGen > 0) {
-                // (Rec+Gen)/Gen * 100 をセット
+                // (Rec+Gen)/Gen * 100
                 hMatrixPercentage->SetBinContent(ix, iy, 100.0 * content / sumGen);
             } else {
                 hMatrixPercentage->SetBinContent(ix, iy, 0.0);
             }
         }
     }
-    std::cout << "\r[4/4] Purity & Stability... 100% completed!" << std::endl; // ★ 完了
+    std::cout << "\r[4/4] Purity & Stability... 100% completed!" << std::endl;
 
     TCanvas* cMat = new TCanvas("cMat", "Rebinned Matrix", 800, 600);
     cMat->SetLogz();
-    // 描画には hMatrixPercentage を使う
     hMatrixPercentage->Draw("COLZ TEXT");
     cMat->SaveAs(outDir + "Step2_RebinnedMatrix.png");
 
@@ -192,8 +192,8 @@ void Step2_DetermineBinning()
     // ==========================================================
     TCanvas* cMatZoom = new TCanvas("cMatZoom", "Rebinned Matrix Zoom", 800, 600);
     cMatZoom->SetLogz();
-    hMatrixPercentage->GetXaxis()->SetRangeUser(0.0, 0.01);
-    hMatrixPercentage->GetYaxis()->SetRangeUser(0.0, 0.01);
+    hMatrixPercentage->GetXaxis()->SetRangeUser(0.0, 0.003);
+    hMatrixPercentage->GetYaxis()->SetRangeUser(0.0, 0.003);
     hMatrixPercentage->SetMarkerSize(1.5); 
     hMatrixPercentage->Draw("COLZ TEXT");
     cMatZoom->SaveAs(outDir + "Step2_RebinnedMatrix_Zoom.png");

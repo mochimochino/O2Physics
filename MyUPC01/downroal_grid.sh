@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_DIR="/alice/sim/2026/LHC26b8/"
-DEST_BASE="/mnt/hdd3TB/UPCcandMuon/MC/sim/2026/LHC26b8/"
+DEST_BASE="/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/sim/2026/LHC26b8/"
 FILE_PATTERN="*AO2D*.root"
 MAX_JOBS=6
 

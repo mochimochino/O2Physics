@@ -1,0 +1,148 @@
+#include <iostream>
+#include "TFile.h"
+#include "TH2F.h"
+#include "TH2D.h"
+#include "TH1D.h"
+#include "TF1.h"
+#include "TGraphErrors.h"
+#include "TCanvas.h"
+#include "TLegend.h"
+#include "TStyle.h"
+#include "TLatex.h"
+
+void pTResolutionAfterCut() {
+    // ==========================================
+    // Setting
+    // ==========================================
+    TString fileName = "psi2s-incoh.root"; 
+    TString histPathPre = "my-upc-muon-resolution/registry/hPtResoVsPtTrue_PostCut"; 
+
+    double drawXmin = 0.0;
+    double drawXmax = 5.0;
+    double drawYmin = -0.5;
+    double drawYmax =  0.5;
+
+    double ptBins[] = {.0, 0.25, 0.5, 0.75, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 3.0, 5.0, 10.0};
+    int nBinsX = sizeof(ptBins)/sizeof(double) - 1;
+    // ==========================================
+
+    TFile *f = TFile::Open(fileName, "READ");
+    if (!f || f->IsZombie()) {
+        std::cerr << "[Error] File not found: " << fileName << std::endl;
+        return;
+    }
+
+    TH2F *h2Pre = (TH2F*)f->Get(histPathPre);
+    if (!h2Pre) {
+        std::cerr << "[Error] 2D histogram not found: " << histPathPre << std::endl;
+        return;
+    }
+
+    gStyle->SetOptStat(0);
+    int fontCode = 42;
+    gStyle->SetLabelFont(fontCode, "XYZ");
+    gStyle->SetTitleFont(fontCode, "XYZ");
+    gStyle->SetTextFont(fontCode);
+    gStyle->SetLegendFont(fontCode);
+    gStyle->SetTitleSize(0.04, "XYZ");
+    gStyle->SetLabelSize(0.03, "XYZ");
+    
+
+    gStyle->SetPalette(kBird);
+    int nBinsY = h2Pre->GetNbinsY();
+    double yMin = h2Pre->GetYaxis()->GetXmin();
+    double yMax = h2Pre->GetYaxis()->GetXmax();
+
+    TH2D *h2Rebinned = new TH2D("h2Rebinned", 
+                                "p_{T} Resolution After Cut; p_{T}^{true} (GeV/c);Resolution (p_{T}^{reco} - p_{T}^{true}) / p_{T}^{true}", 
+                                nBinsX, ptBins, nBinsY, yMin, yMax);
+
+    for (int ix = 1; ix <= h2Pre->GetNbinsX(); ++ix) {
+        for (int iy = 1; iy <= h2Pre->GetNbinsY(); ++iy) {
+            double content = h2Pre->GetBinContent(ix, iy);
+            if (content > 0) {
+                double xCenter = h2Pre->GetXaxis()->GetBinCenter(ix);
+                double yCenter = h2Pre->GetYaxis()->GetBinCenter(iy);
+                h2Rebinned->Fill(xCenter, yCenter, content);
+            }
+        }
+    }
+
+    TGraphErrors *grFitResult = new TGraphErrors(nBinsX);
+
+    for(int i = 0; i < nBinsX; ++i) {
+        TH1D *hProj = h2Rebinned->ProjectionY(Form("hProj_%d", i), i+1, i+1);
+
+        // If entries are too small, skip fitting
+        if (hProj->GetEntries() < 10) continue;
+
+        // ---------------------------------------------------------
+        // Iterative fitting
+        // ---------------------------------------------------------
+        int maxBin = hProj->GetMaximumBin();
+        double peakX = hProj->GetBinCenter(maxBin);
+        double peakY = hProj->GetMaximum();
+        
+        TF1 *fitFunc = new TF1(Form("fit_%d", i), "gaus", peakX - 0.1, peakX + 0.1);
+        
+        // Initial parameters (0: constant, 1: mean, 2: sigma)
+        fitFunc->SetParameters(peakY, peakX, 0.02);
+
+        hProj->Fit(fitFunc, "Q0R");
+
+        double mean1  = fitFunc->GetParameter(1);
+        double sigma1 = fitFunc->GetParameter(2);
+        
+        if(sigma1 > 0.0 && sigma1 < 1.0) {
+            fitFunc->SetRange(mean1 - 1.5 * sigma1, mean1 + 1.5 * sigma1);
+            hProj->Fit(fitFunc, "Q0R");
+        }
+
+        if(fitFunc) {
+            double ptCenter = h2Rebinned->GetXaxis()->GetBinCenter(i+1);
+            double ptErr    = h2Rebinned->GetXaxis()->GetBinWidth(i+1) / 2.0;
+            
+            double mean  = fitFunc->GetParameter(1); // mu
+            double sigma = fitFunc->GetParameter(2); // sigma
+
+            grFitResult->SetPoint(i, ptCenter, mean);
+            grFitResult->SetPointError(i, ptErr, sigma);
+        }
+        
+        delete fitFunc;
+        // ---------------------------------------------------------
+    }
+
+    TCanvas *c1 = new TCanvas("c1", "pT Resolution Fit Overlay", 800, 600);
+    c1->SetTopMargin(0.08);
+    c1->SetRightMargin(0.05);
+    c1->SetGrid();
+
+    h2Rebinned->GetXaxis()->SetRangeUser(drawXmin, drawXmax);
+    h2Rebinned->GetYaxis()->SetRangeUser(drawYmin, drawYmax);
+
+    // Color Map
+    h2Rebinned->Draw("COL"); // COL looks good
+
+    grFitResult->SetMarkerStyle(20);
+    grFitResult->SetMarkerSize(1.2);
+    grFitResult->SetMarkerColor(kBlack);
+    grFitResult->SetLineColor(kBlack);
+    grFitResult->SetLineWidth(2);
+    grFitResult->Draw("P SAME");
+
+    TLatex tex;
+    tex.SetNDC();
+    tex.SetTextFont(fontCode);
+    tex.SetTextSize(0.04);
+    tex.DrawLatex(0.65, 0.88, Form("Entries: %.0f", h2Pre->GetEntries()));
+    
+    // TLegend *leg = new TLegend(0.65, 0.70, 0.95, 0.82);
+    // leg->SetBorderSize(0);
+    // leg->SetFillStyle(0);
+    // leg->AddEntry(grFitResult, "Fit", "pe");
+    // leg->Draw();
+    // ------------------------------------------
+
+    c1->SaveAs("pTResolution_AfterCut.png");
+}

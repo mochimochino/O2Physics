@@ -15,8 +15,6 @@ o2physics_add_dpl_workflow(my-upc-01
                            COMPONENT_NAME Analysis)
 endif()
 
-add_subdirectory(Resolusion)
-
 o2physics_add_dpl_workflow(my-upc-mass-01
                            SOURCES MyUPCMass01.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
@@ -48,5 +46,7 @@ o2physics_add_dpl_workflow(my-upc-luminosity
 
 o2physics_add_dpl_workflow(my-upc-mass-02
                            SOURCES MyUPCMass02.cxx
-                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::DGPIDSelector
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+
+add_subdirectory(Resolution)

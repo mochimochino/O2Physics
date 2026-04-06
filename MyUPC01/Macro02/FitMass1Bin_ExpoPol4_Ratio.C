@@ -211,7 +211,7 @@ void FitMass1Bin_ExpoPol4_Ratio(const char* filename = "/media/takuma/ESD-EAWA/D
   fTotal->SetParameter(13, 0.0);
   fTotal->SetParameter(14, 0.0);
 
-  TFitResultPtr r = hUnlike->Fit(fTotal, "L R S B 0");
+  hUnlike->Fit(fTotal, "L R S B 0");
 
   hUnlike->Draw("PE");
   hOutside->Draw("HIST SAME");
@@ -269,10 +269,10 @@ void FitMass1Bin_ExpoPol4_Ratio(const char* filename = "/media/takuma/ESD-EAWA/D
   double chi2_dof = (ndf > 0) ? chi2 / ndf : 0.0;
   latex.DrawLatex(0.65, 0.64, Form("#chi^{2}/dof = %.2f", chi2_dof));
 
-  TLegend* legend = new TLegend(0.65, 0.34, 0.89, 0.59);
+  TLegend* legend = new TLegend(0.55, 0.30, 0.80, 0.55);
   legend->SetBorderSize(0);
   legend->SetTextFont(fontCode);
-  legend->SetTextSize(0.03);
+  legend->SetTextSize(0.04);
   legend->AddEntry(hUnlike, "Data", "P");
   legend->AddEntry(hOutside, "Continuum", "F");
   legend->AddEntry(fJpsi, "J/#psi", "L");
@@ -334,30 +334,6 @@ void FitMass1Bin_ExpoPol4_Ratio(const char* filename = "/media/takuma/ESD-EAWA/D
 
   c1->SaveAs("Mass_Fit_1Bin_ExpoPol4_Ratio.png");
 
-  pad1->cd();
-  pad1->SetLogy();
-  hUnlike->GetYaxis()->SetRangeUser(10.0, hUnlike->GetMaximum() * 10.0);
-  pad1->Update();
-  c1->SaveAs("Mass_Fit_1Bin_ExpoPol4_Ratio_Log.png");
-
-  // =========================================================
-  // Error
-  // =========================================================
-  double R_N = psi2s_yield / jpsi_yield;
-  double rel_err_psi2s = psi2s_err / psi2s_yield;
-  double rel_err_jpsi = jpsi_err / jpsi_yield;
-
-  // Wihout covariance
-  double err_independent = R_N * TMath::Sqrt(rel_err_psi2s * rel_err_psi2s + rel_err_jpsi * rel_err_jpsi);
-
-  // With covariance
-  double cov_0_7 = r->CovMatrix(0, 7);
-  double param_0 = fTotal->GetParameter(0);
-  double param_7 = fTotal->GetParameter(7);
-  double rel_cov = cov_0_7 / (param_0 * param_7);
-
-  double err_covariance = R_N * TMath::Sqrt(rel_err_psi2s * rel_err_psi2s + rel_err_jpsi * rel_err_jpsi - 2 * rel_cov);
-
   // ==========================================================
   // Print Total Yields to Terminal
   // ==========================================================
@@ -366,12 +342,5 @@ void FitMass1Bin_ExpoPol4_Ratio(const char* filename = "/media/takuma/ESD-EAWA/D
   std::cout << Form("N_J/psi   = %.1f +/- %.1f", jpsi_yield, jpsi_err) << std::endl;
   std::cout << Form("N_psi(2S) = %.1f +/- %.1f", psi2s_yield, psi2s_err) << std::endl;
   std::cout << Form("Chi2/NDF  = %.2f", chi2_dof) << std::endl;
-  std::cout << "Max bin content: " << hUnlike->GetMaximum() << std::endl;
-  std::cout << "----------------------------------------" << std::endl;
-  std::cout << "[ Ratio Error Comparison]" << std::endl;
-  std::cout << Form("Ratio (R)       = %.5f", R_N) << std::endl;
-  std::cout << Form("1. User Formula = %.5f (Independent)", err_independent) << std::endl;
-  std::cout << Form("2. Cov Formula  = %.5f (With Covariance)", err_covariance) << std::endl;
-  std::cout << Form("-> Covariance(0,7) value = %e", cov_0_7) << std::endl;
   std::cout << "=========================================" << std::endl;
 }

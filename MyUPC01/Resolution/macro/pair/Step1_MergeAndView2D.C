@@ -19,7 +19,7 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
   const TString outDir = dataDir;
 

@@ -65,7 +65,7 @@ void Step2_DetermineBinning()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/";
+  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
   const TString inFile = inDir + "Step1_merged.root";
   const TString outDir = inDir;
 
@@ -82,9 +82,9 @@ void Step2_DetermineBinning()
     return;
   }
 
-  double targetPurity = 0.50;    // 50%
-  double targetStability = 0.50; // 50%
-  double maxPt2 = 1.50;          // Coherent Cut 0.065
+  double targetPurity = 0.40;    // 50%
+  double targetStability = 0.40; // 50%
+  double maxPt2 = 0.065;         // Coherent Cut 0.065
   double minStats = 1000;
 
   std::vector<double> pt2Bins = AutoDetermineBinningTopDown(hMatrixFine, targetPurity, targetStability, minStats, maxPt2);

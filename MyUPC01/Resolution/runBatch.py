@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 runBatch.py
-全サンプルに対して o2-analysis-my-upc-muon-pair-resolution を順番に実行し、
 AnalysisResults.root を指定の出力ディレクトリに <sample>.root としてコピーする。
 """
 import os
@@ -15,10 +14,10 @@ import sys
 # ============================================================
 
 # 入力データの親ディレクトリ（各サンプルのサブディレクトリが入っている場所）
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/Output0408"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/"
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/"
 
 # 解析タスク名
 TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution"

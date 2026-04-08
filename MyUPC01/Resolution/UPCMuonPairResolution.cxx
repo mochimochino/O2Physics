@@ -24,14 +24,14 @@
 #include "Framework/O2DatabasePDGPlugin.h"
 #include "Framework/runDataProcessing.h"
 
-#include "TLorentzVector.h"
 #include "TDatabasePDG.h"
+#include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
 
+#include <cmath>
 #include <unordered_map>
 #include <vector>
-#include <cmath>
 
 using namespace o2;
 using namespace o2::framework;
@@ -44,8 +44,8 @@ struct UPCMuonPairResolution {
   Service<o2::framework::O2DatabasePDG> pdg;
 
   // Track type aliases  -------------------------------------------------------
-  using CandidatesFwd     = soa::Join<o2::aod::UDCollisions, o2::aod::UDCollisionsSelsFwd>;
-  using ForwardTracks     = soa::Join<o2::aod::UDFwdTracks, o2::aod::UDFwdTracksExtra>;
+  using CandidatesFwd = soa::Join<o2::aod::UDCollisions, o2::aod::UDCollisionsSelsFwd>;
+  using ForwardTracks = soa::Join<o2::aod::UDFwdTracks, o2::aod::UDFwdTracksExtra>;
   using CompleteFwdTracks = soa::Join<ForwardTracks, o2::aod::UDMcFwdTrackLabels>;
 
   // Histogram registry  -------------------------------------------------------
@@ -55,7 +55,7 @@ struct UPCMuonPairResolution {
   // Configurables
   // ===========================================================================
   // Event Level
-  Configurable<int>   reqMatchMID{"reqMatchMID", 2, "Required number of MCH-MID matched tracks"};
+  Configurable<int> reqMatchMID{"reqMatchMID", 2, "Required number of MCH-MID matched tracks"};
 
   // Single Track Level
   Configurable<float> etaMin{"etaMin", -4.0f, "Minimum pseudorapidity for muon tracks"};
@@ -64,17 +64,17 @@ struct UPCMuonPairResolution {
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
 
   // Dimuon Pair Level
-  Configurable<float> pairPtMax{"pairPtMax",       10.0f, "Maximum dimuon pair pT [GeV/c]"};
+  Configurable<float> pairPtMax{"pairPtMax", 10.0f, "Maximum dimuon pair pT [GeV/c]"}; // 10.0
   Configurable<float> pairRapidityMin{"pairRapidityMin", -4.0f, "Minimum dimuon pair rapidity"};
   Configurable<float> pairRapidityMax{"pairRapidityMax", -2.5f, "Maximum dimuon pair rapidity"};
-  Configurable<float> pairMassMin{"pairMassMin",   1.0f,  "Minimum dimuon pair mass [GeV/c^2]"};
-  Configurable<float> pairMassMax{"pairMassMax",   10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
+  Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
+  Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
 
   // Histogram Binning
-  Configurable<int>   nBinsPt{"nBinsPt",   1000,  "Number of bins on pT axis"};
-  Configurable<float> ptMax{"ptMax",        5.0f, "Upper edge of pT axis [GeV/c]"};
-  Configurable<int>   nBinsPt2{"nBinsPt2", 5000,  "Number of bins on pT^2 axis"};
-  Configurable<float> pt2Max{"pt2Max",      2.5f, "Upper edge of pT^2 axis [GeV^2/c^2]"};
+  Configurable<int> nBinsPt{"nBinsPt", 1000, "Number of bins on pT axis"};
+  Configurable<float> ptMax{"ptMax", 5.0f, "Upper edge of pT axis [GeV/c]"}; // 5
+  Configurable<int> nBinsPt2{"nBinsPt2", 5000, "Number of bins on pT^2 axis"};
+  Configurable<float> pt2Max{"pt2Max", 2.5f, "Upper edge of pT^2 axis [GeV^2/c^2]"}; // 2.5
 
   static constexpr int kMuonPDG = 13;
   float mMu = 0.0f;
@@ -110,11 +110,11 @@ struct UPCMuonPairResolution {
 
     // --- Axis definitions ---
     // Pair pT  (wide range for pre-cut; tight range re-used for post-cut)
-    const AxisSpec axisPairPtMC  {nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
+    const AxisSpec axisPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
     const AxisSpec axisPairPtReco{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c})"};
 
     // Pair pT^2
-    const AxisSpec axisPairPt2MC  {nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,MC} (GeV^{2}/#it{c}^{2})"};
+    const AxisSpec axisPairPt2MC{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,MC} (GeV^{2}/#it{c}^{2})"};
     const AxisSpec axisPairPt2Reco{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,reco} (GeV^{2}/#it{c}^{2})"};
 
     const AxisSpec axisCounter{1, 0., 1., ""};
@@ -123,22 +123,22 @@ struct UPCMuonPairResolution {
     // =========================================================================
     // 1D Histograms: Pair pT  -- PreCut (after unlike-sign+MC-muon, before kin. cuts)
     // =========================================================================
-    registry.add("hPairPtMC_PreCut",   "Dimuon Pair #it{p}_{T} MC truth (Pre Kin. Cuts)",  kTH1F, {axisPairPtMC});
-    registry.add("hPairPtReco_PreCut", "Dimuon Pair #it{p}_{T} Reco (Pre Kin. Cuts)",      kTH1F, {axisPairPtReco});
+    registry.add("hPairPtMC_PreCut", "Dimuon Pair #it{p}_{T} MC truth (Pre Kin. Cuts)", kTH1F, {axisPairPtMC});
+    registry.add("hPairPtReco_PreCut", "Dimuon Pair #it{p}_{T} Reco (Pre Kin. Cuts)", kTH1F, {axisPairPtReco});
 
     // 1D Histograms: Pair pT  -- PostCut (all cuts passed)
-    registry.add("hPairPtMC_PostCut",   "Dimuon Pair #it{p}_{T} MC truth (Post All Cuts)", kTH1F, {axisPairPtMC});
-    registry.add("hPairPtReco_PostCut", "Dimuon Pair #it{p}_{T} Reco (Post All Cuts)",     kTH1F, {axisPairPtReco});
+    registry.add("hPairPtMC_PostCut", "Dimuon Pair #it{p}_{T} MC truth (Post All Cuts)", kTH1F, {axisPairPtMC});
+    registry.add("hPairPtReco_PostCut", "Dimuon Pair #it{p}_{T} Reco (Post All Cuts)", kTH1F, {axisPairPtReco});
 
     // =========================================================================
     // 1D Histograms: Pair pT^2  (|t| ≈ pT^2)  -- PreCut
     // =========================================================================
-    registry.add("hPairPt2MC_PreCut",   "Dimuon Pair #it{p}_{T}^{2} MC truth (Pre Kin. Cuts)",  kTH1F, {axisPairPt2MC});
-    registry.add("hPairPt2Reco_PreCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Pre Kin. Cuts)",      kTH1F, {axisPairPt2Reco});
+    registry.add("hPairPt2MC_PreCut", "Dimuon Pair #it{p}_{T}^{2} MC truth (Pre Kin. Cuts)", kTH1F, {axisPairPt2MC});
+    registry.add("hPairPt2Reco_PreCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Pre Kin. Cuts)", kTH1F, {axisPairPt2Reco});
 
     // 1D Histograms: Pair pT^2  -- PostCut
-    registry.add("hPairPt2MC_PostCut",   "Dimuon Pair #it{p}_{T}^{2} MC truth (Post All Cuts)", kTH1F, {axisPairPt2MC});
-    registry.add("hPairPt2Reco_PostCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Post All Cuts)",     kTH1F, {axisPairPt2Reco});
+    registry.add("hPairPt2MC_PostCut", "Dimuon Pair #it{p}_{T}^{2} MC truth (Post All Cuts)", kTH1F, {axisPairPt2MC});
+    registry.add("hPairPt2Reco_PostCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Post All Cuts)", kTH1F, {axisPairPt2Reco});
 
     // =========================================================================
     // 2D Response Matrices (PostCut only)
@@ -157,13 +157,13 @@ struct UPCMuonPairResolution {
     // 2D Relative Residuals (PostCut only)
     // =========================================================================
     const AxisSpec axisPtRelRes{200, -1.0f, 1.0f,
-      "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
+                                "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
     registry.add("hPairPtResoVsPtMC",
                  "Pair #it{p}_{T} Resolution vs #it{p}_{T}^{MC}",
                  kTH2F, {axisPairPtMC, axisPtRelRes});
 
     const AxisSpec axisPt2RelRes{200, -5.0f, 30.0f,
-      "(#it{p}_{T}^{2,reco} - #it{p}_{T}^{2,MC}) / #it{p}_{T}^{2,MC}"};
+                                 "(#it{p}_{T}^{2,reco} - #it{p}_{T}^{2,MC}) / #it{p}_{T}^{2,MC}"};
     registry.add("hPairPt2ResoVsPt2MC",
                  "Pair #it{p}_{T}^{2} Resolution vs #it{p}_{T}^{2,MC}",
                  kTH2F, {axisPairPt2MC, axisPt2RelRes});
@@ -189,19 +189,23 @@ struct UPCMuonPairResolution {
     registry.fill(HIST("hCutFlow"), 2); // 2: Track All
 
     float rAbs = tr.rAtAbsorberEnd();
-    if (rAbs < rAbsMin || rAbs > rAbsMax) return false;
+    if (rAbs < rAbsMin || rAbs > rAbsMax)
+      return false;
     registry.fill(HIST("hCutFlow"), 3); // 3: Track Pass rAbs
 
     float pDcaMax = (rAbs < 26.5f) ? 350.0f : 200.0f;
-    if (tr.pDca() > pDcaMax) return false;
+    if (tr.pDca() > pDcaMax)
+      return false;
     registry.fill(HIST("hCutFlow"), 4); // 4: Track Pass pDCA
 
-    if (tr.chi2MatchMCHMID() <= 0) return false;
+    if (tr.chi2MatchMCHMID() <= 0)
+      return false;
     registry.fill(HIST("hCutFlow"), 5); // 5: Track Pass MatchMID
 
     TLorentzVector recoVec;
     recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
-    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax) return false;
+    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax)
+      return false;
     registry.fill(HIST("hCutFlow"), 6); // 6: Track Pass Eta
 
     return true;
@@ -219,9 +223,10 @@ struct UPCMuonPairResolution {
     collectCandIDs(tracksPerCand, fwdTracks);
 
     for (const auto& item : tracksPerCand) {
-      int32_t candId   = item.first;
+      int32_t candId = item.first;
       const auto& trkIds = item.second;
-      if (trkIds.size() < 1) continue;
+      if (trkIds.size() < 1)
+        continue;
 
       registry.fill(HIST("hCutFlow"), 0); // 0: All Cand
 
@@ -229,9 +234,11 @@ struct UPCMuonPairResolution {
       int nMchMid = 0;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
-        if (tr.chi2MatchMCHMID() > 0) nMchMid++;
+        if (tr.chi2MatchMCHMID() > 0)
+          nMchMid++;
       }
-      if (nMchMid != reqMatchMID) continue;
+      if (nMchMid != reqMatchMID)
+        continue;
       registry.fill(HIST("hCutFlow"), 1); // 1: Pass Exact MatchMID
 
       // --- Track-level cuts ---
@@ -245,22 +252,24 @@ struct UPCMuonPairResolution {
 
       // --- Dimuon pair loop ---
       for (size_t i = 0; i < goodTrkIds.size(); ++i) {
-        auto tr1       = fwdTracks.iteratorAt(goodTrkIds[i]);
+        auto tr1 = fwdTracks.iteratorAt(goodTrkIds[i]);
         const auto& mc1 = tr1.udMcParticle();
 
         for (size_t j = i + 1; j < goodTrkIds.size(); ++j) {
-          auto tr2       = fwdTracks.iteratorAt(goodTrkIds[j]);
+          auto tr2 = fwdTracks.iteratorAt(goodTrkIds[j]);
           const auto& mc2 = tr2.udMcParticle();
 
           registry.fill(HIST("hCutFlow"), 7); // 7: Pair All
 
           // Unlike-sign cut
-          if (tr1.sign() * tr2.sign() >= 0) continue;
+          if (tr1.sign() * tr2.sign() >= 0)
+            continue;
           registry.fill(HIST("hCutFlow"), 8); // 8: Pair Unlike-sign
 
           // Both tracks must be MC muons
           if (std::abs(mc1.pdgCode()) != kMuonPDG ||
-              std::abs(mc2.pdgCode()) != kMuonPDG) continue;
+              std::abs(mc2.pdgCode()) != kMuonPDG)
+            continue;
           registry.fill(HIST("hCutFlow"), 9); // 9: Pair Both MC Muon
 
           // Build four-vectors
@@ -274,38 +283,41 @@ struct UPCMuonPairResolution {
           mcVec2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
           TLorentzVector pairMC = mcVec1 + mcVec2;
 
-          float pairPtMC   = pairMC.Pt();
+          float pairPtMC = pairMC.Pt();
           float pairPtReco = pairReco.Pt();
-          float pairPt2MC   = pairPtMC   * pairPtMC;
+          float pairPt2MC = pairPtMC * pairPtMC;
           float pairPt2Reco = pairPtReco * pairPtReco;
 
           // =================================================================
           // PreCut fill  (after unlike-sign + both-MC-muon, before kin. cuts)
           // =================================================================
-          registry.fill(HIST("hPairPtMC_PreCut"),   pairPtMC);
+          registry.fill(HIST("hPairPtMC_PreCut"), pairPtMC);
           registry.fill(HIST("hPairPtReco_PreCut"), pairPtReco);
-          registry.fill(HIST("hPairPt2MC_PreCut"),   pairPt2MC);
+          registry.fill(HIST("hPairPt2MC_PreCut"), pairPt2MC);
           registry.fill(HIST("hPairPt2Reco_PreCut"), pairPt2Reco);
 
           // =================================================================
           // Pair kinematic cuts (applied on Reco)
           // =================================================================
-          if (pairReco.Pt() >= pairPtMax) continue;
+          if (pairReco.Pt() >= pairPtMax)
+            continue;
           registry.fill(HIST("hCutFlow"), 10); // 10: Pair Pass Pt
 
           if (pairReco.Rapidity() <= pairRapidityMin ||
-              pairReco.Rapidity() >= pairRapidityMax) continue;
+              pairReco.Rapidity() >= pairRapidityMax)
+            continue;
           registry.fill(HIST("hCutFlow"), 11); // 11: Pair Pass Rapidity
 
-          if (pairReco.M() <= pairMassMin || pairReco.M() >= pairMassMax) continue;
+          if (pairReco.M() <= pairMassMin || pairReco.M() >= pairMassMax)
+            continue;
           registry.fill(HIST("hCutFlow"), 12); // 12: Pair Pass Mass
 
           // =================================================================
           // PostCut fill  (all cuts passed)
           // =================================================================
-          registry.fill(HIST("hPairPtMC_PostCut"),   pairPtMC);
+          registry.fill(HIST("hPairPtMC_PostCut"), pairPtMC);
           registry.fill(HIST("hPairPtReco_PostCut"), pairPtReco);
-          registry.fill(HIST("hPairPt2MC_PostCut"),   pairPt2MC);
+          registry.fill(HIST("hPairPt2MC_PostCut"), pairPt2MC);
           registry.fill(HIST("hPairPt2Reco_PostCut"), pairPt2Reco);
 
           // pT response matrix
@@ -324,7 +336,7 @@ struct UPCMuonPairResolution {
                           (pairPt2Reco - pairPt2MC) / pairPt2MC);
           }
         } // j
-      }   // i
+      } // i
 
       (void)candId;
       (void)eventCandidates;

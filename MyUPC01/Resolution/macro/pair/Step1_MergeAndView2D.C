@@ -21,18 +21,18 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = dataDir;
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/";
 
   std::vector<TString> fileNames = {
-    dataDir + "jpsi-incoh.root",
+    // dataDir + "jpsi-incoh.root",
     dataDir + "jpsi-coh.root",
-    dataDir + "psi2s-incoh.root",
-    dataDir + "psi2s-coh.root",
-    dataDir + "psi2s-incoh-fd.root",
-    dataDir + "psi2s-coh-fd.root",
-    dataDir + "mumu-low.root",
-    dataDir + "mumu-mid.root",
-    dataDir + "mumu-high.root",
+    // dataDir + "psi2s-incoh.root",
+    // dataDir + "psi2s-coh.root",
+    // dataDir + "psi2s-incoh-fd.root",
+    // dataDir + "psi2s-coh-fd.root",
+    // dataDir + "mumu-low.root",
+    // dataDir + "mumu-mid.root",
+    // dataDir + "mumu-high.root",
   };
 
   // ----------------------------------------------------------

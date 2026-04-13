@@ -59,7 +59,7 @@ double GetAverageGlobalCorrelation(TMatrixD covMat)
 void Step3_Unfolding()
 {
   // Settings
-  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/";
+  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/CoherenrtJpsi/40/";
   const TString inFile = inDir + "Step2_Response_for_Unfolding.root";
   const TString outDir = inDir;
 

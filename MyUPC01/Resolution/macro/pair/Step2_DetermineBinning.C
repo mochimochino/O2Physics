@@ -12,6 +12,7 @@
 #include "TStyle.h"
 
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <vector>
 
@@ -27,7 +28,6 @@ std::vector<double> AutoDetermineBinningTopDown(TH2F* hMatrixFine, double target
   int upperBin = maxBinFine;
 
   for (int lowerBin = maxBinFine; lowerBin >= 1; --lowerBin) {
-
     if (lowerBin % 100 == 0 || lowerBin == 1) {
       int progress = 100 - (int)(100.0 * lowerBin / maxBinFine);
       std::cout << "\r[1/4] Auto Binning... " << progress << "% completed" << std::flush;
@@ -65,9 +65,10 @@ void Step2_DetermineBinning()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
+  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/CoherenrtJpsi/";
   const TString inFile = inDir + "Step1_merged.root";
-  const TString outDir = inDir;
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0413/Coherent/";
+  const TString realDataInDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/CoherenrtJpsi/Step1_merged.root";
 
   gStyle->SetOptStat(0);
 
@@ -76,238 +77,144 @@ void Step2_DetermineBinning()
     std::cerr << "Error: Cannot open " << inFile << std::endl;
     return;
   }
-  TH2F* hMatrixFine = (TH2F*)fIn->Get("hResponseMatrixPairPt2"); // X:MC, Y:Reco
+  TH2F* hMatrixFine = (TH2F*)fIn->Get("hResponseMatrixPairPt2");
   if (!hMatrixFine) {
     std::cerr << "Error: hResponseMatrixPairPt2 not found." << std::endl;
     return;
   }
 
-  double targetPurity = 0.40;    // 50%
-  double targetStability = 0.40; // 50%
-  double maxPt2 = 0.065;         // Coherent Cut 0.065
+  double targetPurity = 0.45;
+  double targetStability = 0.45;
+  double maxPt2 = 0.065;
   double minStats = 1000;
 
   std::vector<double> pt2Bins = AutoDetermineBinningTopDown(hMatrixFine, targetPurity, targetStability, minStats, maxPt2);
   const int nBins = pt2Bins.size() - 1;
 
-  std::cout << "[Auto Binning Top-Down] Generated " << nBins << " bins: {";
-  for (size_t i = 0; i < pt2Bins.size(); ++i) {
-    std::cout << pt2Bins[i] << (i == pt2Bins.size() - 1 ? "" : ", ");
-  }
-  std::cout << "}" << std::endl;
   // ==========================================================
-  // Resolution evaluation -- Not using now
+  // Resolution evaluation
   // ==========================================================
   TGraphErrors* grResolution = new TGraphErrors();
-  grResolution->SetName("grResolution");
-  grResolution->SetTitle("Absolute p_{T}^{2} Resolution vs Gen p_{T}^{2};Gen p_{T}^{2} (GeV^{2}/c^{2});#sigma(p_{T}^{2}) (GeV^{2}/c^{2})");
-  grResolution->SetMarkerStyle(20);
-  grResolution->SetMarkerColor(kBlue + 1);
-  grResolution->SetLineColor(kBlue + 1);
-
-  int nSlices = 20; // slice number
-  // double maxPt2 = 2.50;
+  int nSlices = 20;
   for (int i = 0; i < nSlices; ++i) {
-    std::cout << "\r[2/4] Resolution Fitting... " << (int)(100.0 * i / nSlices) << "%" << std::flush;
     double pt2Min = i * (maxPt2 / nSlices);
     double pt2Max = (i + 1) * (maxPt2 / nSlices);
-    double pt2Center = (pt2Min + pt2Max) / 2.0;
-
     int binMin = hMatrixFine->GetXaxis()->FindBin(pt2Min + 1e-6);
     int binMax = hMatrixFine->GetXaxis()->FindBin(pt2Max - 1e-6);
-
-    // True pT^2 slice -> Reco pT^2 distribution
     TH1D* hSlice = hMatrixFine->ProjectionY(Form("slice_%d", i), binMin, binMax);
     if (hSlice->GetEntries() > 50) {
-      // Gaussian fit --------------------------------(Crystall Ball is better?)
       hSlice->Fit("gaus", "Q0");
       TF1* fitFunc = hSlice->GetFunction("gaus");
       if (fitFunc) {
-        double sigma = fitFunc->GetParameter(2);
-        double sigmaErr = fitFunc->GetParError(2);
         int np = grResolution->GetN();
-        grResolution->SetPoint(np, pt2Center, sigma);
-        grResolution->SetPointError(np, 0.0, sigmaErr);
+        grResolution->SetPoint(np, (pt2Min + pt2Max) / 2.0, fitFunc->GetParameter(2));
+        grResolution->SetPointError(np, 0.0, fitFunc->GetParError(2));
       }
     }
     delete hSlice;
   }
 
-  TCanvas* cRes = new TCanvas("cRes", "Resolution", 800, 600);
-  cRes->SetGrid();
-  grResolution->Draw("APE");
-  cRes->SaveAs(outDir + "Step2_Resolution_Abs.png");
-
   // ==========================================================
-  // Rebinning
+  // Rebinning Matrix
   // ==========================================================
-  TH2D* hMatrixRebinned = new TH2D("hMatrixRebinned",
-                                   "Rebinned Response Matrix;Gen p_{T}^{2};Reco p_{T}^{2}",
-                                   nBins, pt2Bins.data(), nBins, pt2Bins.data());
-
+  TH2D* hMatrixRebinned = new TH2D("hMatrixRebinned", "Response Matrix;Gen p_{T}^{2};Reco p_{T}^{2}", nBins, pt2Bins.data(), nBins, pt2Bins.data());
   for (int ix = 1; ix <= hMatrixFine->GetNbinsX(); ++ix) {
-    if (ix % 100 == 0 || ix == hMatrixFine->GetNbinsX()) {
-      std::cout << "\r[3/4] Rebinning Matrix... " << (int)(100.0 * ix / hMatrixFine->GetNbinsX()) << "%" << std::flush;
-    }
     double truePt2 = hMatrixFine->GetXaxis()->GetBinCenter(ix);
     for (int iy = 1; iy <= hMatrixFine->GetNbinsY(); ++iy) {
-      double recoPt2 = hMatrixFine->GetYaxis()->GetBinCenter(iy);
-      double content = hMatrixFine->GetBinContent(ix, iy);
-      if (content > 0) {
-        hMatrixRebinned->Fill(truePt2, recoPt2, content);
-      }
+      hMatrixRebinned->Fill(truePt2, hMatrixFine->GetYaxis()->GetBinCenter(iy), hMatrixFine->GetBinContent(ix, iy));
     }
   }
-  std::cout << "\r[3/4] Rebinning Matrix... 100% completed!" << std::endl;
 
   // ==========================================================
-  // Percentage Matrix
+  // Purity and Stability Calculation
   // ==========================================================
-  TH2D* hMatrixPercentage = (TH2D*)hMatrixRebinned->Clone("hMatrixPercentage");
-  hMatrixPercentage->SetTitle("Rebinned Response Matrix (Reco + Gen)/Gen in %);Gen p_{T}^{2};Reco p_{T}^{2}");
-
-  // Text format
-  gStyle->SetPaintTextFormat(".1f");
-
-  for (int ix = 1; ix <= hMatrixRebinned->GetNbinsX(); ++ix) {
-    std::cout << "\r[4/4] Purity & Stability... " << (int)(100.0 * ix / hMatrixRebinned->GetNbinsX()) << "%" << std::flush;
-    // Gen
-    double sumGen = hMatrixRebinned->Integral(ix, ix, 1, hMatrixRebinned->GetNbinsY());
-
-    for (int iy = 1; iy <= hMatrixRebinned->GetNbinsY(); ++iy) {
-      double content = hMatrixRebinned->GetBinContent(ix, iy); // Rec and Gen
-      if (sumGen > 0) {
-        // (Rec+Gen)/Gen * 100
-        hMatrixPercentage->SetBinContent(ix, iy, 100.0 * content / sumGen);
-      } else {
-        hMatrixPercentage->SetBinContent(ix, iy, 0.0);
-      }
-    }
-  }
-  std::cout << "\r[4/4] Purity & Stability... 100% completed!" << std::endl;
-
-  TCanvas* cMat = new TCanvas("cMat", "Rebinned Matrix", 800, 600);
-  cMat->SetLogz();
-  hMatrixPercentage->Draw("COLZ TEXT");
-  cMat->SaveAs(outDir + "Step2_RebinnedMatrix.png");
-
-  // ==========================================================
-  // 0.0 - 0.01 Zoom
-  // ==========================================================
-  TCanvas* cMatZoom = new TCanvas("cMatZoom", "Rebinned Matrix Zoom", 800, 600);
-  cMatZoom->SetLogz();
-  hMatrixPercentage->GetXaxis()->SetRangeUser(0.0, 0.003);
-  hMatrixPercentage->GetYaxis()->SetRangeUser(0.0, 0.003);
-  hMatrixPercentage->SetMarkerSize(1.5);
-  hMatrixPercentage->Draw("COLZ TEXT");
-  cMatZoom->SaveAs(outDir + "Step2_RebinnedMatrix_Zoom.png");
-
-  // Reset zoom
-  hMatrixPercentage->GetXaxis()->UnZoom();
-  hMatrixPercentage->GetYaxis()->UnZoom();
-  hMatrixPercentage->SetMarkerSize(1.0);
-
-  // ==========================================================
-  // Purity and Stability
-  // ==========================================================
-  TH1D* hPurity = new TH1D("hPurity", "Purity and Stability;p_{T}^{2} Bin;Percentage", nBins, pt2Bins.data());
+  TH1D* hPurity = new TH1D("hPurity", "Purity", nBins, pt2Bins.data());
   TH1D* hStability = new TH1D("hStability", "Stability", nBins, pt2Bins.data());
-
-  hPurity->SetLineColor(kRed);
-  hPurity->SetLineWidth(2);
-  hStability->SetLineColor(kBlue);
-  hStability->SetLineWidth(2);
-
   for (int i = 1; i <= nBins; ++i) {
     double diag = hMatrixRebinned->GetBinContent(i, i);
-
-    // Purity = Diag / sumReco
     double sumReco = hMatrixRebinned->Integral(1, nBins, i, i);
-    double purity = (sumReco > 0) ? (diag / sumReco) : 0;
-    hPurity->SetBinContent(i, purity);
-
-    // Stability = Diag / sumTrue
     double sumTrue = hMatrixRebinned->Integral(i, i, 1, nBins);
-    double stability = (sumTrue > 0) ? (diag / sumTrue) : 0;
-    hStability->SetBinContent(i, stability);
+    hPurity->SetBinContent(i, (sumReco > 0) ? diag / sumReco : 0);
+    hStability->SetBinContent(i, (sumTrue > 0) ? diag / sumTrue : 0);
   }
 
-  TCanvas* cPurStab = new TCanvas("cPurStab", "Purity and Stability", 800, 600);
-  cPurStab->SetGrid();
-  hPurity->GetYaxis()->SetRangeUser(0.0, 1.1);
-  hPurity->Draw("HIST");
-  hStability->Draw("HIST SAME");
+  // ==========================================================
+  // Rebin 1D Histograms
+  // ==========================================================
+  TH1D* hGenFine = (TH1D*)fIn->Get("hGenPt2");
+  TH1D* hRecoFine = (TH1D*)fIn->Get("hRecoPt2");
+  TH1D* hGenRebinned = (hGenFine) ? (TH1D*)hGenFine->Rebin(nBins, "hMCGen_Rebinned", pt2Bins.data()) : nullptr;
+  TH1D* hRecoRebinned = (hRecoFine) ? (TH1D*)hRecoFine->Rebin(nBins, "hMCReco_Rebinned", pt2Bins.data()) : nullptr;
 
-  TLegend* leg = new TLegend(0.65, 0.2, 0.85, 0.35);
-  leg->AddEntry(hPurity, "Purity", "l");
-  leg->AddEntry(hStability, "Stability", "l");
-  leg->Draw();
-
-  TF1* line50 = new TF1("line50", "0.5", 0, maxPt2);
-  line50->SetLineStyle(2);
-  line50->SetLineColor(kBlack);
-  line50->Draw("SAME");
-
-  cPurStab->SaveAs(outDir + "Step2_PurityStability.png");
+  TFile* fData = TFile::Open(realDataInDir, "READ");
+  TH1D* hDataRebinned = nullptr;
+  if (fData && !fData->IsZombie()) {
+    TH1D* hDataFine = (TH1D*)fData->Get("hRecoPt2");
+    if (hDataFine)
+      hDataRebinned = (TH1D*)hDataFine->Rebin(nBins, "hDataReco_Rebinned", pt2Bins.data());
+  }
 
   // ==========================================================
-  // Purity & Stability Zoom
+  // Final Output and Validation (ERROR CHECKING)
   // ==========================================================
-  TCanvas* cPurStabZoom = new TCanvas("cPurStabZoom", "Purity and Stability Zoom", 800, 600);
-  cPurStabZoom->SetGrid();
-  hPurity->GetXaxis()->SetRangeUser(0.0, 0.01);
-  hPurity->Draw("HIST");
-  hStability->Draw("HIST SAME");
-  leg->Draw();
-  line50->Draw("SAME");
-  cPurStabZoom->SaveAs(outDir + "Step2_PurityStability_Zoom.png");
+  std::cout << "\n============================================================" << std::endl;
+  std::cout << " Binning Summary & Validation" << std::endl;
+  std::cout << "============================================================" << std::endl;
+  std::cout << Form("%-5s | %-15s | %-8s | %-10s | %-8s | %-8s | %-10s | %-12s", "Bin", "pT2 Range", "Events", "StatErr%", "Purity%", "Stab%", "Reco/Gen%", "(Diag+Gen)/Gen%") << std::endl;
+  std::cout << "--------------------------------------------------------------------------------------------" << std::endl;
 
-  hPurity->GetXaxis()->UnZoom();
+  bool hasCriticalError = false;
+  std::vector<TString> errorMessages;
 
-  // ==========================================================
-  // Save output for Unfolding macro
-  // ==========================================================
+  for (int i = 1; i <= nBins; ++i) {
+    double events = (hDataRebinned) ? hDataRebinned->GetBinContent(i) : (hRecoRebinned ? hRecoRebinned->GetBinContent(i) : 0);
+    double statErr = (events > 0) ? (100.0 / std::sqrt(events)) : 999.0;
+    double pur = hPurity->GetBinContent(i) * 100.0;
+    double stab = hStability->GetBinContent(i) * 100.0;
+    double recoGenRatio = (hGenRebinned && hRecoRebinned && hGenRebinned->GetBinContent(i) > 0) ? (hRecoRebinned->GetBinContent(i) / hGenRebinned->GetBinContent(i)) * 100.0 : 0.0;
+
+    double diag = hMatrixRebinned->GetBinContent(i, i);
+    double diagGenRatio = (hGenRebinned && hGenRebinned->GetBinContent(i) > 0) ? ((diag + hGenRebinned->GetBinContent(i)) / hGenRebinned->GetBinContent(i)) * 100.0 : 0.0;
+
+    std::cout << Form("%-5d | %5.4f-%5.4f | %-8.0f | %-10.2f | %-8.1f | %-8.1f | %-10.1f | %-12.1f", i, pt2Bins[i - 1], pt2Bins[i], events, statErr, pur, stab, recoGenRatio, diagGenRatio) << std::endl;
+
+    // --- Validation Checks ---
+    if (statErr > 20.0) {
+      errorMessages.push_back(Form("[CRITICAL] Bin %d: Statistical error is too high (%.1f%% > 20%%).", i, statErr));
+      hasCriticalError = true;
+    }
+    if (pur < targetPurity * 100.0 || stab < targetStability * 100.0) {
+      errorMessages.push_back(Form("[WARNING] Bin %d: Purity or Stability is below target threshold.", i));
+    }
+  }
+
+  std::cout << "============================================================\n"
+            << std::endl;
+
+  if (hasCriticalError || !errorMessages.empty()) {
+    std::cerr << "!!! ANALYSIS ALERTS !!!" << std::endl;
+    for (const auto& msg : errorMessages) {
+      std::cerr << "  " << msg << std::endl;
+    }
+    if (hasCriticalError) {
+      std::cerr << "\n[!] ERROR: Some bins have insufficient statistics. Unfolding may be unstable." << std::endl;
+    }
+  } else {
+    std::cout << "[SUCCESS] All bins passed validation criteria." << std::endl;
+  }
+
+  // Save to file
   TFile* fOut = TFile::Open(outDir + "Step2_Response_for_Unfolding.root", "RECREATE");
   hMatrixRebinned->Write("hResponseMatrix");
   hPurity->Write();
   hStability->Write();
-  std::cout << "[Done] Step 2 finished. Binning optimized and Response Matrix ready." << std::endl;
-
-  // ==========================================================
-  // 1D Histograms Rebinning for Unfolding Input
-  // ==========================================================
-  std::cout << "[Start] Rebinning 1D Histograms for Unfolding Input..." << std::endl;
-
-  TH1D* hGenFine = (TH1D*)fIn->Get("hGenPt2");
-  TH1D* hRecoFine = (TH1D*)fIn->Get("hRecoPt2");
-
-  if (hGenFine && hRecoFine) {
-    TH1D* hGenRebinned = (TH1D*)hGenFine->Rebin(nBins, "hMCGen_Rebinned", pt2Bins.data());
-    TH1D* hRecoRebinned = (TH1D*)hRecoFine->Rebin(nBins, "hMCReco_Rebinned", pt2Bins.data());
-
-    fOut->cd();
+  if (hGenRebinned)
     hGenRebinned->Write();
+  if (hRecoRebinned)
     hRecoRebinned->Write();
-    std::cout << " -> Saved MC 1D Rebinned histograms." << std::endl;
-  } else {
-    std::cerr << "Warning: MC 1D histograms not found in Step1_merged.root" << std::endl;
-  }
-
-  TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/Step1_merged.root"; // Check file path (Real data path)
-  TFile* fData = TFile::Open(dataFile, "READ");
-  if (fData && !fData->IsZombie()) {
-    TH1D* hDataFine = (TH1D*)fData->Get("hRecoPt2");
-    if (hDataFine) {
-      TH1D* hDataRebinned = (TH1D*)hDataFine->Rebin(nBins, "hDataReco_Rebinned", pt2Bins.data());
-
-      fOut->cd();
-      hDataRebinned->Write();
-      std::cout << " -> Saved Data 1D Rebinned histogram." << std::endl;
-    }
-    fData->Close();
-  } else {
-    std::cerr << "Warning: Cannot open real data file (Check path)." << std::endl;
-  }
-
+  if (hDataRebinned)
+    hDataRebinned->Write();
   fOut->Close();
+
+  std::cout << "\n[Done] Output saved to: " << outDir << "Step2_Response_for_Unfolding.root" << std::endl;
 }

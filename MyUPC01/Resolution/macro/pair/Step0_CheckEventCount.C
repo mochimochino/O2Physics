@@ -19,9 +19,9 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = dataDir;
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/";
 
   const int rebinFactor = 5;
 
@@ -31,14 +31,14 @@ void Step0_CheckEventCount()
   };
   std::vector<Sample> samples = {
     {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
-    {dataDir + "jpsi-coh.root", "J/#psi coh."},
-    {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
-    {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
-    {dataDir + "psi2s-incoh-fd.root", "#psi(2S) incoh. fd"},
-    {dataDir + "psi2s-coh-fd.root", "#psi(2S) coh. fd"},
-    {dataDir + "mumu-low.root", "#mu#mu low"},
-    {dataDir + "mumu-mid.root", "#mu#mu mid"},
-    {dataDir + "mumu-high.root", "#mu#mu high"},
+    // {dataDir + "jpsi-coh.root", "J/#psi coh."},
+    // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
+    // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
+    // {dataDir + "psi2s-incoh-fd.root", "#psi(2S) incoh. fd"},
+    // {dataDir + "psi2s-coh-fd.root", "#psi(2S) coh. fd"},
+    // {dataDir + "mumu-low.root", "#mu#mu low"},
+    // {dataDir + "mumu-mid.root", "#mu#mu mid"},
+    // {dataDir + "mumu-high.root", "#mu#mu high"},
   };
 
   // ----------------------------------------------------------

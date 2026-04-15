@@ -1,5 +1,5 @@
 // ============================================================
-//  Step1_MergeAndView2D.C
+//  Step1_MergeAndView2DForResponseTraining.C
 // ============================================================
 #include "TAxis.h"
 #include "TCanvas.h"
@@ -14,18 +14,18 @@
 #include <iostream>
 #include <vector>
 
-void Step1_MergeAndView2D()
+void Step1_MergeAndView2DForResponseTraining()
 {
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent//";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/";
 
   std::vector<TString> fileNames = {
-    dataDir + "jpsi-incoh.root",
-    // dataDir + "jpsi-coh.root",
+    //  dataDir + "jpsi-incoh.root",
+    dataDir + "jpsi-coh.root",
     // dataDir + "psi2s-incoh.root",
     // dataDir + "psi2s-coh.root",
     // dataDir + "psi2s-incoh-fd.root",
@@ -241,33 +241,59 @@ void Step1_MergeAndView2D()
   // ==========================================================
   TFile* fOut = TFile::Open(outDir + "Step1_merged.root", "RECREATE");
 
-  // pT^2 projection
   if (h2Pt2) {
-    h2Pt2->Write("hResponseMatrixPairPt2");
+    // --------------------------------------------------------
+    // Toy MC
+    // --------------------------------------------------------
+    int totalEvents = h2Pt2->GetEntries();
+    int trainEvents = totalEvents * 0.8;
+    int testEvents = totalEvents - trainEvents;
 
-    // MC pT^2 projection (X)
-    TH1D* hGenPt2 = h2Pt2->ProjectionX("hGenPt2");
-    hGenPt2->SetTitle("Gen pT^2 from 2D histogram");
-    hGenPt2->GetXaxis()->SetTitle("p_{T}^{2,MC} (GeV^{2}/c^{2})");
-    hGenPt2->GetYaxis()->SetTitle("Counts");
+    std::cout << "[Info] Generating Toy MC events... Total: " << totalEvents << std::endl;
+
+    // Train 80%
+    TH2F* hMatrix_Train = (TH2F*)h2Pt2->Clone("hResponseMatrixPairPt2");
+    hMatrix_Train->Reset();
+
+    // Test 20%
+    TH2F* hMatrix_Test = (TH2F*)h2Pt2->Clone("hMatrix_Test_TMP");
+    hMatrix_Test->Reset();
+    TH1D* hGenPt2_Test = h2Pt2->ProjectionX("hGenPt2_Test");
+    hGenPt2_Test->Reset();
+    TH1D* hRecoPt2_Test = h2Pt2->ProjectionY("hRecoPt2_Test");
+    hRecoPt2_Test->Reset();
+
+    gRandom->SetSeed(0);
+
+    for (int i = 0; i < trainEvents; ++i) {
+      double gen_val, reco_val;
+      h2Pt2->GetRandom2(gen_val, reco_val);
+      hMatrix_Train->Fill(gen_val, reco_val);
+    }
+
+    for (int i = 0; i < testEvents; ++i) {
+      double gen_val, reco_val;
+      h2Pt2->GetRandom2(gen_val, reco_val);
+      hMatrix_Test->Fill(gen_val, reco_val);
+      hGenPt2_Test->Fill(gen_val);
+      hRecoPt2_Test->Fill(reco_val);
+    }
+
+    TH1D* hGenPt2 = hMatrix_Train->ProjectionX("hGenPt2");
+    TH1D* hRecoPt2 = hMatrix_Train->ProjectionY("hRecoPt2");
+
+    hMatrix_Train->Write();
     hGenPt2->Write();
-    delete hGenPt2;
-
-    // Reco pT^2 projection (Y)
-    TH1D* hRecoPt2 = h2Pt2->ProjectionY("hRecoPt2");
-    hRecoPt2->SetTitle("Reco pT^2 from 2D histogram");
-    hRecoPt2->GetXaxis()->SetTitle("p_{T}^{2,reco} (GeV^{2}/c^{2})");
-    hRecoPt2->GetYaxis()->SetTitle("Counts");
     hRecoPt2->Write();
-    delete hRecoPt2;
 
-    std::cout << "[Info] Saved 2D matrix and 1D projections for Pair pT^2." << std::endl;
+    hGenPt2_Test->Write();
+    hRecoPt2_Test->Write();
 
+    std::cout << "[Info] Saved Toy MC partitioned histograms (Train 80%, Test 20%)." << std::endl;
+
+    delete hMatrix_Test;
     delete h2Pt2;
   }
 
   fOut->Close();
-  std::cout << "[Info] Saved merged histograms: " << outDir + "Step1_merged.root" << std::endl;
-
-  std::cout << "[Done] Step 1 finished." << std::endl;
 }

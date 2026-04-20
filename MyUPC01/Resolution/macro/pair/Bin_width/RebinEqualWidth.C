@@ -15,14 +15,15 @@
  * @brief Performs equal-width rebinning on Gen and Reco histograms and saves as PNG.
  */
 void RebinEqualWidth(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/equalwidth/15bin/Step2_Rebinned_EqualWidth.root",
-  double binWidth = 0.10,
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/equalwidth/4bin/Step2_Rebinned.root",
+  double binWidth = 0.016,
   double xMin = 0.0,
-  double xMax = 1.5)
+  double xMax = 0.065)
 {
   // --- Style ---
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
   gStyle->SetPadTickX(1);
   gStyle->SetPadTickY(1);
 
@@ -98,7 +99,7 @@ void RebinEqualWidth(
     TLatex tex;
     tex.SetNDC();
     tex.SetTextSize(0.04);
-    tex.DrawLatex(0.65, 0.84, Form("#bf{%s}", title.Data()));
+    // tex.DrawLatex(0.65, 0.84, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.65, 0.79, Form("Bin Width: %.3f", binWidth));
 
     c->SaveAs(outBase + "_" + suffix + ".png");

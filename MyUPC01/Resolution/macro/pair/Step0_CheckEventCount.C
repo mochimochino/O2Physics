@@ -17,11 +17,11 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0416/Coherent/";
 
-  const int rebinFactor = 5;
+  const int rebinFactor = 1;
 
   struct Sample {
     TString file;
@@ -29,7 +29,7 @@ void Step0_CheckEventCount()
   };
   std::vector<Sample> samples = {
     // {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
-   {dataDir + "jpsi-coh.root", "J/#psi coh."},
+    {dataDir + "jpsi-coh.root", "J/#psi coh."},
     // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
     // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
     // {dataDir + "psi2s-incoh-fd.root", "#psi(2S) incoh. fd"},
@@ -131,7 +131,7 @@ void Step0_CheckEventCount()
     // Axis
     double ymax = std::max(hMC->GetMaximum(), hReco->GetMaximum());
     hMC->GetYaxis()->SetRangeUser(1e0, ymax * 100.0);
-    hMC->GetXaxis()->SetRangeUser(0.0, 0.40);
+    hMC->GetXaxis()->SetRangeUser(0.0, 2.7);
     hMC->GetXaxis()->SetTitle(xTitle);
     hMC->GetYaxis()->SetTitle("Counts");
 
@@ -152,7 +152,7 @@ void Step0_CheckEventCount()
     tex.SetTextFont(fontCode);
     tex.SetTextSize(0.036);
     tex.DrawLatex(0.16, 0.90, Form("#bf{%s}", title.Data()));
-    tex.DrawLatex(0.16, 0.85, "with Coherent J/#psi Cut");
+    tex.DrawLatex(0.16, 0.85, "without Coherent J/#psi Cut");
     tex.DrawLatex(0.16, 0.80, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}");
 
     c->SaveAs(outDir + outFile);
@@ -227,7 +227,7 @@ void Step0_CheckEventCount()
 
       if (firstDraw) {
         h->GetYaxis()->SetRangeUser(1e0, overallMax * 100.0);
-        h->GetXaxis()->SetRangeUser(0.0, 0.40);
+        h->GetXaxis()->SetRangeUser(0.0, 0.5);
         h->Draw("HIST");
         firstDraw = false;
       } else {

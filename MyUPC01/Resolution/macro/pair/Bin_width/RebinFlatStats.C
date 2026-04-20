@@ -14,13 +14,14 @@
 #include "../Make2DHistFromBinnedHists.C"
 
 void RebinFlatStats(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/flatstats/5bin/Step2_Rebinned_FlatStats.root",
-  int nTargetBins = 5,
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/flatstats/4bin/Step2_Rebinned.root",
+  int nTargetBins = 4,
   double xMin = 0.0,
-  double xMax = 1.50)
+  double xMax = 0.065)
 {
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
   TFile* fIn = TFile::Open(inputFile, "READ");
   if (!fIn || fIn->IsZombie())
     return;
@@ -29,11 +30,9 @@ void RebinFlatStats(
   if (!hGen || !hReco)
     return;
 
-  // --- ビン境界の計算 (最適化版) ---
   int binMin = hGen->FindBin(xMin);
   int binMax = hGen->FindBin(xMax);
 
-  // 累積積分配列を作成
   std::vector<double> cumSum;
   cumSum.push_back(0.0);
   for (int i = binMin; i <= binMax; ++i) {
@@ -46,7 +45,6 @@ void RebinFlatStats(
   std::vector<double> bins;
   bins.push_back(xMin);
 
-  // 目標となる累積値に「最も近い」ビン境界を探す
   for (int k = 1; k < nTargetBins; ++k) {
     double target = k * step;
     int bestIdx = 1;
@@ -61,7 +59,6 @@ void RebinFlatStats(
     }
 
     double edge = hGen->GetBinLowEdge(binMin + bestIdx);
-    // 同じ境界が連続するのを防ぐ
     if (edge > bins.back() && edge < xMax) {
       bins.push_back(edge);
     }
@@ -73,10 +70,9 @@ void RebinFlatStats(
   int nBins = bins.size() - 1;
   double* binArray = &bins[0];
 
-  TH1D* hGenRebin = (TH1D*)hGen->Rebin(nBins, "hGenPt2_flat", binArray);
-  TH1D* hRecoRebin = (TH1D*)hReco->Rebin(nBins, "hRecoPt2_flat", binArray);
+  TH1D* hGenRebin = (TH1D*)hGen->Rebin(nBins, "hGenPt2_rebin", binArray);
+  TH1D* hRecoRebin = (TH1D*)hReco->Rebin(nBins, "hRecoPt2_rebin", binArray);
 
-  // --- 均等になっているかの確認ログ出力 ---
   std::cout << "========================================" << std::endl;
   std::cout << "[Info] Target events per bin: " << step << std::endl;
   std::cout << "[Info] Gen Bin Contents after rebinning:" << std::endl;
@@ -108,13 +104,12 @@ void RebinFlatStats(
     h->SetLineColor(suffix == "Gen" ? kRed + 1 : kBlue + 1);
     h->SetLineWidth(2);
 
-    // "E" を外してエラーバーを描画しないように修正
     h->Draw("HIST");
 
     TLatex tex;
     tex.SetNDC();
     tex.SetTextSize(0.03);
-    tex.DrawLatex(0.55, 0.84, Form("#bf{%s}", title.Data()));
+    // tex.DrawLatex(0.55, 0.84, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.55, 0.79, "Method: Flat Distributions");
     tex.DrawLatex(0.55, 0.74, Form("Bins: %d", nBins));
 
@@ -128,7 +123,7 @@ void RebinFlatStats(
   std::cout << "[Info] Saved PNGs: " << outBase << "_Gen.png / " << outBase << "_Reco.png" << std::endl;
   fIn->Close();
 
-  // -------- 2D ヒストグラム作成 --------
+  // 2D hist
   const TString matrixFile = inputFile;
   const TString matrixName = "hResponseMatrixPairPt2";
   const TString outFile2D = outputFile;
@@ -136,8 +131,8 @@ void RebinFlatStats(
   Make2DHistFromBinnedHists(
     matrixFile,
     matrixName,
-    outputFile,      // リビン済み 1D ヒストが入ったファイル
-    "hGenPt2_flat",  // X軸（Gen）用ヒスト名
-    "hRecoPt2_flat", // Y軸（Reco）用ヒスト名
+    outputFile,
+    "hGenPt2_rebin",
+    "hRecoPt2_rebin",
     outFile2D);
 }

@@ -82,14 +82,15 @@ std::vector<double> TopDownBinEdges(
 //  Main
 // ----------------------------------------------------------
 void RebinTopDown(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/topdown/50/Step2_Rebinned_TopDown.root",
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/topdown/50/Step2_Rebinned.root",
   double targetPurity = 0.50,
   double targetStability = 0.50,
   double minStats = 1000,
-  double maxPt2 = 1.5)
+  double maxPt2 = 0.065)
 {
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
 
   TFile* fIn = TFile::Open(inputFile, "READ");
   if (!fIn || fIn->IsZombie()) {
@@ -131,8 +132,8 @@ void RebinTopDown(
     return;
   }
 
-  TH1D* hGenRebin = (TH1D*)hGenFine->Rebin(nBins, "hGenPt2_topdown", bins.data());
-  TH1D* hRecoRebin = (TH1D*)hRecoFine->Rebin(nBins, "hRecoPt2_topdown", bins.data());
+  TH1D* hGenRebin = (TH1D*)hGenFine->Rebin(nBins, "hGenPt2_rebin", bins.data());
+  TH1D* hRecoRebin = (TH1D*)hRecoFine->Rebin(nBins, "hRecoPt2_rebin", bins.data());
   hGenRebin->SetDirectory(nullptr);
   hRecoRebin->SetDirectory(nullptr);
   fIn->Close();
@@ -159,7 +160,7 @@ void RebinTopDown(
     TLatex tex;
     tex.SetNDC();
     tex.SetTextSize(0.04);
-    tex.DrawLatex(0.35, 0.84, Form("#bf{%s}", title.Data()));
+    // tex.DrawLatex(0.35, 0.84, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.35, 0.79, "Method: TopDown (Purity+Stability)");
     tex.DrawLatex(0.35, 0.74, Form("Pur >= %.2f, Stab >= %.2f, minN >= %.0f", targetPurity, targetStability, minStats));
     tex.DrawLatex(0.35, 0.69, Form("Bins: %d", nBins));
@@ -187,7 +188,7 @@ void RebinTopDown(
     matrixFile,
     matrixName,
     outputFile,
-    "hGenPt2_topdown",
-    "hRecoPt2_topdown",
+    "hGenPt2_rebin",
+    "hRecoPt2_rebin",
     outputFile);
 }

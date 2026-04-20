@@ -12,15 +12,16 @@
 #include "../Make2DHistFromBinnedHists.C"
 
 void RebinConstantDiff(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/constantdiff/15bin/Step2_Rebinned.root",
-  double initialWidth = 0.016,
-  double deltaW = 0.012,
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/Step2_Rebinned.root",
+  double initialWidth = 0.005,
+  double deltaW = 0.004,
   double xMin = 0.0,
-  double xMax = 1.50,
+  double xMax = 0.065,
   bool respectOverflow = true)
 {
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(0);
   std::vector<double> bins;
   bins.push_back(xMin);
   double currentX = xMin;
@@ -70,7 +71,7 @@ void RebinConstantDiff(
     TLatex tex;
     tex.SetNDC();
     tex.SetTextSize(0.03);
-    tex.DrawLatex(0.55, 0.84, Form("#bf{%s}", title.Data()));
+    // tex.DrawLatex(0.55, 0.84, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.55, 0.79, "Method: Constant Bin Difference");
     tex.DrawLatex(0.55, 0.74, Form("w0: %.3f, dw: %.3f", initialWidth, deltaW));
 

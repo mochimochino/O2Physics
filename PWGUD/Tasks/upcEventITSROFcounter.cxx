@@ -23,7 +23,7 @@
 #include <CCDB/BasicCCDBManager.h>
 #include <CommonConstants/LHCConstants.h>
 #include <CommonDataFormat/TimeStamp.h>
-#include <DataFormatsITSMFT/DPLAlpideParam.h>
+#include <ITSMFTBase/DPLAlpideParam.h>
 #include <Framework/AnalysisDataModel.h>
 #include <Framework/AnalysisHelpers.h>
 #include <Framework/AnalysisTask.h>

@@ -22,7 +22,7 @@
 #include <CommonConstants/LHCConstants.h>
 #include <CommonDataFormat/BunchFilling.h>
 #include <CommonDataFormat/TimeStamp.h>
-#include <DataFormatsITSMFT/DPLAlpideParam.h>
+#include <ITSMFTBase/DPLAlpideParam.h>
 #include <DataFormatsITSMFT/TimeDeadMap.h>
 #include <DataFormatsParameters/AggregatedRunInfo.h>
 #include <DataFormatsParameters/GRPLHCIFData.h>

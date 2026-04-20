@@ -60,6 +60,7 @@ void Make2DHistFromBinnedHists(
   // Read file and hist
   // ==========================================================
   gStyle->SetOptStat(0);
+  gStyle->SetOptTitle(1);
 
   TFile* fMatrix = TFile::Open(matrixFile, "READ");
   if (!fMatrix || fMatrix->IsZombie()) {

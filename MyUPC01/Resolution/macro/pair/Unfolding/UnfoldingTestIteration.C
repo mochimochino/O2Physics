@@ -64,7 +64,7 @@ void DrawUnfoldedResult(TVirtualPad* parentPad, int iter, TH1D* hGen, TH1D* hDat
   padTop->Draw();
   padTop->cd();
 
-  // Gen
+  // Gen (Test Truth)
   TH1D* hGenDraw = (TH1D*)hGen->Clone(Form("hGenDraw_%d", iter));
   hGenDraw->SetTitle(Form("Bayes Unfolding (Iter = %d)", iter));
   hGenDraw->SetLineColor(kBlack);
@@ -84,7 +84,7 @@ void DrawUnfoldedResult(TVirtualPad* parentPad, int iter, TH1D* hGen, TH1D* hDat
   hGenDraw->SetMinimum(minY * 0.1);
   hGenDraw->Draw("HIST");
 
-  // Draw DATA
+  // Draw DATA (Test Reco)
   TH1D* hDataDraw = (TH1D*)hData->Clone(Form("hDataDraw_%d", iter));
   hDataDraw->SetLineColor(kBlue + 1);
   hDataDraw->SetMarkerColor(kBlue + 1);
@@ -102,8 +102,8 @@ void DrawUnfoldedResult(TVirtualPad* parentPad, int iter, TH1D* hGen, TH1D* hDat
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->SetTextSize(0.04);
-  leg->AddEntry(hGenDraw, "Truth (Gen)", "l");
-  leg->AddEntry(hDataDraw, "Measured (Data)", "pe");
+  leg->AddEntry(hGenDraw, "Truth (Test Gen)", "l");
+  leg->AddEntry(hDataDraw, "Measured (Test Data)", "pe");
   leg->AddEntry(hUnfolded, Form("Unfolded (iter=%d)", iter), "pe");
   leg->Draw();
 
@@ -120,7 +120,7 @@ void DrawUnfoldedResult(TVirtualPad* parentPad, int iter, TH1D* hGen, TH1D* hDat
   padBot->cd();
 
   TH1D* hRatio = (TH1D*)hUnfolded->Clone(Form("hRatio_%d", iter));
-  hRatio->Divide(hGen); // Unfolded / Truth
+  hRatio->Divide(hGen); // Unfolded / Truth (Test Gen)
   hRatio->SetTitle("");
 
   hRatio->GetYaxis()->SetTitle("Unfolded / Truth");
@@ -150,15 +150,20 @@ void UnfoldingTestIteration()
   // ===========================
   // Setting
   // ===========================
-  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/constantdiff/15bin/";
-  const TString inFile = inDir + "Step2_Rebinned.root";
-  const TString outDir = inDir;
-  const TString outFileName = "Step3_1_4Pads_Comparison.png";
+  // MC (Training for Response Matrix)
+  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/Step2_Rebinned.root";
+  const TString histNameGen = "hGenPt2_rebin";      // Needed to build Response object
+  const TString histNameReco = "hRecoPt2_rebin";    // Needed to build Response object
+  const TString histNameMatrix = "hResponseMatrix"; // Needed to build Response object
 
-  const TString histNameGen = "hGenPt2_rebin";
-  const TString histNameReco = "hRecoPt2_rebin";
-  const TString histNameMatrix = "hResponseMatrix";
-  const TString histNameData = "hRecoPt2_rebin"; // Need to change to real data
+  // Test Data (Closure Test)
+  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root";
+  const TString histNameDataFine = "hRecoPt2_Test"; // To be unfolded
+  const TString histNameGenFine = "hGenPt2_Test";   // True distribution for evaluation
+
+  // Output
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/";
+  const TString outFileName = "Step3_1_4Pads_Comparison.png";
 
   const std::vector<int> iters = {1, 3, 5, 7};
 
@@ -168,29 +173,64 @@ void UnfoldingTestIteration()
   gStyle->SetOptStat(0);
   gStyle->SetTitleFontSize(0.05);
 
-  TFile* fIn = TFile::Open(inFile, "READ");
-  if (!fIn || fIn->IsZombie()) {
-    std::cerr << "[ERROR] Cannot open input file:" << inFile << std::endl;
+  // --- Load Training MC ---
+  TFile* fMC = TFile::Open(mcFile, "READ");
+  if (!fMC || fMC->IsZombie()) {
+    std::cerr << "[ERROR] Cannot open MC file:" << mcFile << std::endl;
+    return;
+  }
+  TH1D* hGenTrain = LoadHistogram<TH1D>(fMC, histNameGen);
+  TH1D* hRecoTrain = LoadHistogram<TH1D>(fMC, histNameReco);
+  TH2D* hMat = LoadHistogram<TH2D>(fMC, histNameMatrix);
+  fMC->Close();
+
+  if (!hGenTrain || !hRecoTrain || !hMat) {
+    std::cerr << "[ERROR] Missing MC histograms. Aborting." << std::endl;
     return;
   }
 
-  // Read file with helper
-  TH1D* hGen = LoadHistogram<TH1D>(fIn, histNameGen);
-  TH1D* hReco = LoadHistogram<TH1D>(fIn, histNameReco);
-  TH2D* hMat = LoadHistogram<TH2D>(fIn, histNameMatrix);
-  TH1D* hData = LoadHistogram<TH1D>(fIn, histNameData);
-  fIn->Close();
-
-  if (!hGen || !hReco || !hMat || !hData) {
-    std::cerr << "[ERROR] Missing histograms" << std::endl;
+  // --- Load Test Data ---
+  TFile* fData = TFile::Open(dataFile, "READ");
+  if (!fData || fData->IsZombie()) {
+    std::cerr << "[ERROR] Cannot open Data file:" << dataFile << std::endl;
     return;
   }
+  TH1D* hDataFine = LoadHistogram<TH1D>(fData, histNameDataFine);
+  TH1D* hGenTestFine = LoadHistogram<TH1D>(fData, histNameGenFine);
+  fData->Close();
+
+  if (!hDataFine || !hGenTestFine) {
+    std::cerr << "[ERROR] Missing Data histograms. Aborting." << std::endl;
+    return;
+  }
+
+  // ===========================
+  // Data Rebin (Applying MC Bins to Test Data)
+  // ===========================
+  int nBins = hRecoTrain->GetNbinsX();
+  double* binEdges = new double[nBins + 1];
+
+  // Get bin edges from Training MC histogram
+  if (hRecoTrain->GetXaxis()->GetXbins()->GetSize() > 0) {
+    const double* arr = hRecoTrain->GetXaxis()->GetXbins()->GetArray();
+    std::copy(arr, arr + nBins + 1, binEdges);
+  } else {
+    for (int i = 1; i <= nBins + 1; ++i) {
+      binEdges[i - 1] = hRecoTrain->GetXaxis()->GetBinLowEdge(i);
+    }
+  }
+
+  TH1D* hDataTest = (TH1D*)hDataFine->Rebin(nBins, "hDataTest_Rebinned", binEdges);
+  TH1D* hGenTest = (TH1D*)hGenTestFine->Rebin(nBins, "hGenTest_Rebinned", binEdges);
+  delete[] binEdges;
+
+  std::cout << "[INFO] Successfully rebinned Test Data & Test Truth into " << nBins << " bins." << std::endl;
 
   // ===========================
   // RooUnfolding Processing
   // ===========================
-  std::cout << "[Info] Constructing RooUnfoldResponse" << std::endl;
-  RooUnfoldResponse response(hReco, hGen, hMat);
+  std::cout << "[INFO] Constructing RooUnfoldResponse with Training Data" << std::endl;
+  RooUnfoldResponse response(hRecoTrain, hGenTrain, hMat);
 
   // Canvas setting
   int nPads = iters.size();
@@ -200,14 +240,15 @@ void UnfoldingTestIteration()
   TCanvas* c1 = new TCanvas("c1", "Bayes Iteration Comparison", cols * 600, rows * 500);
   c1->Divide(cols, rows);
 
-  for (Size_t i = 0; i < iters.size(); ++i) {
+  for (size_t i = 0; i < iters.size(); ++i) {
     int iter = iters[i];
-    std::cout << "[INFO] Runnging Vayes Unfolding with Iteration =" << iter << std::endl;
+    std::cout << "[INFO] Running Bayes Unfolding with Iteration = " << iter << std::endl;
 
-    RooUnfoldBayes unfoldBayes(&response, hData, iter);
+    // Unfolding test
+    RooUnfoldBayes unfoldBayes(&response, hDataTest, iter);
     TH1D* hUnfolded = (TH1D*)unfoldBayes.Hreco()->Clone(Form("hUnfold_iter%d", iter));
 
-    DrawUnfoldedResult(c1->cd(i + 1), iter, hGen, hData, hUnfolded);
+    DrawUnfoldedResult(c1->cd(i + 1), iter, hGenTest, hDataTest, hUnfolded);
   }
 
   // =============================

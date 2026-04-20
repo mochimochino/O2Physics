@@ -15,34 +15,35 @@
 
 #include "PWGLF/DataModel/ReducedF1ProtonTables.h"
 
-#include "Common/Core/trackUtilities.h"
-
-#include "CCDB/BasicCCDBManager.h"
-#include "CCDB/CcdbApi.h"
-#include "CommonConstants/PhysicsConstants.h"
-#include "DataFormatsParameters/GRPMagField.h"
-#include "DataFormatsParameters/GRPObject.h"
-#include "Framework/ASoAHelpers.h"
-#include "Framework/AnalysisDataModel.h"
-#include "Framework/AnalysisTask.h"
-#include "Framework/StepTHn.h"
-#include "Framework/runDataProcessing.h"
+#include <CCDB/BasicCCDBManager.h>
+#include <CCDB/CcdbApi.h>
+#include <DataFormatsParameters/GRPMagField.h>
+#include <Framework/ASoAHelpers.h>
+#include <Framework/AnalysisDataModel.h>
+#include <Framework/AnalysisHelpers.h>
+#include <Framework/AnalysisTask.h>
+#include <Framework/BinningPolicy.h>
 #include <Framework/Configurable.h>
+#include <Framework/HistogramRegistry.h>
+#include <Framework/HistogramSpec.h>
+#include <Framework/InitContext.h>
+#include <Framework/Logger.h>
+#include <Framework/OutputObjHeader.h>
+#include <Framework/runDataProcessing.h>
 
 #include <Math/GenVector/Boost.h>
-#include <Math/Vector4D.h>
 #include <TLorentzVector.h>
 #include <TMath.h>
-#include <TObjString.h>
-
-#include <fairlogger/Logger.h>
+#include <TMathBase.h>
 
 #include <algorithm>
 #include <array>
-#include <iostream>
-#include <iterator>
+#include <chrono>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 #include <random>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -292,9 +293,9 @@ struct f1protoncorrelation {
     if (f1track.f1d1TOFHit() != 1) {
       return (std::abs(nsTPC) < cutNoTOF);
     }
-
-    const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
-    return (comb < cutWithTOF);
+    return (std::abs(nsTPC) < cutNoTOF && std::abs(nsTOF) < cutWithTOF);
+    // const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
+    // return (comb < cutWithTOF);
   }
   inline bool passKaonPID(int pidMode,
                           const aod::F1Tracks::iterator& f1track,
@@ -340,10 +341,10 @@ struct f1protoncorrelation {
       }
       return true;
     }
-
+    return (std::abs(nsTPC) < cutNoTOFBase && std::abs(nsTOF) < cutWithTOF);
     // --- TOF available: circular cut in (TPC,TOF) nσ plane
-    const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
-    return (comb < cutWithTOF);
+    // const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
+    // return (comb < cutWithTOF);
   }
   inline bool passProtonPID(int pidMode,
                             const aod::ProtonTracks::iterator& ptrack,
@@ -379,8 +380,9 @@ struct f1protoncorrelation {
     // circular cut in (TPC,TOF)
     const float nsTPC = ptrack.protonNsigmaTPC();
     const float nsTOF = ptrack.protonNsigmaTOF();
-    const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
-    return (comb < cutCircle);
+    return (std::abs(nsTPC) < cutTPC && std::abs(nsTOF) < cutCircle);
+    // const float comb = std::sqrt(nsTPC * nsTPC + nsTOF * nsTOF);
+    // return (comb < cutCircle);
   }
 
   // Initialize the ananlysis task
@@ -610,7 +612,7 @@ struct f1protoncorrelation {
           histos.fill(HIST("hNsigmaProtonTPC"), protontrack.protonNsigmaTPC(), protontrack.protonNsigmaTOF(), Proton.Pt());
         }
         histos.fill(HIST("h2SameEventPtCorrelation"), relative_momentum, F1.Pt(), Proton.Pt());
-
+        auto mT = getmT(F1, Proton);
         if (f1track.f1SignalStat() > 0) {
           // check charge
           float pairCharge = f1track.f1SignalStat() * protontrack.protonCharge();
@@ -625,7 +627,9 @@ struct f1protoncorrelation {
             histos.fill(HIST("hPhaseSpaceProtonKaonSame"), Proton.Eta() - Kaon.Eta(), PhiAtSpecificRadiiTPC(Proton, Kaon, protontrack.protonCharge(), kaonCharge, bz, bz), relative_momentum); // Phase Space Proton kaon
           if (pionCharge == protontrack.protonCharge())
             histos.fill(HIST("hPhaseSpaceProtonPionSame"), Proton.Eta() - Pion.Eta(), PhiAtSpecificRadiiTPC(Proton, Pion, protontrack.protonCharge(), pionCharge, bz, bz), relative_momentum); // Phase Space Proton Pionsyst
-          histos.fill(HIST("h2SameEventInvariantMassUnlike_mass"), relative_momentum, F1.Pt(), F1.M(), pairCharge, collision.numContrib());                                                  // F1 sign = 1 unlike, F1 sign = -1 like
+
+          histos.fill(HIST("h2SameEventInvariantMassUnlike_mass"), relative_momentum, F1.Pt(), F1.M(), pairCharge, collision.numContrib()); // F1 sign = 1 unlike, F1 sign = -1 like
+          histos.fill(HIST("h2SameEventInvariantMassUnlike_mass_SYS"), 0, relative_momentum, mT, F1.M(), collision.numContrib());
           if (fillSparse) {
             histos.fill(HIST("SEMassUnlike"), F1.M(), F1.Pt(), Proton.Pt(), relative_momentum, combinedTPC, pairCharge);
           }
@@ -651,6 +655,7 @@ struct f1protoncorrelation {
           }
         }
         if (f1track.f1SignalStat() == -1) {
+          histos.fill(HIST("h2SameEventInvariantMassLike_mass_SYS"), 0, relative_momentum, mT, F1.M(), collision.numContrib());
           histos.fill(HIST("h2SameEventInvariantMassLike_mass"), relative_momentum, F1.Pt(), F1.M(), protontrack.protonCharge(), collision.numContrib());
           if (fillSparse) {
             histos.fill(HIST("SEMassLike"), F1.M(), F1.Pt(), Proton.Pt(), relative_momentum, combinedTPC, protontrack.protonCharge());
@@ -896,6 +901,7 @@ struct f1protoncorrelation {
           continue;
         }
         auto relative_momentum = getkstar(F1, Proton);
+        auto mT = getmT(F1, Proton);
         if (t1.f1SignalStat() > 0) {
           float pairCharge = t1.f1SignalStat() * t2.protonCharge();
           int f1Charge = t1.f1SignalStat();
@@ -905,6 +911,7 @@ struct f1protoncorrelation {
             pionCharge = 1;
             kaonCharge = -1;
           }
+          histos.fill(HIST("h2MixEventInvariantMassUnlike_mass_SYS"), 0, relative_momentum, mT, F1.M(), collision1.numContrib());
           histos.fill(HIST("h2MixEventInvariantMassUnlike_mass"), relative_momentum, F1.Pt(), F1.M(), pairCharge, collision1.numContrib());                                         // F1 sign = 1 unlike, F1 sign = -1 like
           histos.fill(HIST("hPhaseSpaceProtonKaonMix"), Proton.Eta() - Kaon.Eta(), PhiAtSpecificRadiiTPC(Proton, Kaon, t2.protonCharge(), kaonCharge, bz, bz2), relative_momentum); // Phase Space Proton kaon
           histos.fill(HIST("hPhaseSpaceProtonPionMix"), Proton.Eta() - Pion.Eta(), PhiAtSpecificRadiiTPC(Proton, Pion, t2.protonCharge(), pionCharge, bz, bz2), relative_momentum); // Phase Space Proton Pion
@@ -936,6 +943,7 @@ struct f1protoncorrelation {
           }
         }
         if (t1.f1SignalStat() == -1) {
+          histos.fill(HIST("h2MixEventInvariantMassLike_mass_SYS"), 0, relative_momentum, mT, F1.M(), collision1.numContrib());
           histos.fill(HIST("h2MixEventInvariantMassLike_mass"), relative_momentum, F1.Pt(), F1.M(), t2.protonCharge(), collision1.numContrib());
           if (fillSparse) {
             histos.fill(HIST("MEMassLike"), F1.M(), F1.Pt(), Proton.Pt(), relative_momentum, combinedTPC, t2.protonCharge());

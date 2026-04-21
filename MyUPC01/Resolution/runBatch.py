@@ -14,10 +14,10 @@ import sys
 # ============================================================
 
 # 入力データの親ディレクトリ（各サンプルのサブディレクトリが入っている場所）
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/Output0408"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Output_global0420/"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/CoherentCut/"
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/" # Now testing
 
 # 解析タスク名
 TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution"

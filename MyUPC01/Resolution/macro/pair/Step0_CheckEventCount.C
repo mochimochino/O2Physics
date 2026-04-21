@@ -17,11 +17,11 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/Resolution/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0416/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/Coherent/";
 
-  const int rebinFactor = 1;
+  const int rebinFactor = 5;
 
   struct Sample {
     TString file;
@@ -131,7 +131,7 @@ void Step0_CheckEventCount()
     // Axis
     double ymax = std::max(hMC->GetMaximum(), hReco->GetMaximum());
     hMC->GetYaxis()->SetRangeUser(1e0, ymax * 100.0);
-    hMC->GetXaxis()->SetRangeUser(0.0, 2.7);
+    hMC->GetXaxis()->SetRangeUser(0.0, 0.5);
     hMC->GetXaxis()->SetTitle(xTitle);
     hMC->GetYaxis()->SetTitle("Counts");
 

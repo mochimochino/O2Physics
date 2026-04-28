@@ -14,11 +14,11 @@
 #include "../Make2DHistFromBinnedHists.C"
 
 void RebinFlatStats(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/flatstats/4bin/Step2_Rebinned.root",
-  int nTargetBins = 4,
-  double xMin = 0.0,
-  double xMax = 0.065)
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/flatstats/15bin/Step2_Rebinned.root",
+  int nTargetBins = 15,
+  double xMin = 0.065,
+  double xMax = 1.20)
 {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);

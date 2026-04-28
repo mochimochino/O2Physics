@@ -1,80 +1,87 @@
 import os
-import json
 import glob
 import subprocess
+import shutil
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
+# ==========================================
 # 1. 全体設定
+# ==========================================
 BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
-LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0427test")
-RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0427test") # 分割リストの保存先
-MAX_WORKERS = 20            # 並列実行数
+LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_QA_0427")
+RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry_QA_0427")
+
+MAX_WORKERS = 15            # メモリやCPUに応じて調整してください
 MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
 
-DATASET_MAP = {
-    "jpsi-coh": "jpsi-coh-conf.json",
-    "jpsi-incoh": "jpsi-incoh-conf.json"
-    #"mumu-high": "mumu-high-conf.json",
-    #"mumu-low": "mumu-low-conf.json",
-    #"mumu-mid": "mumu-mid-conf.json",
-    #"psi2s-coh": "psi2S-coh-conf.json",
-    #"psi2s-coh-fd": "psi2s-coh-fd-conf.json",
-    #"psi2s-incoh": "psi2s-incoh-conf.json",
-    #"psi2s-incoh-fd": "psi2s-incoh-fd-conf.json"
-}
+# 今回はJSON不要なので、処理したいデータセット（ディレクトリ名）のリストだけ定義
+DATASETS = [
+    "jpsi-coh",
+    "jpsi-incoh"
+    # "mumu-high",
+    # "mumu-low",
+]
 
-def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):
-    """1つのテキストファイルリストに対するO2タスクを実行する関数"""
-    template_json_path = os.path.join(BASE_DIR, "conf", conf_filename)
-    output_dir = os.path.join(OUTPUT_BASE_DIR, dataset_name)
-    os.makedirs(output_dir, exist_ok=True)
+# QAタスクのパラメータ（意図的にゆるくして全貌を見る）
+QA_MAX_CHI2 = "100.0"
+QA_MAX_DCAXY = "999.0"
+
+# ==========================================
+
+def run_o2_task(dataset_name, list_filepath, task_basename):
+    """1つのテキストファイルリストに対するQAタスクを実行する関数"""
     
-    temp_json_path = os.path.join(output_dir, f"conf_{task_basename}.json")
+    # データセットごとの最終出力先ディレクトリ
+    final_output_dir = os.path.join(OUTPUT_BASE_DIR, dataset_name)
+    os.makedirs(final_output_dir, exist_ok=True)
+    
+    # 最終的なヒストグラムのファイル名
+    final_root_file = os.path.join(final_output_dir, f"{task_basename}.root")
+    
+    # 並列実行時の AnalysisResults.root 競合を防ぐため、タスク専用の作業ディレクトリを作る
+    work_dir = os.path.join(final_output_dir, f"work_{task_basename}")
+    os.makedirs(work_dir, exist_ok=True)
 
+    cmd = [
+        "o2-analysis-my-upc-globaltrack-qa",
+        "--aod-file", f"@{list_filepath}",
+        "-b",
+        "--QA_maxChi2", QA_MAX_CHI2,
+        "--QA_maxDCAxy", QA_MAX_DCAXY
+    ]
+    
     try:
-        with open(template_json_path, 'r') as f:
-            base_conf = json.load(f)
-        
-        base_conf["internal-dpl-aod-reader"]["aod-file-private"] = f"@{list_filepath}"
-        
-        with open(temp_json_path, 'w') as f:
-            json.dump(base_conf, f, indent=4)
-
-        cmd = [
-            "o2-analysis-ud-upc-cand-producer-global-muon",
-            "--configuration", f"json://{temp_json_path}",
-            "--aod-writer-keep", "dangling",
-            "--aod-writer-resfile", task_basename,
-            "-b",
-            "--shm-segment-size", "12000000000"
-        ]
-        
+        # タスク固有の作業ディレクトリ(work_dir)でコマンドを実行
         subprocess.run(
             cmd, 
             check=True, 
-            cwd=output_dir, 
+            cwd=work_dir, 
             stdout=subprocess.DEVNULL, 
             stderr=subprocess.PIPE
         )
         
-        os.remove(temp_json_path)
+        # 成功したら、AnalysisResults.root を名前を変えて回収
+        generated_root = os.path.join(work_dir, "AnalysisResults.root")
+        if os.path.exists(generated_root):
+            shutil.move(generated_root, final_root_file)
+        else:
+            raise FileNotFoundError(f"{generated_root} が生成されませんでした。")
+        
+        # 作業ディレクトリのお掃除
+        shutil.rmtree(work_dir)
         return True, task_basename, None
         
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode('utf-8') if e.stderr else str(e)
-        if os.path.exists(temp_json_path):
-            os.remove(temp_json_path)
         return False, task_basename, error_msg
     except Exception as e:
-        if os.path.exists(temp_json_path):
-            os.remove(temp_json_path)
         return False, task_basename, str(e)
 
 
 def main():
-    failed_log_path = os.path.join(BASE_DIR, "failed_tasks.log")
-    retry_failed_log_path = os.path.join(BASE_DIR, "failed_tasks_retry.log")
+    failed_log_path = os.path.join(BASE_DIR, "failed_qa_tasks.log")
+    retry_failed_log_path = os.path.join(BASE_DIR, "failed_qa_tasks_retry.log")
     
     tasks_to_run = []
     failed_tasks_info = []
@@ -82,8 +89,7 @@ def main():
     # ==========================================
     # フェーズ1: 初回並列実行
     # ==========================================
-    for dataset, conf_file in DATASET_MAP.items():
-        # リストの取得元を LIST_BASE_DIR に変更
+    for dataset in DATASETS:
         list_dir = os.path.join(LIST_BASE_DIR, dataset)
         list_files = glob.glob(os.path.join(list_dir, "*.txt"))
         
@@ -93,13 +99,13 @@ def main():
             
         for list_filepath in list_files:
             basename = os.path.splitext(os.path.basename(list_filepath))[0]
-            tasks_to_run.append((dataset, conf_file, list_filepath, basename))
+            tasks_to_run.append((dataset, list_filepath, basename))
             
-    print(f"--- フェーズ1: 全 {len(tasks_to_run)} 件のタスクを {MAX_WORKERS} 並列で開始します ---")
+    print(f"--- フェーズ1: 全 {len(tasks_to_run)} 件のQAタスクを {MAX_WORKERS} 並列で開始します ---")
 
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {
-            executor.submit(run_o2_task, t[0], t[1], t[2], t[3]): t for t in tasks_to_run
+            executor.submit(run_o2_task, t[0], t[1], t[2]): t for t in tasks_to_run
         }
         
         for future in as_completed(futures):
@@ -115,7 +121,7 @@ def main():
     if failed_tasks_info:
         with open(failed_log_path, 'w') as f:
             for task in failed_tasks_info:
-                f.write(f"{task[3]}\n")
+                f.write(f"{task[2]}\n")
     else:
         print("すべてのタスクが正常に完了しました。再実行フェーズはスキップします。")
         return
@@ -126,7 +132,7 @@ def main():
     print(f"\n--- フェーズ2: 失敗した {len(failed_tasks_info)} 件のタスクを分割して再実行します ---")
     retry_tasks_to_run = []
 
-    for dataset, conf_file, original_list_filepath, basename in failed_tasks_info:
+    for dataset, original_list_filepath, basename in failed_tasks_info:
         if not os.path.exists(original_list_filepath):
             print(f"警告: 元のリストが見つかりません -> {original_list_filepath}")
             continue
@@ -140,21 +146,21 @@ def main():
         for i in range(0, len(paths), MAX_FILES_PER_RETRY):
             chunk = paths[i:i + MAX_FILES_PER_RETRY]
             sub_index = i // MAX_FILES_PER_RETRY
-            new_basename = f"{basename}_{sub_index}"
+            new_basename = f"{basename}_retry_{sub_index}"
             new_list_file = os.path.join(retry_dataset_dir, f"{new_basename}.txt")
             
             with open(new_list_file, "w") as out_f:
                 for p in chunk:
                     out_f.write(p + "\n")
                     
-            retry_tasks_to_run.append((dataset, conf_file, new_list_file, new_basename))
+            retry_tasks_to_run.append((dataset, new_list_file, new_basename))
 
     print(f"分割後の再実行タスク: 計 {len(retry_tasks_to_run)} 件")
     final_failed_tasks = []
 
     with ProcessPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {
-            executor.submit(run_o2_task, t[0], t[1], t[2], t[3]): t for t in retry_tasks_to_run
+            executor.submit(run_o2_task, t[0], t[1], t[2]): t for t in retry_tasks_to_run
         }
         
         for future in as_completed(futures):
@@ -176,7 +182,6 @@ def main():
         with open(retry_failed_log_path, 'w') as f:
             for task_basename, error_msg in final_failed_tasks:
                 f.write(f"Task: {task_basename}\nError:\n{error_msg}\n{'-'*40}\n")
-        print(f"再実行で失敗したリストとエラー詳細を '{retry_failed_log_path}' に保存しました。")
     else:
         print("再実行したすべてのサブタスクが正常に完了しました。")
 

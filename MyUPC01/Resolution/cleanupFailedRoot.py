@@ -1,19 +1,19 @@
 import os
 
 # 1. パスの設定（前回の実行スクリプトに完全準拠）
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon"
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0420")
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0427test")
 
 DATASETS = [
     "jpsi-coh",
     "jpsi-incoh",
-    "mumu-high",
-    "mumu-low",
-    "mumu-mid",
-    "psi2s-coh",
-    "psi2s-coh-fd",
-    "psi2s-incoh",
-    "psi2s-incoh-fd"
+    #"mumu-high",
+    #"mumu-low",
+    #"mumu-mid",
+    #"psi2s-coh",
+    #"psi2s-coh-fd",
+    #"psi2s-incoh",
+    #"psi2s-incoh-fd"
 ]
 
 # ログファイルはBASE_DIR直下にあるため、パスを結合

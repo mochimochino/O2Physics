@@ -108,6 +108,7 @@ struct UPCMuonPairResolution {
       hCutFlow->GetXaxis()->SetBinLabel(i + 1, CutNames[i].Data());
     }
 
+    registry.add<TH1>("hTrackType", "Track Type Distribution;Track Type;Counts", HistType::kTH1I, {{5, 0., 5.}});
     // --- Axis definitions ---
     // Pair pT  (wide range for pre-cut; tight range re-used for post-cut)
     const AxisSpec axisPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
@@ -234,6 +235,9 @@ struct UPCMuonPairResolution {
       int nMchMid = 0;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
+        if (tr.trackType() >= 0 && tr.trackType() <= 4) {
+          registry.fill(HIST("hTrackType"), tr.trackType());
+        }
         if (tr.chi2MatchMCHMID() > 0)
           nMchMid++;
       }

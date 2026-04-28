@@ -11,10 +11,8 @@
 
 /// \file   UPCMuonPairResolution.cxx
 /// \brief  Resolution analysis for the dimuon pair pT and pT^2 in UPC J/psi photoproduction.
-///         Since |t| ≈ pT^2 for coherent UPC events, pT^2 resolution directly reflects
-///         the momentum-transfer resolution critical for nuclear structure studies.
-///         Produces: 1D Pair pT (Reco/MC), 1D Pair pT^2 (Reco/MC), and 2D response
-///         matrix (pT^2_reco vs pT^2_MC) as well as a cut-flow histogram.
+///         Produces: 1D Pair pT, 1D Pair pT^2, and 2D response matrix.
+///         Track type distribution and separated cut-flows are added.
 /// \author Takuma Matsumoto
 
 #include "PWGUD/DataModel/UDTables.h"
@@ -23,6 +21,7 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/O2DatabasePDGPlugin.h"
 #include "Framework/runDataProcessing.h"
+#include "ReconstructionDataFormats/TrackFwd.h"
 
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
@@ -54,30 +53,31 @@ struct UPCMuonPairResolution {
   // ===========================================================================
   // Configurables
   // ===========================================================================
-  // Event Level
-  Configurable<int> reqMatchMFT{"reqMatchMFT", 2, "Required number of MCH-MFT matched tracks"};
+  Configurable<int> reqMatchMFT{"reqMatchMFT", 2, "Required number of valid tracks per event"};
 
-  // Track Type (0: GlobalMuon, 3: Standalone)
-  Configurable<int> reqTrackType{"reqTrackType", 0, "Track type required for the analysis"};
+  Configurable<int> reqTrackType{
+    "reqTrackType",
+    static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack),
+    "Track type required for the analysis (0: GlobalMuonTrack, 3: MuonStandaloneTrack)"};
 
-  // Single Track Level
   Configurable<float> etaMin{"etaMin", -4.0f, "Minimum pseudorapidity for muon tracks"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum pseudorapidity for muon tracks"};
   Configurable<float> rAbsMin{"rAbsMin", 17.6f, "Minimum R at absorber end [cm]"};
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
 
-  // Dimuon Pair Level
-  Configurable<float> pairPtMax{"pairPtMax", 10.0f, "Maximum dimuon pair pT [GeV/c]"}; // 10.0
+  Configurable<float> pairPtMax{"pairPtMax", 0.25f, "Maximum dimuon pair pT [GeV/c]"}; // Max pair pT setting
   Configurable<float> pairRapidityMin{"pairRapidityMin", -4.0f, "Minimum dimuon pair rapidity"};
   Configurable<float> pairRapidityMax{"pairRapidityMax", -2.5f, "Maximum dimuon pair rapidity"};
   Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
   Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
 
-  // Histogram Binning
   Configurable<int> nBinsPt{"nBinsPt", 1000, "Number of bins on pT axis"};
-  Configurable<float> ptMax{"ptMax", 5.0f, "Upper edge of pT axis [GeV/c]"}; // 5
+  Configurable<float> ptMax{"ptMax", 0.5f, "Upper edge of pT axis [GeV/c]"};
   Configurable<int> nBinsPt2{"nBinsPt2", 5000, "Number of bins on pT^2 axis"};
-  Configurable<float> pt2Max{"pt2Max", 2.5f, "Upper edge of pT^2 axis [GeV^2/c^2]"}; // 2.5
+  Configurable<float> pt2Max{"pt2Max", 0.5, "Upper edge of pT^2 axis [GeV^2/c^2]"};
+
+  Configurable<float> maxChi2{"maxChi2", 100.f, "Maximum allowed global track Chi2"};
+  Configurable<float> maxChi2MatchMCHMFT{"maxChi2MatchMCHMFT", 100.f, "Maximum allowed MCH-MFT match Chi2"};
 
   static constexpr int kMuonPDG = 13;
   float mMu = 0.0f;
@@ -89,88 +89,65 @@ struct UPCMuonPairResolution {
     mMu = particle ? particle->Mass() : 0.105658f;
 
     // --- Cut Flow Histogram ---
-    auto hCutFlow = registry.add<TH1>("hCutFlow", "Selection Cut Flow;;Counts", HistType::kTH1I, {{16, 0., 16.}});
-    TString CutNames[16] = {
-      "0: All Cand",            // 0
-      "1: Pass Exact MatchMFT", // 1
-      "2: Track All",           // 2
-      "3: Track Pass Type",     // 3  <- トラックタイプの選択を最初に配置
-      "4: Track Pass rAbs",     // 4
-      "5: Track Pass pDCA",     // 5
-      "6: Track Pass MatchMFT", // 6  <- MCH-MIDからMCH-MFTのチェックに変更
-      "7: Track Pass Eta",      // 7
-      "8: Pair All",            // 8
-      "9: Pair Unlike-sign",    // 9
-      "10: Pair Both MC Muon",  // 10
-      "11: Pair Pass Pt",       // 11
-      "12: Pair Pass Rapidity", // 12
-      "13: Pair Pass Mass",     // 13
-      "14: Filler",             // 14
-      "15: Filler"              // 15
+    auto hCutFlow = registry.add<TH1>("hCutFlow", "Selection Cut Flow;;Counts", HistType::kTH1I, {{18, 0., 18.}});
+    TString CutNames[18] = {
+      "0: All Cand",                 // 0
+      "1: Has Requested Track Type", // 1
+      "2: Pass Exact 2 Tracks",      // 2
+      "3: Pass Exact MatchMFT",      // 3
+      "4: Track All",                // 4
+      "5: Track Pass Type",          // 5
+      "6: Track Pass rAbs",          // 6
+      "7: Track Pass pDCA",          // 7
+      "8: Track Pass MatchMFT",      // 8
+      "9: Track Pass Eta",           // 9
+      "10: Pair All",                // 10
+      "11: Pair Unlike-sign",        // 11
+      "12: Pair Both MC Muon",       // 12
+      "13: Pair Pass Pt",            // 13
+      "14: Pair Pass Rapidity",      // 14
+      "15: Pair Pass Mass",          // 15
+      "16: Filler",                  // 16
+      "17: Filler"                   // 17
     };
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < 18; i++) {
       hCutFlow->GetXaxis()->SetBinLabel(i + 1, CutNames[i].Data());
     }
 
+    auto hTrackType = registry.add<TH1>("hTrackType", "Track Type Distribution;Track Type;Counts", HistType::kTH1I, {{5, -0.5, 4.5}});
+    hTrackType->GetXaxis()->SetBinLabel(1, "GlobalMuon");     // 値: 0
+    hTrackType->GetXaxis()->SetBinLabel(2, "OtherMatch");     // 値: 1
+    hTrackType->GetXaxis()->SetBinLabel(3, "GlobalFwd");      // 値: 2
+    hTrackType->GetXaxis()->SetBinLabel(4, "MuonStandalone"); // 値: 3
+    hTrackType->GetXaxis()->SetBinLabel(5, "MCHStandalone");  // 値: 4
+
     // --- Axis definitions ---
-    // Pair pT  (wide range for pre-cut; tight range re-used for post-cut)
     const AxisSpec axisPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
     const AxisSpec axisPairPtReco{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c})"};
-
-    // Pair pT^2
     const AxisSpec axisPairPt2MC{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,MC} (GeV^{2}/#it{c}^{2})"};
     const AxisSpec axisPairPt2Reco{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,reco} (GeV^{2}/#it{c}^{2})"};
-
     const AxisSpec axisCounter{1, 0., 1., ""};
+
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
 
-    // =========================================================================
-    // 1D Histograms: Pair pT  -- PreCut (after unlike-sign+MC-muon, before kin. cuts)
-    // =========================================================================
     registry.add("hPairPtMC_PreCut", "Dimuon Pair #it{p}_{T} MC truth (Pre Kin. Cuts)", kTH1F, {axisPairPtMC});
     registry.add("hPairPtReco_PreCut", "Dimuon Pair #it{p}_{T} Reco (Pre Kin. Cuts)", kTH1F, {axisPairPtReco});
-
-    // 1D Histograms: Pair pT  -- PostCut (all cuts passed)
     registry.add("hPairPtMC_PostCut", "Dimuon Pair #it{p}_{T} MC truth (Post All Cuts)", kTH1F, {axisPairPtMC});
     registry.add("hPairPtReco_PostCut", "Dimuon Pair #it{p}_{T} Reco (Post All Cuts)", kTH1F, {axisPairPtReco});
 
-    // =========================================================================
-    // 1D Histograms: Pair pT^2  (|t| ≈ pT^2)  -- PreCut
-    // =========================================================================
     registry.add("hPairPt2MC_PreCut", "Dimuon Pair #it{p}_{T}^{2} MC truth (Pre Kin. Cuts)", kTH1F, {axisPairPt2MC});
     registry.add("hPairPt2Reco_PreCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Pre Kin. Cuts)", kTH1F, {axisPairPt2Reco});
-
-    // 1D Histograms: Pair pT^2  -- PostCut
     registry.add("hPairPt2MC_PostCut", "Dimuon Pair #it{p}_{T}^{2} MC truth (Post All Cuts)", kTH1F, {axisPairPt2MC});
     registry.add("hPairPt2Reco_PostCut", "Dimuon Pair #it{p}_{T}^{2} Reco (Post All Cuts)", kTH1F, {axisPairPt2Reco});
 
-    // =========================================================================
-    // 2D Response Matrices (PostCut only)
-    // =========================================================================
-    // pT response matrix
-    registry.add("hResponseMatrixPairPt",
-                 "Pair #it{p}_{T} Response Matrix (#it{p}_{T}^{reco} vs #it{p}_{T}^{MC})",
-                 kTH2F, {axisPairPtMC, axisPairPtReco});
+    registry.add("hResponseMatrixPairPt", "Pair #it{p}_{T} Response Matrix", kTH2F, {axisPairPtMC, axisPairPtReco});
+    registry.add("hResponseMatrixPairPt2", "Pair #it{p}_{T}^{2} Response Matrix", kTH2F, {axisPairPt2MC, axisPairPt2Reco});
 
-    // pT^2 response matrix
-    registry.add("hResponseMatrixPairPt2",
-                 "Pair #it{p}_{T}^{2} Response Matrix (#it{p}_{T}^{2,reco} vs #it{p}_{T}^{2,MC})",
-                 kTH2F, {axisPairPt2MC, axisPairPt2Reco});
+    const AxisSpec axisPtRelRes{200, -1.0f, 1.0f, "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
+    registry.add("hPairPtResoVsPtMC", "Pair #it{p}_{T} Resolution vs #it{p}_{T}^{MC}", kTH2F, {axisPairPtMC, axisPtRelRes});
 
-    // =========================================================================
-    // 2D Relative Residuals (PostCut only)
-    // =========================================================================
-    const AxisSpec axisPtRelRes{200, -1.0f, 1.0f,
-                                "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
-    registry.add("hPairPtResoVsPtMC",
-                 "Pair #it{p}_{T} Resolution vs #it{p}_{T}^{MC}",
-                 kTH2F, {axisPairPtMC, axisPtRelRes});
-
-    const AxisSpec axisPt2RelRes{200, -5.0f, 30.0f,
-                                 "(#it{p}_{T}^{2,reco} - #it{p}_{T}^{2,MC}) / #it{p}_{T}^{2,MC}"};
-    registry.add("hPairPt2ResoVsPt2MC",
-                 "Pair #it{p}_{T}^{2} Resolution vs #it{p}_{T}^{2,MC}",
-                 kTH2F, {axisPairPt2MC, axisPt2RelRes});
+    const AxisSpec axisPt2RelRes{200, -5.0f, 30.0f, "(#it{p}_{T}^{2,reco} - #it{p}_{T}^{2,MC}) / #it{p}_{T}^{2,MC}"};
+    registry.add("hPairPt2ResoVsPt2MC", "Pair #it{p}_{T}^{2} Resolution vs #it{p}_{T}^{2,MC}", kTH2F, {axisPairPt2MC, axisPt2RelRes});
   }
 
   // ---------------------------------------------------------------------------
@@ -190,36 +167,37 @@ struct UPCMuonPairResolution {
   template <typename TTrack>
   bool passTrackCuts(const TTrack& tr)
   {
-    registry.fill(HIST("hCutFlow"), 2); // 2: Track All
+    registry.fill(HIST("hCutFlow"), 4); // 4: Track All
 
-    // 1. トラックタイプの一致を確認
-    if (tr.trackType() != reqTrackType)
-      return false;
-    registry.fill(HIST("hCutFlow"), 3); // 3: Track Pass Type
+    // registry.fill(HIST("hCutFlow"), 5); // 5: Track Pass Type
 
-    // 2. rAbs のカット
     float rAbs = tr.rAtAbsorberEnd();
     if (rAbs < rAbsMin || rAbs > rAbsMax)
       return false;
-    registry.fill(HIST("hCutFlow"), 4); // 4: Track Pass rAbs
+    registry.fill(HIST("hCutFlow"), 6); // 6: Track Pass rAbs
 
-    // 3. pDCA のカット
     float pDcaMax = (rAbs < 26.5f) ? 350.0f : 200.0f;
     if (tr.pDca() > pDcaMax)
       return false;
-    registry.fill(HIST("hCutFlow"), 5); // 5: Track Pass pDCA
+    registry.fill(HIST("hCutFlow"), 7); // 7: Track Pass pDCA
 
-    // 4. MCH-MFT マッチングのチェック
-    if (tr.chi2MatchMCHMFT() <= 0)
+    if (tr.chi2() > maxChi2) {
       return false;
-    registry.fill(HIST("hCutFlow"), 6); // 6: Track Pass MatchMFT
+    }
 
-    // 5. Eta のカット
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      float chi2MFT = tr.chi2MatchMCHMFT();
+      if (chi2MFT < 0.f || chi2MFT > maxChi2MatchMCHMFT) {
+        return false;
+      }
+    }
+    registry.fill(HIST("hCutFlow"), 8); // 8: Track Pass MatchMFT
+
     TLorentzVector recoVec;
     recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
     if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax)
       return false;
-    registry.fill(HIST("hCutFlow"), 7); // 7: Track Pass Eta
+    registry.fill(HIST("hCutFlow"), 9); // 9: Track Pass Eta
 
     return true;
   }
@@ -238,32 +216,61 @@ struct UPCMuonPairResolution {
     for (const auto& item : tracksPerCand) {
       int32_t candId = item.first;
       const auto& trkIds = item.second;
-      if (trkIds.size() < 1)
+
+      if (trkIds.empty())
         continue;
 
       registry.fill(HIST("hCutFlow"), 0); // 0: All Cand
 
-      // --- Event-level cut: exactly reqMatchMFT matched tracks of requested type ---
-      int nValidTracks = 0;
+      // =========================================================
+      // 1. 軽量カット (Pre-selection)
+      // 指定したトラックタイプのトラックだけを抽出し、高速にイベントを選別する
+      // =========================================================
+      std::vector<int32_t> candidateTrkIds;
+      candidateTrkIds.reserve(trkIds.size()); // メモリ割り当ての最適化
+
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
-        // TrackType の合致と、MCH-MFTの有効なマッチング(IDやChi2)を持つトラックをカウント
-        if (tr.trackType() == reqTrackType && tr.chi2MatchMCHMFT() > 0) {
-          nValidTracks++;
+
+        // QA用に全トラックタイプの分布を記録
+        registry.fill(HIST("hTrackType"), static_cast<float>(tr.trackType()));
+
+        // 指定したトラックタイプ（GlobalMuon等）であれば候補リストに追加
+        if (tr.trackType() == reqTrackType) {
+          candidateTrkIds.push_back(idx);
         }
       }
-      if (nValidTracks != reqMatchMFT)
-        continue;
-      registry.fill(HIST("hCutFlow"), 1); // 1: Pass Exact MatchMFT
 
-      // --- Track-level cuts ---
+      if (candidateTrkIds.empty())
+        continue;
+      registry.fill(HIST("hCutFlow"), 1); // 1: Has Requested Track Type
+
+      // ここで大幅にイベントを削減:
+      // 目的のトラックタイプがぴったり2本(reqMatchMFT)でなければ、重い計算をする前にスキップ
+      if (candidateTrkIds.size() != reqMatchMFT) {
+        continue;
+      }
+      registry.fill(HIST("hCutFlow"), 2); // 2: Pass Exact 2 Type-Matched Tracks
+
+      // =========================================================
+      // 2. 品質カット (Quality Cuts)
+      // 生き残ったイベントの2本の候補トラックにのみ、重い品質カットを適用する
+      // =========================================================
       std::vector<int32_t> goodTrkIds;
-      for (auto idx : trkIds) {
+      goodTrkIds.reserve(reqMatchMFT);
+
+      for (auto idx : candidateTrkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
+
         if (passTrackCuts(tr)) {
           goodTrkIds.push_back(idx);
         }
       }
+
+      if (goodTrkIds.size() != reqMatchMFT) {
+        continue;
+      }
+      registry.fill(HIST("hCutFlow"), 3); // 3: Pass Exact 2 Good Track
 
       // --- Dimuon pair loop ---
       for (size_t i = 0; i < goodTrkIds.size(); ++i) {
@@ -274,20 +281,16 @@ struct UPCMuonPairResolution {
           auto tr2 = fwdTracks.iteratorAt(goodTrkIds[j]);
           const auto& mc2 = tr2.udMcParticle();
 
-          registry.fill(HIST("hCutFlow"), 8); // 8: Pair All
+          registry.fill(HIST("hCutFlow"), 10); // 10: Pair All
 
-          // Unlike-sign cut
           if (tr1.sign() * tr2.sign() >= 0)
             continue;
-          registry.fill(HIST("hCutFlow"), 9); // 9: Pair Unlike-sign
+          registry.fill(HIST("hCutFlow"), 11); // 11: Pair Unlike-sign
 
-          // Both tracks must be MC muons
-          if (std::abs(mc1.pdgCode()) != kMuonPDG ||
-              std::abs(mc2.pdgCode()) != kMuonPDG)
+          if (std::abs(mc1.pdgCode()) != kMuonPDG || std::abs(mc2.pdgCode()) != kMuonPDG)
             continue;
-          registry.fill(HIST("hCutFlow"), 10); // 10: Pair Both MC Muon
+          registry.fill(HIST("hCutFlow"), 12); // 12: Pair Both MC Muon
 
-          // Build four-vectors
           TLorentzVector recoVec1, recoVec2;
           recoVec1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
           recoVec2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
@@ -303,55 +306,39 @@ struct UPCMuonPairResolution {
           float pairPt2MC = pairPtMC * pairPtMC;
           float pairPt2Reco = pairPtReco * pairPtReco;
 
-          // =================================================================
-          // PreCut fill  (after unlike-sign + both-MC-muon, before kin. cuts)
-          // =================================================================
           registry.fill(HIST("hPairPtMC_PreCut"), pairPtMC);
           registry.fill(HIST("hPairPtReco_PreCut"), pairPtReco);
           registry.fill(HIST("hPairPt2MC_PreCut"), pairPt2MC);
           registry.fill(HIST("hPairPt2Reco_PreCut"), pairPt2Reco);
 
-          // =================================================================
-          // Pair kinematic cuts (applied on Reco)
-          // =================================================================
           if (pairReco.Pt() >= pairPtMax)
             continue;
-          registry.fill(HIST("hCutFlow"), 11); // 11: Pair Pass Pt
+          registry.fill(HIST("hCutFlow"), 13); // 13: Pair Pass Pt
 
-          if (pairReco.Rapidity() <= pairRapidityMin ||
-              pairReco.Rapidity() >= pairRapidityMax)
+          if (pairReco.Rapidity() <= pairRapidityMin || pairReco.Rapidity() >= pairRapidityMax)
             continue;
-          registry.fill(HIST("hCutFlow"), 12); // 12: Pair Pass Rapidity
+          registry.fill(HIST("hCutFlow"), 14); // 14: Pair Pass Rapidity
 
           if (pairReco.M() <= pairMassMin || pairReco.M() >= pairMassMax)
             continue;
-          registry.fill(HIST("hCutFlow"), 13); // 13: Pair Pass Mass
+          registry.fill(HIST("hCutFlow"), 15); // 15: Pair Pass Mass
 
-          // =================================================================
-          // PostCut fill  (all cuts passed)
-          // =================================================================
           registry.fill(HIST("hPairPtMC_PostCut"), pairPtMC);
           registry.fill(HIST("hPairPtReco_PostCut"), pairPtReco);
           registry.fill(HIST("hPairPt2MC_PostCut"), pairPt2MC);
           registry.fill(HIST("hPairPt2Reco_PostCut"), pairPt2Reco);
 
-          // pT response matrix
           registry.fill(HIST("hResponseMatrixPairPt"), pairPtMC, pairPtReco);
-          // pT relative residual
           if (pairPtMC > 0.f) {
-            registry.fill(HIST("hPairPtResoVsPtMC"), pairPtMC,
-                          (pairPtReco - pairPtMC) / pairPtMC);
+            registry.fill(HIST("hPairPtResoVsPtMC"), pairPtMC, (pairPtReco - pairPtMC) / pairPtMC);
           }
 
-          // pT^2 response matrix
           registry.fill(HIST("hResponseMatrixPairPt2"), pairPt2MC, pairPt2Reco);
-          // pT^2 relative residual
           if (pairPt2MC > 0.f) {
-            registry.fill(HIST("hPairPt2ResoVsPt2MC"), pairPt2MC,
-                          (pairPt2Reco - pairPt2MC) / pairPt2MC);
+            registry.fill(HIST("hPairPt2ResoVsPt2MC"), pairPt2MC, (pairPt2Reco - pairPt2MC) / pairPt2MC);
           }
-        } // j
-      } // i
+        }
+      }
 
       (void)candId;
       (void)eventCandidates;

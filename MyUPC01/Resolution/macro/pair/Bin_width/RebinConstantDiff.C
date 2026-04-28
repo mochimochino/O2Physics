@@ -12,12 +12,12 @@
 #include "../Make2DHistFromBinnedHists.C"
 
 void RebinConstantDiff(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/Step2_Rebinned.root",
-  double initialWidth = 0.005,
-  double deltaW = 0.004,
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/constantdiff/15bin/Step2_Rebinned.root",
+  double initialWidth = 0.016,
+  double deltaW = 0.012,
   double xMin = 0.0,
-  double xMax = 0.065,
+  double xMax = 1.5,
   bool respectOverflow = true)
 {
   gStyle->SetOptStat(0);

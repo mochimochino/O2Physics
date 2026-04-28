@@ -17,9 +17,9 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/Coherent/";
 
   const int rebinFactor = 5;
 
@@ -28,7 +28,7 @@ void Step0_CheckEventCount()
     TString label;
   };
   std::vector<Sample> samples = {
-    // {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
+    //{dataDir + "jpsi-incoh.root", "J/#psi incoh."},
     {dataDir + "jpsi-coh.root", "J/#psi coh."},
     // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
     // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
@@ -131,7 +131,7 @@ void Step0_CheckEventCount()
     // Axis
     double ymax = std::max(hMC->GetMaximum(), hReco->GetMaximum());
     hMC->GetYaxis()->SetRangeUser(1e0, ymax * 100.0);
-    hMC->GetXaxis()->SetRangeUser(0.0, 0.5);
+    hMC->GetXaxis()->SetRangeUser(0.0, 1.5);
     hMC->GetXaxis()->SetTitle(xTitle);
     hMC->GetYaxis()->SetTitle("Counts");
 
@@ -152,8 +152,9 @@ void Step0_CheckEventCount()
     tex.SetTextFont(fontCode);
     tex.SetTextSize(0.036);
     tex.DrawLatex(0.16, 0.90, Form("#bf{%s}", title.Data()));
-    tex.DrawLatex(0.16, 0.85, "without Coherent J/#psi Cut");
+    tex.DrawLatex(0.16, 0.85, "with Coherent J/#psi Cut");
     tex.DrawLatex(0.16, 0.80, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}");
+    tex.DrawLatex(0.16, 0.75, "Global Muon (MFT-MCH-MID)");
 
     c->SaveAs(outDir + outFile);
     std::cout << "[Info] Saved: " << outDir + outFile << std::endl;
@@ -227,7 +228,7 @@ void Step0_CheckEventCount()
 
       if (firstDraw) {
         h->GetYaxis()->SetRangeUser(1e0, overallMax * 100.0);
-        h->GetXaxis()->SetRangeUser(0.0, 0.5);
+        h->GetXaxis()->SetRangeUser(0.0, 0.065);
         h->Draw("HIST");
         firstDraw = false;
       } else {
@@ -243,7 +244,7 @@ void Step0_CheckEventCount()
     tex.SetTextFont(fontCode);
     tex.SetTextSize(0.036);
     tex.DrawLatex(0.16, 0.90, Form("#bf{%s (per sample)}", title.Data()));
-    tex.DrawLatex(0.16, 0.85, "without Coherent J/#psi Cut");
+    tex.DrawLatex(0.16, 0.85, "with Coherent J/#psi Cut");
     tex.DrawLatex(0.16, 0.80, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}");
 
     c->SaveAs(outDir + outFile);

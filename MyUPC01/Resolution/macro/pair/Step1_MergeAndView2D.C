@@ -19,13 +19,13 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/Incoherent/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/";
 
   std::vector<TString> fileNames = {
-    // dataDir + "jpsi-incoh.root",
-    dataDir + "jpsi-coh.root",
+    dataDir + "jpsi-incoh.root",
+    // dataDir + "jpsi-coh.root",
     // dataDir + "psi2s-incoh.root",
     // dataDir + "psi2s-coh.root",
     // dataDir + "psi2s-incoh-fd.root",
@@ -34,6 +34,14 @@ void Step1_MergeAndView2D()
     // dataDir + "mumu-mid.root",
     // dataDir + "mumu-high.root",
   };
+
+  // --- Rebin Factors (1 = No rebinning) ---
+  const int rebinPt_X = 1;  // Pair pT Response Matrix X-axis
+  const int rebinPt_Y = 1;  // Pair pT Response Matrix Y-axis
+  const int rebinPt2_X = 2; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
+  const int rebinPt2_Y = 2; // Pair pT^2 Response Matrix Y-axis
+  const int rebinRes_X = 1; // Resolution 2D plots X-axis
+  const int rebinRes_Y = 1; // Resolution 2D plots Y-axis
 
   // ----------------------------------------------------------
   // Global style
@@ -53,9 +61,9 @@ void Step1_MergeAndView2D()
   }
 
   // ----------------------------------------------------------
-  // Helper: merge a 2D histogram from all files
+  // Helper: merge and rebin a 2D histogram from all files
   // ----------------------------------------------------------
-  auto merge2D = [&](const TString& histName) -> TH2F* {
+  auto merge2D = [&](const TString& histName, int rbX = 1, int rbY = 1) -> TH2F* {
     TH2F* h2 = nullptr;
     for (const auto& fname : fileNames) {
       TFile* f = TFile::Open(fname, "READ");
@@ -80,13 +88,19 @@ void Step1_MergeAndView2D()
       f->Close();
       std::cout << "[Info] Loaded " << histName << " from " << fname << std::endl;
     }
+
+    // Apply Rebinning if requested
+    if (h2 && (rbX > 1 || rbY > 1)) {
+      h2->Rebin2D(rbX, rbY);
+      std::cout << "[Info] Rebinned " << histName << " by (X:" << rbX << ", Y:" << rbY << ")" << std::endl;
+    }
     return h2;
   };
 
   // ----------------------------------------------------------
-  // Helper: merge a 1D histogram from all files
+  // Helper: merge and rebin a 1D histogram from all files
   // ----------------------------------------------------------
-  auto merge1D = [&](const TString& histName) -> TH1D* {
+  auto merge1D = [&](const TString& histName, int rbX = 1) -> TH1D* {
     TH1D* h1 = nullptr;
     for (const auto& fname : fileNames) {
       TFile* f = TFile::Open(fname, "READ");
@@ -109,6 +123,12 @@ void Step1_MergeAndView2D()
       }
       f->Close();
       std::cout << "[Info] Loaded 1D " << histName << " from " << fname << std::endl;
+    }
+
+    // Apply Rebinning if requested
+    if (h1 && rbX > 1) {
+      h1->Rebin(rbX);
+      std::cout << "[Info] Rebinned " << histName << " by " << rbX << std::endl;
     }
     return h1;
   };
@@ -147,6 +167,7 @@ void Step1_MergeAndView2D()
     tex.DrawLatex(0.55, 0.89, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.55, 0.84, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}");
     tex.DrawLatex(0.55, 0.79, Form("#bf{Entries: %.0f}", h2->GetEntries()));
+    tex.DrawLatex(0.55, 0.74, "Global Muon (MFT-MCH-MID)");
 
     c->SaveAs(outDir + outFile);
     std::cout << "[Info] Saved: " << outDir + outFile << std::endl;
@@ -158,13 +179,13 @@ void Step1_MergeAndView2D()
   //     X: pT_MC  Y: pT_reco
   // ==========================================================
   {
-    TH2F* h2 = merge2D("hResponseMatrixPairPt");
+    TH2F* h2 = merge2D("hResponseMatrixPairPt", rebinPt_X, rebinPt_Y);
     if (h2) {
       draw2D(h2,
              "p_{T,#mu#mu}^{MC} (GeV/c)",
              "p_{T,#mu#mu}^{reco} (GeV/c)",
              "Pair p_{T} Response Matrix",
-             0.0, 5.0, 0.0, 5.0,
+             0.0, 2.5, 0.0, 2.5,
              "c_rmat_pt",
              "Step1_ResponseMatrix_PairPt.png");
       delete h2;
@@ -177,13 +198,13 @@ void Step1_MergeAndView2D()
   // ==========================================================
   TH2F* h2Pt2 = nullptr; // keep for saving
   {
-    h2Pt2 = merge2D("hResponseMatrixPairPt2");
+    h2Pt2 = merge2D("hResponseMatrixPairPt2", rebinPt2_X, rebinPt2_Y);
     if (h2Pt2) {
       draw2D(h2Pt2,
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "p_{T,#mu#mu}^{2,reco} (GeV^{2}/c^{2})",
-             "Pair p_{T}^{2} Response (Zoom 0-0.005)",
-             0.0, 0.005, 0.0, 0.005,
+             "Pair p_{T}^{2} Response (Zoom 0-0.002)",
+             0.0, 2.5, 0.0, 2.5,
              "c_rmat_pt2_zoom",
              "Step1_ResponseMatrix_PairPt2_Zoom.png");
 
@@ -205,7 +226,7 @@ void Step1_MergeAndView2D()
   //     X: pT_MC  Y: (pT_reco - pT_MC) / pT_MC
   // ==========================================================
   {
-    TH2F* h2 = merge2D("hPairPtResoVsPtMC");
+    TH2F* h2 = merge2D("hPairPtResoVsPtMC", rebinRes_X, rebinRes_Y);
     if (h2) {
       draw2D(h2,
              "p_{T,#mu#mu}^{MC} (GeV/c)",
@@ -223,7 +244,7 @@ void Step1_MergeAndView2D()
   //     X: pT^2_MC  Y: (pT^2_reco - pT^2_MC) / pT^2_MC
   // ==========================================================
   {
-    TH2F* h2 = merge2D("hPairPt2ResoVsPt2MC");
+    TH2F* h2 = merge2D("hPairPt2ResoVsPt2MC", rebinRes_X, rebinRes_Y);
     if (h2) {
       draw2D(h2,
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
@@ -245,7 +266,7 @@ void Step1_MergeAndView2D()
   if (h2Pt2) {
     h2Pt2->Write("hResponseMatrixPairPt2");
 
-    // MC pT^2 projection (X)
+    // MC pT^2 projection (X) - 2DをRebin済みなので、1Dにも自動で反映されます
     TH1D* hGenPt2 = h2Pt2->ProjectionX("hGenPt2");
     hGenPt2->SetTitle("Gen pT^2 from 2D histogram");
     hGenPt2->GetXaxis()->SetTitle("p_{T}^{2,MC} (GeV^{2}/c^{2})");

@@ -14,13 +14,13 @@ import sys
 # ============================================================
 
 # 入力データの親ディレクトリ（各サンプルのサブディレクトリが入っている場所）
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Output_global0420/"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/Output0408/"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/Resolution/0421/" # Now testing
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/Standalone/" # Now testing
 
 # 解析タスク名
-TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution"
+TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution-eta" #-global-muon
 
 # 共有メモリサイズ
 SHM_SIZE = "10000000000"
@@ -28,14 +28,14 @@ SHM_SIZE = "10000000000"
 # サンプルリスト: (サブディレクトリ名, ファイルプレフィックス, 出力ファイル名)
 SAMPLES = [
     ("jpsi-coh",       "jpsi-coh-*.root",        "jpsi-coh.root"),
-    ("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
-    ("psi2s-coh",      "psi2s-coh-*.root",        "psi2s-coh.root"),
-    ("psi2s-incoh",    "psi2s-incoh-*.root",      "psi2s-incoh.root"),
-    ("psi2s-coh-fd",   "psi2s-coh-fd-*.root",     "psi2s-coh-fd.root"),
-    ("psi2s-incoh-fd", "psi2s-incoh-fd-*.root",   "psi2s-incoh-fd.root"),
-    ("mumu-low",       "mumu-low-*.root",         "mumu-low.root"),
-    ("mumu-mid",       "mumu-mid-*.root",         "mumu-mid.root"),
-    ("mumu-high",      "mumu-high-*.root",        "mumu-high.root"),
+    #("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
+    #("psi2s-coh",      "psi2s-coh-*.root",        "psi2s-coh.root"),
+    #("psi2s-incoh",    "psi2s-incoh-*.root",      "psi2s-incoh.root"),
+    #("psi2s-coh-fd",   "psi2s-coh-fd-*.root",     "psi2s-coh-fd.root"),
+    #("psi2s-incoh-fd", "psi2s-incoh-fd-*.root",   "psi2s-incoh-fd.root"),
+    #("mumu-low",       "mumu-low-*.root",         "mumu-low.root"),
+    #("mumu-mid",       "mumu-mid-*.root",         "mumu-mid.root"),
+    #("mumu-high",      "mumu-high-*.root",        "mumu-high.root"),
 ]
 
 # ============================================================

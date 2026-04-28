@@ -5,23 +5,23 @@ import subprocess
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # 1. 全体設定
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
 LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0420")
-RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0420") # 分割リストの保存先
-MAX_WORKERS = 40            # 並列実行数
-MAX_FILES_PER_RETRY = 5     # 再実行時の1リストあたりの最大ファイル数
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0427test")
+RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0427test") # 分割リストの保存先
+MAX_WORKERS = 20            # 並列実行数
+MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
 
 DATASET_MAP = {
     "jpsi-coh": "jpsi-coh-conf.json",
-    "jpsi-incoh": "jpsi-incoh-conf.json",
-    "mumu-high": "mumu-high-conf.json",
-    "mumu-low": "mumu-low-conf.json",
-    "mumu-mid": "mumu-mid-conf.json",
-    "psi2s-coh": "psi2S-coh-conf.json",
-    "psi2s-coh-fd": "psi2s-coh-fd-conf.json",
-    "psi2s-incoh": "psi2s-incoh-conf.json",
-    "psi2s-incoh-fd": "psi2s-incoh-fd-conf.json"
+    "jpsi-incoh": "jpsi-incoh-conf.json"
+    #"mumu-high": "mumu-high-conf.json",
+    #"mumu-low": "mumu-low-conf.json",
+    #"mumu-mid": "mumu-mid-conf.json",
+    #"psi2s-coh": "psi2S-coh-conf.json",
+    #"psi2s-coh-fd": "psi2s-coh-fd-conf.json",
+    #"psi2s-incoh": "psi2s-incoh-conf.json",
+    #"psi2s-incoh-fd": "psi2s-incoh-fd-conf.json"
 }
 
 def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):

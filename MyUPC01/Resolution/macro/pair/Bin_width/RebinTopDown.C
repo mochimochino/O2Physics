@@ -82,12 +82,12 @@ std::vector<double> TopDownBinEdges(
 //  Main
 // ----------------------------------------------------------
 void RebinTopDown(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/topdown/50/Step2_Rebinned.root",
-  double targetPurity = 0.50,
-  double targetStability = 0.50,
-  double minStats = 1000,
-  double maxPt2 = 0.065)
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/topdown/40/Step2_Rebinned.root",
+  double targetPurity = 0.40,
+  double targetStability = 0.40,
+  double minStats = 500,
+  double maxPt2 = 1.5)
 {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);

@@ -60,10 +60,10 @@ void Step2_DetermineBinning_equalevents()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/CoherenrtJpsi/";
+  const TString inDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Coherent/";
   const TString inFile = inDir + "Step1_merged.root";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0413/Coherent/equal/";
-  const TString realDataInDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0409/CoherenrtJpsi/Step1_merged.root";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Coherent/equal/";
+  const TString realDataInDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Coherent/Step1_merged.root";
 
   // === ここでBinの数を指定します ===
   int nTargetBins = 6;

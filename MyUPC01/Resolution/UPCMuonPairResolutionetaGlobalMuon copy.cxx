@@ -13,7 +13,7 @@
 /// \brief  Resolution analysis for dimuon pairs and single muons in UPC photoproduction.
 ///         Produces: 1D Pair pT, 1D Pair pT^2, and 2D response matrix.
 ///         Track type distribution, separated cut-flows, and single/pair resolutions are added.
-/// \author Takuma Matsumoto
+/// \author Takuma Matsumoto (Modified by ｔ解析)
 
 #include "PWGUD/DataModel/UDTables.h"
 
@@ -166,10 +166,6 @@ struct UPCMuonPairResolution {
 
     const AxisSpec axPRelRes{200, -0.5f, 0.5f, "(#it{p}^{reco} - #it{p}^{MC}) / #it{p}^{MC}"};
 
-    // MFTのクラスター数は最大でも10程度なので、0〜15の範囲で設定
-    const AxisSpec axMFTClusters{16, -0.5f, 15.5f, "Number of MFT Clusters"};
-    registry.add("hResoPz_vs_MFTClusters", "Pz Rel Resolution vs MFT Clusters", kTH2F, {axMFTClusters, axPRelRes});
-
     // 1D distributions
     registry.add("hTrkPhiMC", "Track #phi MC", kTH1F, {axPhiMC});
     registry.add("hTrkPhiReco", "Track #phi Reco", kTH1F, {axPhiReco});
@@ -195,16 +191,6 @@ struct UPCMuonPairResolution {
     registry.add("hResoPx", "Track #it{p}_{x} Resolution", kTH2F, {axPxMC, axPRelRes});
     registry.add("hResoPy", "Track #it{p}_{y} Resolution", kTH2F, {axPyMC, axPRelRes});
     registry.add("hResoPz", "Track #it{p}_{z} Resolution", kTH2F, {axPzMC, axPRelRes});
-
-    // =========================================================================
-    // 追加: 異常なPzの原因究明用 2Dヒストグラム (Eta, rAbs, Chi2Match と Pz残差の相関)
-    // =========================================================================
-    const AxisSpec axRAbs{100, 15.0f, 95.0f, "#it{R}_{abs} (cm)"};
-    const AxisSpec axChi2Match{100, 0.0f, 100.0f, "MFT-MCH Match #chi^{2}"};
-
-    registry.add("hResoPz_vs_EtaMC", "Pz Rel Resolution vs #eta^{MC}", kTH2F, {axEtaMC, axPRelRes});
-    registry.add("hResoPz_vs_rAbs", "Pz Rel Resolution vs #it{R}_{abs}", kTH2F, {axRAbs, axPRelRes});
-    registry.add("hResoPz_vs_Chi2Match", "Pz Rel Resolution vs Match #chi^{2}", kTH2F, {axChi2Match, axPRelRes});
   }
 
   // ---------------------------------------------------------------------------
@@ -366,26 +352,8 @@ struct UPCMuonPairResolution {
       registry.fill(HIST("hResoPx"), vMC.Px(), (vReco.Px() - vMC.Px()) / std::abs(vMC.Px()));
     if (std::abs(vMC.Py()) > 0.f)
       registry.fill(HIST("hResoPy"), vMC.Py(), (vReco.Py() - vMC.Py()) / std::abs(vMC.Py()));
-
-    // Pz 関連の残差と診断プロット
-    if (std::abs(vMC.Pz()) > 0.f) {
-      float relResPz = (vReco.Pz() - vMC.Pz()) / std::abs(vMC.Pz());
-      registry.fill(HIST("hResoPz"), vMC.Pz(), relResPz);
-
-      // 追加: Pz残差とEta, rAbs, Chi2Matchの相関
-      registry.fill(HIST("hResoPz_vs_EtaMC"), vMC.Eta(), relResPz);
-      registry.fill(HIST("hResoPz_vs_rAbs"), tr.rAtAbsorberEnd(), relResPz);
-
-      if (tr.trackType() == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
-        registry.fill(HIST("hResoPz_vs_Chi2Match"), tr.chi2MatchMCHMFT(), relResPz);
-      }
-    }
-    if (std::abs(vMC.Pz()) > 0.f && tr.trackType() == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
-
-      int nClusters = tr.nClusters(); // ← ※適宜O2の関数名に合わせてください
-
-      registry.fill(HIST("hResoPz_vs_MFTClusters"), nClusters, (vReco.Pz() - vMC.Pz()) / std::abs(vMC.Pz()));
-    }
+    if (std::abs(vMC.Pz()) > 0.f)
+      registry.fill(HIST("hResoPz"), vMC.Pz(), (vReco.Pz() - vMC.Pz()) / std::abs(vMC.Pz()));
   }
 
   // ---------------------------------------------------------------------------

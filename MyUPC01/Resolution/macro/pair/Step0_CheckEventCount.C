@@ -17,9 +17,9 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
 
   const int rebinFactor = 5;
 

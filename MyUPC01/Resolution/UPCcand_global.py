@@ -7,8 +7,8 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # 1. 全体設定
 BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
 LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0427test")
-RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0427test") # 分割リストの保存先
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0429test")
+RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0429test") # 分割リストの保存先
 MAX_WORKERS = 20            # 並列実行数
 MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
 

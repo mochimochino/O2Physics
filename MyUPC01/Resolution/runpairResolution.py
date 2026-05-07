@@ -10,10 +10,10 @@ import sys
 # ============================================================
 
 # 入力データの親ディレクトリ
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_global0427test/"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_global0429test/"
 
 # 出力先ディレクトリ
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/Standalone/"
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/pTtest/"
 
 # コンフィグファイル（JSON）が保存されている親ディレクトリ
 CONF_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/conf/" # ★環境に合わせて変更してください

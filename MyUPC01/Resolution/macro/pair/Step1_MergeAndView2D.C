@@ -19,13 +19,13 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0427test/Incoherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
 
   std::vector<TString> fileNames = {
-    dataDir + "jpsi-incoh.root",
-    // dataDir + "jpsi-coh.root",
+    // dataDir + "jpsi-incoh.root",
+    dataDir + "jpsi-coh.root",
     // dataDir + "psi2s-incoh.root",
     // dataDir + "psi2s-coh.root",
     // dataDir + "psi2s-incoh-fd.root",
@@ -38,8 +38,8 @@ void Step1_MergeAndView2D()
   // --- Rebin Factors (1 = No rebinning) ---
   const int rebinPt_X = 1;  // Pair pT Response Matrix X-axis
   const int rebinPt_Y = 1;  // Pair pT Response Matrix Y-axis
-  const int rebinPt2_X = 2; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
-  const int rebinPt2_Y = 2; // Pair pT^2 Response Matrix Y-axis
+  const int rebinPt2_X = 1; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
+  const int rebinPt2_Y = 1; // Pair pT^2 Response Matrix Y-axis
   const int rebinRes_X = 1; // Resolution 2D plots X-axis
   const int rebinRes_Y = 1; // Resolution 2D plots Y-axis
 

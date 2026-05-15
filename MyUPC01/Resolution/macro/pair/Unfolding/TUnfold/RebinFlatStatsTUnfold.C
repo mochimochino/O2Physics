@@ -45,13 +45,11 @@ std::vector<double> CalculateFlatStatsBins(TH1D* h, int nTargetBins, double xMin
     }
 
     double edge = h->GetBinLowEdge(binMin + bestIdx);
-    // 同じ境界値が連続しないようにし、xMaxを超えないようにする
     if (edge > bins.back() && edge < xMax) {
       bins.push_back(edge);
     }
   }
 
-  // 最後に終端を追加
   if (bins.back() < xMax) {
     bins.push_back(xMax);
   }
@@ -59,20 +57,16 @@ std::vector<double> CalculateFlatStatsBins(TH1D* h, int nTargetBins, double xMin
   return bins;
 }
 
-// ---------------------------------------------------------
-// メイン関数
-// ---------------------------------------------------------
 void RebinFlatStatsTUnfold(
   const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/flatstats/5bin/Step2_Rebinned.root",
-  int nGenTargetBins = 5,
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/flatstats/3bin/02/Step2_Rebinned.root",
+  int nGenTargetBins = 3,
   double xMin = 0.0,
-  double xMax = 0.065)
+  double xMax = 0.020)
 {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);
 
-  // TUnfoldの安定性のため、Recoビン数はGenビン数の2倍(またはそれ以上)にする
   int nRecoTargetBins = nGenTargetBins * 2;
 
   std::cout << "========================================" << std::endl;

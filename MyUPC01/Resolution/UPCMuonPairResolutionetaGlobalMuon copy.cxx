@@ -13,7 +13,7 @@
 /// \brief  Resolution analysis for dimuon pairs and single muons in UPC photoproduction.
 ///         Produces: 1D Pair pT, 1D Pair pT^2, and 2D response matrix.
 ///         Track type distribution, separated cut-flows, and single/pair resolutions are added.
-/// \author Takuma Matsumoto (Modified by ｔ解析)
+/// \author Takuma Matsumoto
 
 #include "PWGUD/DataModel/UDTables.h"
 
@@ -133,6 +133,10 @@ struct UPCMuonPairResolution {
     hTrackType->GetXaxis()->SetBinLabel(4, "MuonStandalone"); // 3
     hTrackType->GetXaxis()->SetBinLabel(5, "MCHStandalone");  // 4
 
+    // --- NEW: イベントごとのトラック多重度カウント用 ---
+    registry.add<TH1>("hNTracksTotal", "Total Forward Tracks per Event;N Tracks;Events", HistType::kTH1I, {{50, -0.5, 49.5}});
+    registry.add<TH1>("hNGlobalMuons", "Global Muon Tracks per Event;N Global Muons;Events", HistType::kTH1I, {{20, -0.5, 19.5}});
+
     const AxisSpec axisCounter{1, 0., 1., ""};
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
   }
@@ -202,7 +206,6 @@ struct UPCMuonPairResolution {
     const AxisSpec axisPairPt2MC{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,MC} (GeV^{2}/#it{c}^{2})"};
     const AxisSpec axisPairPt2Reco{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,reco} (GeV^{2}/#it{c}^{2})"};
 
-    // Pair Eta and Phi axes
     const AxisSpec axPairRapMC{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}^{MC}"};
     const AxisSpec axPairRapReco{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}^{reco}"};
     const AxisSpec axPairRapRes{200, -0.1f, 0.1f, "#it{y}_{#mu#mu}^{reco} - #it{y}_{#mu#mu}^{MC}"};
@@ -215,7 +218,6 @@ struct UPCMuonPairResolution {
     const AxisSpec axPairPhiReco{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi_{#mu#mu}^{reco} (rad)"};
     const AxisSpec axPairPhiRes{200, -0.1f, 0.1f, "#phi_{#mu#mu}^{reco} - #phi_{#mu#mu}^{MC} (rad)"};
 
-    // Pair Mass axes
     const AxisSpec axPairMassMC{nBinsMass, massAxisMin, massAxisMax, "#it{M}_{#mu#mu}^{MC} (GeV/#it{c}^{2})"};
     const AxisSpec axPairMassReco{nBinsMass, massAxisMin, massAxisMax, "#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})"};
     const AxisSpec axPairMassRes{200, -0.5f, 0.5f, "#it{M}_{#mu#mu}^{reco} - #it{M}_{#mu#mu}^{MC} (GeV/#it{c}^{2})"};
@@ -313,7 +315,6 @@ struct UPCMuonPairResolution {
   }
 
   // ---------------------------------------------------------------------------
-  // 単一トラックのキネマティクス＆レゾリューションのFill処理
   template <typename TTrack, typename TMcParticle>
   void fillSingleTrackAnalysis(const TTrack& tr, const TMcParticle& mc)
   {
@@ -321,7 +322,6 @@ struct UPCMuonPairResolution {
     vReco.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
     vMC.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
 
-    // 1D distributions
     registry.fill(HIST("hTrkPhiMC"), vMC.Phi());
     registry.fill(HIST("hTrkPhiReco"), vReco.Phi());
     registry.fill(HIST("hTrkEtaMC"), vMC.Eta());
@@ -338,12 +338,9 @@ struct UPCMuonPairResolution {
     registry.fill(HIST("hTrkPzMC"), vMC.Pz());
     registry.fill(HIST("hTrkPzReco"), vReco.Pz());
 
-    // 2D Residuals
-    // 角度は絶対残差 (Reco - MC)
     registry.fill(HIST("hResoPhi"), vMC.Phi(), TVector2::Phi_mpi_pi(vReco.Phi() - vMC.Phi()));
     registry.fill(HIST("hResoEta"), vMC.Eta(), vReco.Eta() - vMC.Eta());
 
-    // 運動量は相対残差 (Reco - MC) / MC
     if (vMC.P() > 0.f)
       registry.fill(HIST("hResoP"), vMC.P(), (vReco.P() - vMC.P()) / vMC.P());
     if (vMC.Pt() > 0.f)
@@ -357,7 +354,6 @@ struct UPCMuonPairResolution {
   }
 
   // ---------------------------------------------------------------------------
-  // DimuonペアのレゾリューションFill処理
   template <typename TTrack, typename TMcParticle>
   void processPairAnalysis(const TTrack& tr1, const TMcParticle& mc1,
                            const TTrack& tr2, const TMcParticle& mc2)
@@ -394,7 +390,6 @@ struct UPCMuonPairResolution {
     float pairMassMC = pairMC.M();
     float pairMassReco = pairReco.M();
 
-    // PreCut fill
     registry.fill(HIST("hPairPtMC_PreCut"), pairPtMC);
     registry.fill(HIST("hPairPtReco_PreCut"), pairPtReco);
     registry.fill(HIST("hPairPt2MC_PreCut"), pairPt2MC);
@@ -412,7 +407,6 @@ struct UPCMuonPairResolution {
       return;
     registry.fill(HIST("hCutFlow"), 15); // 15: Pair Pass Mass
 
-    // PostCut fill
     registry.fill(HIST("hPairPtMC_PostCut"), pairPtMC);
     registry.fill(HIST("hPairPtReco_PostCut"), pairPtReco);
     registry.fill(HIST("hPairPt2MC_PostCut"), pairPt2MC);
@@ -438,7 +432,6 @@ struct UPCMuonPairResolution {
     registry.fill(HIST("hResponseMatrixPairMass"), pairMassMC, pairMassReco);
     registry.fill(HIST("hPairMassResoVsMassMC"), pairMassMC, pairMassReco - pairMassMC);
 
-    // Pt / Pt2 Response and Resolution
     registry.fill(HIST("hResponseMatrixPairPt"), pairPtMC, pairPtReco);
     if (pairPtMC > 0.f) {
       registry.fill(HIST("hPairPtResoVsPtMC"), pairPtMC, (pairPtReco - pairPtMC) / pairPtMC);
@@ -467,14 +460,14 @@ struct UPCMuonPairResolution {
       int32_t candId = item.first;
       const auto& trkIds = item.second;
 
+      // --- NEW: イベント内の全前方トラック数をカウント ---
+      registry.fill(HIST("hNTracksTotal"), static_cast<float>(trkIds.size()));
+
       if (trkIds.empty())
         continue;
 
       registry.fill(HIST("hCutFlow"), 0); // 0: All Cand
 
-      // =========================================================
-      // 1. 軽量カット (Pre-selection)
-      // =========================================================
       std::vector<int32_t> candidateTrkIds;
       candidateTrkIds.reserve(trkIds.size());
 
@@ -487,6 +480,9 @@ struct UPCMuonPairResolution {
         }
       }
 
+      // --- NEW: イベント内の GlobalMuon トラック数をカウント ---
+      registry.fill(HIST("hNGlobalMuons"), static_cast<float>(candidateTrkIds.size()));
+
       if (candidateTrkIds.empty())
         continue;
       registry.fill(HIST("hCutFlow"), 1); // 1: Has Requested Track Type
@@ -495,9 +491,6 @@ struct UPCMuonPairResolution {
         continue;
       registry.fill(HIST("hCutFlow"), 2); // 2: Pass Exact 2 Tracks
 
-      // =========================================================
-      // 2. 品質カット (Quality Cuts) & 単一トラックレゾリューション評価
-      // =========================================================
       std::vector<int32_t> goodTrkIds;
       goodTrkIds.reserve(reqMatchMFT);
 
@@ -517,9 +510,6 @@ struct UPCMuonPairResolution {
         continue;
       registry.fill(HIST("hCutFlow"), 3); // 3: Pass Exact MatchMFT
 
-      // =========================================================
-      // 3. ペア解析 (Pair Analysis)
-      // =========================================================
       for (size_t i = 0; i < goodTrkIds.size(); ++i) {
         auto tr1 = fwdTracks.iteratorAt(goodTrkIds[i]);
         const auto& mc1 = tr1.udMcParticle();

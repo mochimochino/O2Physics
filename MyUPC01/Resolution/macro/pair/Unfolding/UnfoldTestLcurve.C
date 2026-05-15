@@ -14,6 +14,7 @@
 #include "TString.h"
 #include "TStyle.h"
 #include "TUnfoldDensity.h"
+#include <TUnfold.h>
 
 #include <algorithm>
 #include <iostream>
@@ -86,11 +87,11 @@ void UnfoldTestLcurve()
   // ===========================
   // 4. Setup TUnfold
   // ===========================
-  TUnfold::ERegMode regMode = TUnfold::kRegModeCurvature;
+  TUnfold::ERegMode regModeCur = TUnfold::kRegModeCurvature;
   TUnfold::EConstraint constraintMode = TUnfold::kEConstraintArea;
   TUnfoldDensity::EDensityMode densityFlags = TUnfoldDensity::kDensityModeBinWidth;
 
-  TUnfoldDensity unfold(hMat, TUnfold::kHistMapOutputHoriz, regMode, constraintMode, densityFlags);
+  TUnfoldDensity unfold(hMat, TUnfold::kHistMapOutputHoriz, regModeCur, constraintMode, densityFlags);
 
   if (unfold.SetInput(hDataTest) >= 10000) {
     std::cerr << "[WARNING] Unfolding result may be wrong. Check input bins." << std::endl;

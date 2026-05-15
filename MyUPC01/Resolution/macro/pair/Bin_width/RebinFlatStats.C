@@ -15,10 +15,10 @@
 
 void RebinFlatStats(
   const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/Sq/flatstats/4bin/Step2_Rebinned.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/Sq/flatstats/4bin/02/Step2_Rebinned.root",
   int nTargetBins = 4,
   double xMin = 0.0,
-  double xMax = 0.065)
+  double xMax = 0.020)
 {
   gStyle->SetOptStat(0);
   gStyle->SetOptTitle(0);

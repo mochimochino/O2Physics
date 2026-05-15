@@ -2,12 +2,12 @@ import os
 import glob
 import subprocess
 
-target_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/psi2s-incoh" #Change
+target_dir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0331/jpsi-coh" #Change
 
 list_filename = "skimmed_aod_list.txt"
 
 
-search_pattern = os.path.join(target_dir, "psi2s-incoh-*.root") #Change
+search_pattern = os.path.join(target_dir, "jpsi-coh-*.root") #Change
 root_files = glob.glob(search_pattern)
 
 if not root_files:
@@ -24,7 +24,7 @@ print(f"対象ファイル数: {len(root_files)}")
 print(f"リストファイル: {list_filepath}\n")
 
 cmd = [
-    "o2-analysis-my-upc-muon-pair-resolution",
+    "o2-analysis-my-upc-muon-pair-resolution-eta",
     "--aod-file", f"@{list_filepath}",
     "--shm-segment-size", "10000000000",
     "-b"

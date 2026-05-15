@@ -9,7 +9,7 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file   UPCMuonPairResolution.cxx
+/// \file   UPCMuonPairResolutioneta.cxx
 /// \brief  Resolution analysis for dimuon pairs and single muons in UPC photoproduction.
 /// \author Takuma Matsumoto
 
@@ -19,12 +19,13 @@
 #include "Framework/AnalysisTask.h"
 #include "Framework/O2DatabasePDGPlugin.h"
 #include "Framework/runDataProcessing.h"
+#include "ReconstructionDataFormats/TrackFwd.h"
 
 #include "TDatabasePDG.h"
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
-#include "TVector2.h" // Added for Phi_mpi_pi
+#include "TVector2.h"
 
 #include <cmath>
 #include <unordered_map>
@@ -53,14 +54,20 @@ struct UPCMuonPairResolutioneta {
   // ===========================================================================
 
   // --- Event & Track Selection Level ---
-  Configurable<int> reqMatchMID{"reqMatchMID", 2, "Required number of MCH-MID matched tracks"};
+  Configurable<int> reqMatchMID{"reqMatchMID", 2, "Required number of specific tracks"};
+
+  Configurable<int> reqTrackType{
+    "reqTrackType",
+    static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::MuonStandaloneTrack),
+    "Track type required for the analysis (0: GlobalMuon, 3: MuonStandalone)"};
+
   Configurable<float> etaMin{"etaMin", -4.0f, "Minimum pseudorapidity for muon tracks"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum pseudorapidity for muon tracks"};
   Configurable<float> rAbsMin{"rAbsMin", 17.6f, "Minimum R at absorber end [cm]"};
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
 
   // --- Dimuon Pair Kinematic Cuts ---
-  Configurable<float> pairPtMax{"pairPtMax", 10.0f, "Maximum dimuon pair pT [GeV/c]"};
+  Configurable<float> pairPtMax{"pairPtMax", 0.25, "Maximum dimuon pair pT [GeV/c]"};
   Configurable<float> pairRapidityMin{"pairRapidityMin", -4.0f, "Minimum dimuon pair rapidity"};
   Configurable<float> pairRapidityMax{"pairRapidityMax", -2.5f, "Maximum dimuon pair rapidity"};
   Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
@@ -101,25 +108,29 @@ struct UPCMuonPairResolutioneta {
   }
 
   // ---------------------------------------------------------------------------
-  // ヒストグラム初期化: コントロールプロット・カットフロー
   void initControlHistograms()
   {
-    auto hCutFlow = registry.add<TH1>("hCutFlow", "Selection Cut Flow;;Counts", HistType::kTH1I, {{15, 0., 15.}});
-    TString CutNames[15] = {
-      "0: All Cand", "1: Pass Exact MatchMID", "2: Track All", "3: Track Pass rAbs", "4: Track Pass pDCA",
-      "5: Track Pass MatchMID", "6: Track Pass Eta", "7: Pair All", "8: Pair Unlike-sign", "9: Pair Both MC Muon",
-      "10: Pair Pass Pt", "11: Pair Pass Rapidity", "12: Pair Pass Mass", "13: Filler", "14: Filler"};
-    for (int i = 0; i < 15; i++) {
+    auto hCutFlow = registry.add<TH1>("hCutFlow", "Selection Cut Flow;;Counts", HistType::kTH1I, {{16, 0., 16.}});
+    TString CutNames[16] = {
+      "0: All Cand", "1: Pass Exact Match MID/Type", "2: Track All", "3: Track Pass Type", "4: Track Pass rAbs", "5: Track Pass pDCA",
+      "6: Track Pass MatchMID", "7: Track Pass Eta", "8: Pair All", "9: Pair Unlike-sign", "10: Pair Both MC Muon",
+      "11: Pair Pass Pt", "12: Pair Pass Rapidity", "13: Pair Pass Mass", "14: Filler", "15: Filler"};
+    for (int i = 0; i < 16; i++) {
       hCutFlow->GetXaxis()->SetBinLabel(i + 1, CutNames[i].Data());
     }
 
-    registry.add<TH1>("hTrackType", "Track Type Distribution;Track Type;Counts", HistType::kTH1I, {{5, 0., 5.}});
+    auto hTrackType = registry.add<TH1>("hTrackType", "Track Type Distribution;Track Type;Counts", HistType::kTH1I, {{5, -0.5, 4.5}});
+    hTrackType->GetXaxis()->SetBinLabel(1, "GlobalMuon");     // 0
+    hTrackType->GetXaxis()->SetBinLabel(2, "OtherMatch");     // 1
+    hTrackType->GetXaxis()->SetBinLabel(3, "GlobalFwd");      // 2
+    hTrackType->GetXaxis()->SetBinLabel(4, "MuonStandalone"); // 3
+    hTrackType->GetXaxis()->SetBinLabel(5, "MCHStandalone");  // 4
+
     const AxisSpec axisCounter{1, 0., 1., ""};
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
   }
 
   // ---------------------------------------------------------------------------
-  // ヒストグラム初期化: 単一トラックレベルの運動量・角度
   void initSingleTrackHistograms()
   {
     const AxisSpec axPhiMC{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{MC} (rad)"};
@@ -144,7 +155,6 @@ struct UPCMuonPairResolutioneta {
 
     const AxisSpec axPRelRes{200, -0.5f, 0.5f, "(#it{p}^{reco} - #it{p}^{MC}) / #it{p}^{MC}"};
 
-    // 1D distributions
     registry.add("hTrkPhiMC", "Track #phi MC", kTH1F, {axPhiMC});
     registry.add("hTrkPhiReco", "Track #phi Reco", kTH1F, {axPhiReco});
     registry.add("hTrkEtaMC", "Track #eta MC", kTH1F, {axEtaMC});
@@ -159,7 +169,6 @@ struct UPCMuonPairResolutioneta {
     registry.add("hTrkPzMC", "Track #it{p}_{z} MC", kTH1F, {axPzMC});
     registry.add("hTrkPzReco", "Track #it{p}_{z} Reco", kTH1F, {axPzReco});
 
-    // 2D Response / Residuals
     registry.add("hResoPhi", "Track #phi Resolution", kTH2F, {axPhiMC, axPhiRes});
     registry.add("hResoEta", "Track #eta Resolution", kTH2F, {axEtaMC, axEtaRes});
     registry.add("hResoP", "Track #it{p} Resolution", kTH2F, {axPMC, axPRelRes});
@@ -169,7 +178,6 @@ struct UPCMuonPairResolutioneta {
   }
 
   // ---------------------------------------------------------------------------
-  // ヒストグラム初期化: Dimuonペアレベル
   void initPairHistograms()
   {
     const AxisSpec axisPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
@@ -177,7 +185,6 @@ struct UPCMuonPairResolutioneta {
     const AxisSpec axisPairPt2MC{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,MC} (GeV^{2}/#it{c}^{2})"};
     const AxisSpec axisPairPt2Reco{nBinsPt2, 0.f, pt2Max, "#it{p}_{T,#mu#mu}^{2,reco} (GeV^{2}/#it{c}^{2})"};
 
-    // --- NEW: Pair Rapidity, Eta, Phi, Mass axes ---
     const AxisSpec axPairRapMC{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}^{MC}"};
     const AxisSpec axPairRapReco{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}^{reco}"};
     const AxisSpec axPairRapRes{200, -0.1f, 0.1f, "#it{y}_{#mu#mu}^{reco} - #it{y}_{#mu#mu}^{MC}"};
@@ -194,7 +201,6 @@ struct UPCMuonPairResolutioneta {
     const AxisSpec axPairMassReco{nBinsMass, massAxisMin, massAxisMax, "#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})"};
     const AxisSpec axPairMassRes{200, -0.5f, 0.5f, "#it{M}_{#mu#mu}^{reco} - #it{M}_{#mu#mu}^{MC} (GeV/#it{c}^{2})"};
 
-    // 1D distributions
     registry.add("hPairPtMC_PreCut", "Dimuon Pair #it{p}_{T} MC (Pre Kin. Cuts)", kTH1F, {axisPairPtMC});
     registry.add("hPairPtReco_PreCut", "Dimuon Pair #it{p}_{T} Reco (Pre Kin. Cuts)", kTH1F, {axisPairPtReco});
     registry.add("hPairPtMC_PostCut", "Dimuon Pair #it{p}_{T} MC (Post All Cuts)", kTH1F, {axisPairPtMC});
@@ -214,7 +220,6 @@ struct UPCMuonPairResolutioneta {
     registry.add("hPairMassMC_PostCut", "Dimuon Pair Mass MC (Post All Cuts)", kTH1F, {axPairMassMC});
     registry.add("hPairMassReco_PostCut", "Dimuon Pair Mass Reco (Post All Cuts)", kTH1F, {axPairMassReco});
 
-    // 2D Response Matrices
     registry.add("hResponseMatrixPairPt", "Pair #it{p}_{T} Response Matrix", kTH2F, {axisPairPtMC, axisPairPtReco});
     registry.add("hResponseMatrixPairPt2", "Pair #it{p}_{T}^{2} Response Matrix", kTH2F, {axisPairPt2MC, axisPairPt2Reco});
     registry.add("hResponseMatrixPairRap", "Pair Rapidity Response Matrix", kTH2F, {axPairRapMC, axPairRapReco});
@@ -222,7 +227,6 @@ struct UPCMuonPairResolutioneta {
     registry.add("hResponseMatrixPairPhi", "Pair #phi Response Matrix", kTH2F, {axPairPhiMC, axPairPhiReco});
     registry.add("hResponseMatrixPairMass", "Pair Mass Response Matrix", kTH2F, {axPairMassMC, axPairMassReco});
 
-    // 2D Relative Residuals (Resolutions)
     const AxisSpec axPtRelRes{200, -1.0f, 1.0f, "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
     const AxisSpec axPt2RelRes{200, -5.0f, 30.0f, "(#it{p}_{T}^{2,reco} - #it{p}_{T}^{2,MC}) / #it{p}_{T}^{2,MC}"};
     registry.add("hPairPtResoVsPtMC", "Pair #it{p}_{T} Resolution vs #it{p}_{T}^{MC}", kTH2F, {axisPairPtMC, axPtRelRes});
@@ -238,8 +242,6 @@ struct UPCMuonPairResolutioneta {
   // Core Methods
   // ===========================================================================
 
-  // ---------------------------------------------------------------------------
-  // 候補ごとのトラックID収集
   template <typename TTracks>
   void collectCandIDs(std::unordered_map<int32_t, std::vector<int32_t>>& tracksPerCand, TTracks& tracks)
   {
@@ -256,33 +258,44 @@ struct UPCMuonPairResolutioneta {
   template <typename TTrack>
   bool passTrackCuts(const TTrack& tr)
   {
-    registry.fill(HIST("hCutFlow"), 2); // Track All
+    registry.fill(HIST("hCutFlow"), 2); // 2: Track All
+
+    if (tr.trackType() != reqTrackType) {
+      return false;
+    }
+    registry.fill(HIST("hCutFlow"), 3); // 3: Track Pass Type
 
     float rAbs = tr.rAtAbsorberEnd();
-    if (rAbs < rAbsMin || rAbs > rAbsMax)
+    if (rAbs < rAbsMin || rAbs > rAbsMax) {
       return false;
-    registry.fill(HIST("hCutFlow"), 3); // Track Pass rAbs
+    }
+    registry.fill(HIST("hCutFlow"), 4); // 4: Track Pass rAbs
 
     float pDcaMax = (rAbs < 26.5f) ? 350.0f : 200.0f;
-    if (tr.pDca() > pDcaMax)
+    if (tr.pDca() > pDcaMax) {
       return false;
-    registry.fill(HIST("hCutFlow"), 4); // Track Pass pDCA
+    }
+    registry.fill(HIST("hCutFlow"), 5); // 5: Track Pass pDCA
 
-    if (tr.chi2MatchMCHMID() <= 0)
-      return false;
-    registry.fill(HIST("hCutFlow"), 5); // Track Pass MatchMID
+    // Enum を使用した明示的なチェック：MuonStandaloneTrack の場合のみMIDマッチを要求
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::MuonStandaloneTrack)) {
+      if (tr.chi2MatchMCHMID() <= 0) {
+        return false;
+      }
+    }
+    registry.fill(HIST("hCutFlow"), 6); // 6: Track Pass MatchMID
 
     TLorentzVector recoVec;
     recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
-    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax)
+    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax) {
       return false;
-    registry.fill(HIST("hCutFlow"), 6); // Track Pass Eta
+    }
+    registry.fill(HIST("hCutFlow"), 7); // 7: Track Pass Eta
 
     return true;
   }
 
   // ---------------------------------------------------------------------------
-  // 単一トラックのキネマティクス＆レゾリューションのFill処理
   template <typename TTrack, typename TMcParticle>
   void fillSingleTrackAnalysis(const TTrack& tr, const TMcParticle& mc)
   {
@@ -290,7 +303,6 @@ struct UPCMuonPairResolutioneta {
     vReco.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
     vMC.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
 
-    // 1D distributions
     registry.fill(HIST("hTrkPhiMC"), vMC.Phi());
     registry.fill(HIST("hTrkPhiReco"), vReco.Phi());
     registry.fill(HIST("hTrkEtaMC"), vMC.Eta());
@@ -305,12 +317,9 @@ struct UPCMuonPairResolutioneta {
     registry.fill(HIST("hTrkPzMC"), vMC.Pz());
     registry.fill(HIST("hTrkPzReco"), vReco.Pz());
 
-    // 2D Residuals
-    // 角度は絶対残差 (Reco - MC)
     registry.fill(HIST("hResoPhi"), vMC.Phi(), TVector2::Phi_mpi_pi(vReco.Phi() - vMC.Phi()));
     registry.fill(HIST("hResoEta"), vMC.Eta(), vReco.Eta() - vMC.Eta());
 
-    // 運動量は相対残差 (Reco - MC) / MC
     if (vMC.P() > 0.f)
       registry.fill(HIST("hResoP"), vMC.P(), (vReco.P() - vMC.P()) / vMC.P());
     if (std::abs(vMC.Px()) > 0.f)
@@ -322,20 +331,19 @@ struct UPCMuonPairResolutioneta {
   }
 
   // ---------------------------------------------------------------------------
-  // DimuonペアのレゾリューションFill処理
   template <typename TTrack, typename TMcParticle>
   void processPairAnalysis(const TTrack& tr1, const TMcParticle& mc1,
                            const TTrack& tr2, const TMcParticle& mc2)
   {
-    registry.fill(HIST("hCutFlow"), 7); // Pair All
+    registry.fill(HIST("hCutFlow"), 8); // 8: Pair All
 
     if (tr1.sign() * tr2.sign() >= 0)
       return;
-    registry.fill(HIST("hCutFlow"), 8); // Pair Unlike-sign
+    registry.fill(HIST("hCutFlow"), 9); // 9: Pair Unlike-sign
 
     if (std::abs(mc1.pdgCode()) != kMuonPDG || std::abs(mc2.pdgCode()) != kMuonPDG)
       return;
-    registry.fill(HIST("hCutFlow"), 9); // Pair Both MC Muon
+    registry.fill(HIST("hCutFlow"), 10); // 10: Pair Both MC Muon
 
     TLorentzVector recoVec1, recoVec2, mcVec1, mcVec2;
     recoVec1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
@@ -360,26 +368,23 @@ struct UPCMuonPairResolutioneta {
     float pairMassMC = pairMC.M();
     float pairMassReco = pairReco.M();
 
-    // PreCut fill
     registry.fill(HIST("hPairPtMC_PreCut"), pairPtMC);
     registry.fill(HIST("hPairPtReco_PreCut"), pairPtReco);
     registry.fill(HIST("hPairPt2MC_PreCut"), pairPt2MC);
     registry.fill(HIST("hPairPt2Reco_PreCut"), pairPt2Reco);
 
-    // Pair kinematic cuts (applied on Reco)
     if (pairReco.Pt() >= pairPtMax)
       return;
-    registry.fill(HIST("hCutFlow"), 10); // Pair Pass Pt
+    registry.fill(HIST("hCutFlow"), 11); // 11: Pair Pass Pt
 
     if (pairReco.Rapidity() <= pairRapidityMin || pairReco.Rapidity() >= pairRapidityMax)
       return;
-    registry.fill(HIST("hCutFlow"), 11); // Pair Pass Rapidity
+    registry.fill(HIST("hCutFlow"), 12); // 12: Pair Pass Rapidity
 
     if (pairReco.M() <= pairMassMin || pairReco.M() >= pairMassMax)
       return;
-    registry.fill(HIST("hCutFlow"), 12); // Pair Pass Mass
+    registry.fill(HIST("hCutFlow"), 13); // 13: Pair Pass Mass
 
-    // PostCut fill
     registry.fill(HIST("hPairPtMC_PostCut"), pairPtMC);
     registry.fill(HIST("hPairPtReco_PostCut"), pairPtReco);
     registry.fill(HIST("hPairPt2MC_PostCut"), pairPt2MC);
@@ -394,7 +399,6 @@ struct UPCMuonPairResolutioneta {
     registry.fill(HIST("hPairMassMC_PostCut"), pairMassMC);
     registry.fill(HIST("hPairMassReco_PostCut"), pairMassReco);
 
-    // Pt / Pt2 Response and Resolution
     registry.fill(HIST("hResponseMatrixPairPt"), pairPtMC, pairPtReco);
     if (pairPtMC > 0.f) {
       registry.fill(HIST("hPairPtResoVsPtMC"), pairPtMC, (pairPtReco - pairPtMC) / pairPtMC);
@@ -405,7 +409,6 @@ struct UPCMuonPairResolutioneta {
       registry.fill(HIST("hPairPt2ResoVsPt2MC"), pairPt2MC, (pairPt2Reco - pairPt2MC) / pairPt2MC);
     }
 
-    // Rapidity / Eta / Phi / Mass Response and Resolution
     registry.fill(HIST("hResponseMatrixPairRap"), pairRapMC, pairRapReco);
     registry.fill(HIST("hPairRapResoVsRapMC"), pairRapMC, pairRapReco - pairRapMC);
 
@@ -435,34 +438,44 @@ struct UPCMuonPairResolutioneta {
     for (const auto& item : tracksPerCand) {
       int32_t candId = item.first;
       const auto& trkIds = item.second;
-      if (trkIds.size() < 1)
+      if (trkIds.empty())
         continue;
 
-      registry.fill(HIST("hCutFlow"), 0); // All Cand
+      registry.fill(HIST("hCutFlow"), 0); // 0: All Cand
 
-      // Event-level selection (MCH-MID matching)
-      int nMchMid = 0;
+      int nValidTracks = 0;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
+
         if (tr.trackType() >= 0 && tr.trackType() <= 4) {
           registry.fill(HIST("hTrackType"), tr.trackType());
         }
-        if (tr.chi2MatchMCHMID() > 0)
-          nMchMid++;
+
+        // Enumを用いた明示的なプレセレクション判定
+        bool isValid = (tr.trackType() == reqTrackType);
+
+        // 該当タイプがMuonStandaloneの場合のみ、MIDマッチを確認
+        if (isValid && reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::MuonStandaloneTrack)) {
+          if (tr.chi2MatchMCHMID() <= 0) {
+            isValid = false;
+          }
+        }
+
+        if (isValid) {
+          nValidTracks++;
+        }
       }
 
-      if (nMchMid != reqMatchMID)
+      if (nValidTracks != reqMatchMID)
         continue;
-      registry.fill(HIST("hCutFlow"), 1); // Pass Exact MatchMID
+      registry.fill(HIST("hCutFlow"), 1); // 1: Pass Exact Match MID/Type
 
-      // Track-level evaluation & Single Track Analysis
       std::vector<int32_t> goodTrkIds;
       for (auto idx : trkIds) {
         auto tr = fwdTracks.iteratorAt(idx);
         if (passTrackCuts(tr)) {
           goodTrkIds.push_back(idx);
 
-          // Track Cutsを通ったミューオンの単一レゾリューション評価
           const auto& mcParticle = tr.udMcParticle();
           if (std::abs(mcParticle.pdgCode()) == kMuonPDG) {
             fillSingleTrackAnalysis(tr, mcParticle);
@@ -470,7 +483,6 @@ struct UPCMuonPairResolutioneta {
         }
       }
 
-      // Dimuon pair evaluation
       for (size_t i = 0; i < goodTrkIds.size(); ++i) {
         auto tr1 = fwdTracks.iteratorAt(goodTrkIds[i]);
         const auto& mc1 = tr1.udMcParticle();

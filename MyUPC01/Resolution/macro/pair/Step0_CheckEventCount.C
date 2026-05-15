@@ -19,16 +19,16 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/STEP0/";
 
-  const int rebinFactor = 5;
+  const int rebinFactor = 1;
 
   struct Sample {
     TString file;
     TString label;
   };
   std::vector<Sample> samples = {
-    //{dataDir + "jpsi-incoh.root", "J/#psi incoh."},
+    // {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
     {dataDir + "jpsi-coh.root", "J/#psi coh."},
     // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
     // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
@@ -113,6 +113,7 @@ void Step0_CheckEventCount()
     c->SetRightMargin(0.05);
     c->SetGrid();
     c->SetLogy();
+    c->SetLogx();
 
     // Style MC
     hMC->SetLineColor(kBlue + 1);
@@ -180,6 +181,7 @@ void Step0_CheckEventCount()
     c->SetRightMargin(0.05);
     c->SetGrid();
     c->SetLogy();
+    c->SetLogx();
 
     TLegend* leg = new TLegend(0.64, 0.55, 0.94, 0.94);
     leg->SetBorderSize(0);

@@ -247,7 +247,7 @@ struct UPCMuonPairResolution {
 
       // ここで大幅にイベントを削減:
       // 目的のトラックタイプがぴったり2本(reqMatchMFT)でなければ、重い計算をする前にスキップ
-      if (candidateTrkIds.size() != reqMatchMFT) {
+      if (candidateTrkIds.size() >= reqMatchMFT) { // change from != to >=
         continue;
       }
       registry.fill(HIST("hCutFlow"), 2); // 2: Pass Exact 2 Type-Matched Tracks

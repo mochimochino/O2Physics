@@ -14,13 +14,13 @@ import sys
 # ============================================================
 
 # 入力データの親ディレクトリ（各サンプルのサブディレクトリが入っている場所）
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/Output0408/"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_global0429test/"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0428test/Standalone/" # Now testing
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0508test/" # Now testing
 
 # 解析タスク名
-TASK_CMD = "o2-analysis-my-upc-muon-pair-resolution-eta" #-global-muon
+TASK_CMD = "o2-analysis-my-upc-muon-pair-resolutioneta-global-muon"
 
 # 共有メモリサイズ
 SHM_SIZE = "10000000000"

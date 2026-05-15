@@ -21,7 +21,7 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/";
 
   std::vector<TString> fileNames = {
     // dataDir + "jpsi-incoh.root",
@@ -36,12 +36,12 @@ void Step1_MergeAndView2D()
   };
 
   // --- Rebin Factors (1 = No rebinning) ---
-  const int rebinPt_X = 1;  // Pair pT Response Matrix X-axis
-  const int rebinPt_Y = 1;  // Pair pT Response Matrix Y-axis
-  const int rebinPt2_X = 1; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
-  const int rebinPt2_Y = 1; // Pair pT^2 Response Matrix Y-axis
-  const int rebinRes_X = 1; // Resolution 2D plots X-axis
-  const int rebinRes_Y = 1; // Resolution 2D plots Y-axis
+  const int rebinPt_X = 10;  // Pair pT Response Matrix X-axis
+  const int rebinPt_Y = 10;  // Pair pT Response Matrix Y-axis
+  const int rebinPt2_X = 30; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
+  const int rebinPt2_Y = 30; // Pair pT^2 Response Matrix Y-axis
+  const int rebinRes_X = 3; // Resolution 2D plots X-axis
+  const int rebinRes_Y = 3; // Resolution 2D plots Y-axis
 
   // ----------------------------------------------------------
   // Global style
@@ -185,7 +185,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{MC} (GeV/c)",
              "p_{T,#mu#mu}^{reco} (GeV/c)",
              "Pair p_{T} Response Matrix",
-             0.0, 2.5, 0.0, 2.5,
+             0.0, 0.5, 0.0, 0.5,
              "c_rmat_pt",
              "Step1_ResponseMatrix_PairPt.png");
       delete h2;
@@ -204,7 +204,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "p_{T,#mu#mu}^{2,reco} (GeV^{2}/c^{2})",
              "Pair p_{T}^{2} Response (Zoom 0-0.002)",
-             0.0, 2.5, 0.0, 2.5,
+             0.0, 0.02, 0.0, 0.02,
              "c_rmat_pt2_zoom",
              "Step1_ResponseMatrix_PairPt2_Zoom.png");
 
@@ -212,7 +212,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "p_{T,#mu#mu}^{2,reco} (GeV^{2}/c^{2})",
              "Pair p_{T}^{2} Response (|t| #approx p_{T}^{2})",
-             0.0, 2.5, 0.0, 2.5,
+             0.0, 0.05, 0.0, 0.05,
              "c_rmat_pt2",
              "Step1_ResponseMatrix_PairPt2.png");
 
@@ -232,7 +232,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{MC} (GeV/c)",
              "(p_{T}^{reco} - p_{T}^{MC}) / p_{T}^{MC}",
              "Pair p_{T} Resolution",
-             0.0, 5.0, -1.0, 1.0,
+             0.0, 0.5, -1.0, 1.0,
              "c_reso_pt",
              "Step1_Resolution_PairPt.png");
       delete h2;
@@ -250,7 +250,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "(p_{T}^{2,reco} - p_{T}^{2,MC}) / p_{T}^{2,MC}",
              "Pair p_{T}^{2} Resolution  (|t| #approx p_{T}^{2})",
-             0.0, 2.5, -5.0, 30.0,
+             0.0, 0.1, -5.0, 30.0,
              "c_reso_pt2",
              "Step1_Resolution_PairPt2.png");
       delete h2;

@@ -38,3 +38,10 @@ o2physics_add_dpl_workflow(my-upc-globaltrack-qa
                            SOURCES globalMuonQA.cxx
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
+
+# under developing
+o2physics_add_dpl_workflow(my-upc-muon-efficiency
+                           SOURCES UPCMuonEfficiencyTask.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+

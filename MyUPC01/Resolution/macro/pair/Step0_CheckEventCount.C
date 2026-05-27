@@ -17,9 +17,9 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/STEP0/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/0515FORMEETING/";
 
   const int rebinFactor = 1;
 
@@ -28,8 +28,8 @@ void Step0_CheckEventCount()
     TString label;
   };
   std::vector<Sample> samples = {
-    // {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
-    {dataDir + "jpsi-coh.root", "J/#psi coh."},
+    {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
+    //{dataDir + "jpsi-coh.root", "J/#psi coh."},
     // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
     // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
     // {dataDir + "psi2s-incoh-fd.root", "#psi(2S) incoh. fd"},
@@ -230,7 +230,7 @@ void Step0_CheckEventCount()
 
       if (firstDraw) {
         h->GetYaxis()->SetRangeUser(1e0, overallMax * 100.0);
-        h->GetXaxis()->SetRangeUser(0.0, 0.065);
+        h->GetXaxis()->SetRangeUser(0.0, 1.2);
         h->Draw("HIST");
         firstDraw = false;
       } else {

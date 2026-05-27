@@ -19,27 +19,34 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/";
   const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/0515FORMEETING/";
 
   std::vector<TString> fileNames = {
-    // dataDir + "jpsi-incoh.root",
-    dataDir + "jpsi-coh.root",
-    // dataDir + "psi2s-incoh.root",
-    // dataDir + "psi2s-coh.root",
-    // dataDir + "psi2s-incoh-fd.root",
-    // dataDir + "psi2s-coh-fd.root",
-    // dataDir + "mumu-low.root",
-    // dataDir + "mumu-mid.root",
-    // dataDir + "mumu-high.root",
+    dataDir + "jpsi-incoh.root",
+    // dataDir + "jpsi-coh.root",
+    //  dataDir + "psi2s-incoh.root",
+    //  dataDir + "psi2s-coh.root",
+    //  dataDir + "psi2s-incoh-fd.root",
+    //  dataDir + "psi2s-coh-fd.root",
+    //  dataDir + "mumu-low.root",
+    //  dataDir + "mumu-mid.root",
+    //  dataDir + "mumu-high.root",
   };
 
   // --- Rebin Factors (1 = No rebinning) ---
-  const int rebinPt_X = 10;  // Pair pT Response Matrix X-axis
+  /*const int rebinPt_X = 10;  // Pair pT Response Matrix X-axis
   const int rebinPt_Y = 10;  // Pair pT Response Matrix Y-axis
   const int rebinPt2_X = 30; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
   const int rebinPt2_Y = 30; // Pair pT^2 Response Matrix Y-axis
+  const int rebinRes_X = 3;  // Resolution 2D plots X-axis
+  const int rebinRes_Y = 3;  // Resolution 2D plots Y-axis*/
+
+  const int rebinPt_X = 10; // Pair pT Response Matrix X-axis
+  const int rebinPt_Y = 10; // Pair pT Response Matrix Y-axis
+  const int rebinPt2_X = 2; // Pair pT^2 Response Matrix X-axis (e.g. 5 bins -> 1 bin)
+  const int rebinPt2_Y = 2; // Pair pT^2 Response Matrix Y-axis
   const int rebinRes_X = 3; // Resolution 2D plots X-axis
   const int rebinRes_Y = 3; // Resolution 2D plots Y-axis
 
@@ -167,7 +174,7 @@ void Step1_MergeAndView2D()
     tex.DrawLatex(0.55, 0.89, Form("#bf{%s}", title.Data()));
     tex.DrawLatex(0.55, 0.84, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}");
     tex.DrawLatex(0.55, 0.79, Form("#bf{Entries: %.0f}", h2->GetEntries()));
-    tex.DrawLatex(0.55, 0.74, "Global Muon (MFT-MCH-MID)");
+    tex.DrawLatex(0.55, 0.74, "Standalone Muon (MCH-MID)");
 
     c->SaveAs(outDir + outFile);
     std::cout << "[Info] Saved: " << outDir + outFile << std::endl;
@@ -212,7 +219,7 @@ void Step1_MergeAndView2D()
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "p_{T,#mu#mu}^{2,reco} (GeV^{2}/c^{2})",
              "Pair p_{T}^{2} Response (|t| #approx p_{T}^{2})",
-             0.0, 0.05, 0.0, 0.05,
+             0.0, 2.0, 0.0, 2.0,
              "c_rmat_pt2",
              "Step1_ResponseMatrix_PairPt2.png");
 

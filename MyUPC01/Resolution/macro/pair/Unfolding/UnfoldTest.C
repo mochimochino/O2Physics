@@ -40,10 +40,10 @@ void UnfoldTest()
   // ===========================
   // Settings
   // ===========================
-  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Incoherent/TopDown/40/Step2_Rebinned.root";
+  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/FlatStats/4bin/Step2_Rebinned.root";
   const TString histNameMatrix = "hResponseMatrix";
 
-  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Incoherent/Step1_merged.root";
+  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Coherent/Step1_merged.root";
   const TString histNameDataFine = "hRecoPt2_Test";
   const TString histNameGenFine = "hGenPt2_Test";
 
@@ -141,7 +141,7 @@ void UnfoldTest()
     // 3. ScanTau (RhoAvg)
     // ===========================
     TSpline* scanResult = 0;
-    unfold.ScanTau(nScan, 1e-9, 1.0, &scanResult, TUnfoldDensity::kEScanTauRhoAvg, 0, 0, nullptr, nullptr, nullptr);
+    unfold.ScanTau(nScan, 1e-5, 1.0, &scanResult, TUnfoldDensity::kEScanTauRhoAvg, 0, 0, nullptr, nullptr, nullptr);
     Double_t tauRho = unfold.GetTau();
     TH1D* hUnfolded_Rho = (TH1D*)unfold.GetOutput(Form("hUnfolded_Rho_%s", modeNames[i].Data()));
 

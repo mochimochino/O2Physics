@@ -5,28 +5,31 @@ import ROOT
 # ============================================================
 # 1. 全体設定
 # ============================================================
-INPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0403/without/"
+INPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0508/"
 OUTPUT_FILE = "mass_distribution_rebin_colored.png"
 
-HISTO_PATH = "my-upc-mass-02/registry/hMassUnlike"
+HISTO_PATH = "my-upc-muon-pair-resolution-eta/registry/hPairMassReco_PostCut"
 
-REBIN_FACTOR = 20
+REBIN_FACTOR = 2
 
 SAMPLES = [
     ("jpsi-incoh.root",     "J/#psi incoh.",         ROOT.kRed + 1),
-    ("jpsi-coh.root",       "J/#psi coh.",           ROOT.kBlue + 1),
-    ("psi2s-incoh.root",    "#psi(2S) incoh.",       ROOT.kGreen + 2),
-    ("psi2s-coh.root",      "#psi(2S) coh.",         ROOT.kMagenta + 1),
-    ("psi2s-incoh-fd.root", "#psi(2S) incoh. fd",    ROOT.kOrange + 1),
-    ("psi2s-coh-fd.root",   "#psi(2S) coh. fd",      ROOT.kCyan + 2),
-    ("mumu-low.root",       "#mu#mu low",            ROOT.kViolet + 1),
-    ("mumu-mid.root",       "#mu#mu mid",            ROOT.kTeal + 2),
-    ("mumu-high.root",      "#mu#mu high",           ROOT.kPink + 1)
+    #("jpsi-coh.root",       "J/#psi coh.",           ROOT.kBlue + 1),
+    #("psi2s-incoh.root",    "#psi(2S) incoh.",       ROOT.kGreen + 2),
+    #("psi2s-coh.root",      "#psi(2S) coh.",         ROOT.kMagenta + 1),
+    #("psi2s-incoh-fd.root", "#psi(2S) incoh. fd",    ROOT.kOrange + 1),
+    #("psi2s-coh-fd.root",   "#psi(2S) coh. fd",      ROOT.kCyan + 2),
+    #("mumu-low.root",       "#mu#mu low",            ROOT.kViolet + 1),
+    #("mumu-mid.root",       "#mu#mu mid",            ROOT.kTeal + 2),
+    #("mumu-high.root",      "#mu#mu high",           ROOT.kPink + 1)
 ]
 
 def main():
     ROOT.gROOT.SetBatch(True)
     ROOT.gStyle.SetOptStat(0)
+
+    # X方向のエラーバーをビン幅の100%（左右0.5ずつ）に設定し、横線として描画する
+    ROOT.gStyle.SetErrorX(0.5)
 
     ROOT.gStyle.SetPadTickX(1)
     ROOT.gStyle.SetPadTickY(1)
@@ -47,7 +50,7 @@ def main():
     canvas.SetTopMargin(0.06)
     canvas.SetRightMargin(0.05)
     canvas.SetGrid()
-    canvas.SetLogy()
+    #canvas.SetLogy()
 
     legend = ROOT.TLegend(0.64, 0.55, 0.94, 0.94)
     legend.SetBorderSize(0)
@@ -87,12 +90,17 @@ def main():
             
         h_clone.SetLineColor(color)
         h_clone.SetLineWidth(2)
+        h_clone.SetMarkerColor(color)
+        
+        # マーカーを非表示にして線のみを描画させる
+        h_clone.SetMarkerSize(0)
         
         entries = int(h_clone.GetEntries())
         label_with_entries = f"{label} ({entries})"
         
         histograms.append(h_clone)
-        legend.AddEntry(h_clone, label_with_entries, "l")
+        # 凡例のスタイルを線とエラーバー(lE)に変更
+        legend.AddEntry(h_clone, label_with_entries, "lE")
 
         current_max = h_clone.GetMaximum()
         if current_max > max_y:
@@ -104,11 +112,13 @@ def main():
             y_title = f"Counts / {bin_width_mev:.0f} MeV/#it{{c}}^{{2}}"
             
             h_clone.SetTitle(f";m_{{#mu#mu}} (GeV/#it{{c}}^{{2}});{y_title}")
-            h_clone.GetXaxis().SetRangeUser(1.0, 10.0)
-            h_clone.Draw("HIST")
+            h_clone.GetXaxis().SetRangeUser(2.5, 4.0)
+            # ヒゲなしのエラーバー（Eオプション）で描画
+            h_clone.Draw("E")
             first_draw = False
         else:
-            h_clone.Draw("HIST SAME")
+            # SAMEのときもEオプションを使用
+            h_clone.Draw("E SAME")
 
         root_file.Close()
         print(f"  [OK] 読み込み完了: {filename} (Entries: {entries})")
@@ -118,7 +128,7 @@ def main():
         return
 
     histograms[0].SetMinimum(1e0) 
-    histograms[0].SetMaximum(max_y * 100.0) 
+    histograms[0].SetMaximum(max_y * 1.5) 
 
     legend.Draw()
     
@@ -128,7 +138,8 @@ def main():
     tex.SetTextSize(0.036)
     tex.DrawLatex(0.16, 0.90, "#bf{Invariant Mass (Unlike)}")
     tex.DrawLatex(0.16, 0.85, "#bf{LHC26b8} #font[52]{(MC, UPC #mu pair)}")
-    tex.DrawLatex(0.16, 0.80, "with Coherent Cut")
+    #tex.DrawLatex(0.16, 0.80, "with Coherent Cut")
+    tex.DrawLatex(0.16, 0.80, "StandaloneMuon")
     
     out_path = os.path.join(INPUT_DIR, OUTPUT_FILE)
     canvas.SaveAs(out_path)

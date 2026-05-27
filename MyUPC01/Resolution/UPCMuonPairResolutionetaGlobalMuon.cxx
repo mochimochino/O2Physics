@@ -52,7 +52,7 @@ struct UPCMuonPairResolution {
   HistogramRegistry registry{"registry", {}, OutputObjHandlingPolicy::AnalysisObject, true, true};
 
   // ===========================================================================
-  // Configurables (設定パラメータ群)
+  // Configurables
   // ===========================================================================
 
   // --- Event & Track Selection Level ---
@@ -62,7 +62,7 @@ struct UPCMuonPairResolution {
     static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack),
     "Track type required for the analysis (0: GlobalMuonTrack, 3: MuonStandaloneTrack)"};
 
-  Configurable<float> etaMin{"etaMin", -4.0f, "Minimum pseudorapidity for muon tracks"};
+  Configurable<float> etaMin{"etaMin", -3.6f, "Minimum pseudorapidity for muon tracks"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum pseudorapidity for muon tracks"};
   Configurable<float> rAbsMin{"rAbsMin", 17.6f, "Minimum R at absorber end [cm]"};
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
@@ -71,7 +71,7 @@ struct UPCMuonPairResolution {
 
   // --- Dimuon Pair Kinematic Cuts ---
   Configurable<float> pairPtMax{"pairPtMax", 0.25f, "Maximum dimuon pair pT [GeV/c]"};
-  Configurable<float> pairRapidityMin{"pairRapidityMin", -4.0f, "Minimum dimuon pair rapidity"};
+  Configurable<float> pairRapidityMin{"pairRapidityMin", -3.6f, "Minimum dimuon pair rapidity"};
   Configurable<float> pairRapidityMax{"pairRapidityMax", -2.5f, "Maximum dimuon pair rapidity"};
   Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
   Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
@@ -94,6 +94,9 @@ struct UPCMuonPairResolution {
   Configurable<float> pTrackMax{"pTrackMax", 50.0f, "Upper edge of track p axis [GeV/c]"};
   Configurable<float> ptTrackMax{"ptTrackMax", 10.0f, "Upper edge of track pT axis [GeV/c]"};
   Configurable<float> pxpyTrackMax{"pxpyTrackMax", 10.0f, "Upper edge of track px/py axis [GeV/c]"};
+
+  // --- Efficiency check (for MC) ---
+  // Configurable<float>
 
   static constexpr int kMuonPDG = 13;
   float mMu = 0.0f;
@@ -194,7 +197,6 @@ struct UPCMuonPairResolution {
   }
 
   // ---------------------------------------------------------------------------
-  // ヒストグラム初期化: Dimuonペアレベル
   void initPairHistograms()
   {
     const AxisSpec axisPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
@@ -456,7 +458,6 @@ struct UPCMuonPairResolution {
       int32_t candId = item.first;
       const auto& trkIds = item.second;
 
-      // --- NEW: イベント内の全前方トラック数をカウント ---
       registry.fill(HIST("hNTracksTotal"), static_cast<float>(trkIds.size()));
 
       if (trkIds.empty())
@@ -476,7 +477,6 @@ struct UPCMuonPairResolution {
         }
       }
 
-      // --- NEW: イベント内の GlobalMuon トラック数をカウント ---
       registry.fill(HIST("hNGlobalMuons"), static_cast<float>(candidateTrkIds.size()));
 
       if (candidateTrkIds.empty())

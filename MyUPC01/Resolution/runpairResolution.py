@@ -14,16 +14,17 @@ INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_
 
 # 出力先ディレクトリ
 #OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/pTtest/"
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/036/Coherent/"
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/test"
 
 # コンフィグファイル（JSON）が保存されている親ディレクトリ
-#CONF_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/conf/"
-CONF_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/036/Coherent/"
+CONF_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/conf/"
+#CONF_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/"
+
 
 # 解析タスク名
-#TASK_CMD = "o2-analysis-my-upc-muon-pair-resolutioneta-global-muon"
+TASK_CMD = "o2-analysis-my-upc-muon-pair-resolutioneta-global-muon"
 #TASK_CMD = "o2-analysis-my-upc-muon-efficiency"
-TASK_CMD = "o2-analysis-my-upc-muon-analysis-mc"
+#TASK_CMD = "o2-analysis-my-upc-muon-analysis-mc"
 
 # 共有メモリサイズ
 SHM_SIZE = "10000000000"

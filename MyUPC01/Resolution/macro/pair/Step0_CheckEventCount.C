@@ -17,9 +17,9 @@ void Step0_CheckEventCount()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0408/";
-  const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0414/Incoherent/0515FORMEETING/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/";
+  const TString taskReg = "upc-muon-analysis/registry/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/";
 
   const int rebinFactor = 1;
 
@@ -28,8 +28,8 @@ void Step0_CheckEventCount()
     TString label;
   };
   std::vector<Sample> samples = {
-    {dataDir + "jpsi-incoh.root", "J/#psi incoh."},
-    //{dataDir + "jpsi-coh.root", "J/#psi coh."},
+    //{dataDir + "jpsi-incoh.root", "J/#psi incoh."},
+    {dataDir + "jpsi-coh.root", "J/#psi coh."},
     // {dataDir + "psi2s-incoh.root", "#psi(2S) incoh."},
     // {dataDir + "psi2s-coh.root", "#psi(2S) coh."},
     // {dataDir + "psi2s-incoh-fd.root", "#psi(2S) incoh. fd"},
@@ -113,7 +113,7 @@ void Step0_CheckEventCount()
     c->SetRightMargin(0.05);
     c->SetGrid();
     c->SetLogy();
-    c->SetLogx();
+    //c->SetLogx();
 
     // Style MC
     hMC->SetLineColor(kBlue + 1);
@@ -181,7 +181,7 @@ void Step0_CheckEventCount()
     c->SetRightMargin(0.05);
     c->SetGrid();
     c->SetLogy();
-    c->SetLogx();
+    //c->SetLogx();
 
     TLegend* leg = new TLegend(0.64, 0.55, 0.94, 0.94);
     leg->SetBorderSize(0);

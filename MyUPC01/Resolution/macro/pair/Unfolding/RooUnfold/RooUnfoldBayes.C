@@ -56,6 +56,7 @@ double GetAverageGlobalCorrelation(TMatrixD covMat)
   return 1.0;
 }
 
+
 void RooUnfoldBayes()
 {
   // Settings

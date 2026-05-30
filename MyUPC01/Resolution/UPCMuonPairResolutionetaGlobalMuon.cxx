@@ -64,6 +64,7 @@ struct UPCMuonPairResolution {
 
   Configurable<float> etaMin{"etaMin", -3.6f, "Minimum pseudorapidity for muon tracks"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum pseudorapidity for muon tracks"};
+  Configurable<float> pTmin{"pTmin", 0.3f, "Minimum single muon pT [GeV/c]"};
   Configurable<float> rAbsMin{"rAbsMin", 17.6f, "Minimum R at absorber end [cm]"};
   Configurable<float> rAbsMax{"rAbsMax", 89.5f, "Maximum R at absorber end [cm]"};
   Configurable<float> maxChi2{"maxChi2", 100.f, "Maximum allowed global track Chi2"};
@@ -122,7 +123,7 @@ struct UPCMuonPairResolution {
       "4: Track All", "5: Track Pass Type", "6: Track Pass rAbs", "7: Track Pass pDCA",
       "8: Track Pass MatchMFT", "9: Track Pass Eta", "10: Pair All", "11: Pair Unlike-sign",
       "12: Pair Both MC Muon", "13: Pair Pass Pt", "14: Pair Pass Rapidity", "15: Pair Pass Mass",
-      "16: Filler", "17: Filler"};
+      "16: Track Pass pT", "17: Filler"};
     for (int i = 0; i < 18; i++) {
       hCutFlow->GetXaxis()->SetBinLabel(i + 1, CutNames[i].Data());
     }
@@ -308,6 +309,10 @@ struct UPCMuonPairResolution {
     if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax)
       return false;
     registry.fill(HIST("hCutFlow"), 9); // 9: Track Pass Eta
+
+    if (recoVec.Pt() < pTmin)
+      return false;
+    registry.fill(HIST("hCutFlow"), 16); // 16: Track Pass pT
 
     return true;
   }

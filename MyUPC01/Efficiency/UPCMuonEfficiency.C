@@ -1,6 +1,6 @@
 /// \file   UPCMuonEfficiency.C
 /// \brief  Efficiency analysis macro for UPC dimuon photoproduction.
-///         Reads the output of UPCMuonEfficiencyTask (AnalysisResults.root),
+///         Reads the output of UPCMuonAnalysis (AnalysisResults.root),
 ///         computes Eff = Reco / MC for single muons and dimuon pairs
 ///         (Phi, Eta/y, pT), and saves plots and histograms to a ROOT file.
 ///
@@ -11,6 +11,10 @@
 ///   Efficiency          (6 TCanvas): cEff_TrkPhi/Eta/Pt, cEff_PairPhi/Rap/Pt
 ///   Source histograms  (12 TH1)
 ///   Efficiency hists    (6 TH1D)
+///
+/// NOTE: Histogram names and task name updated for the unified UPCMuonAnalysis task.
+///       Efficiency histograms are now prefixed "hEff" in the task output.
+///       Task directory name is now "upc-muon-analysis".
 ///
 /// \usage  root -l -b -q 'UPCMuonEfficiency.C("AnalysisResults.root")'
 /// \author Takuma Matsumoto
@@ -26,16 +30,14 @@
 #include "TStyle.h"
 
 // ============================================================================
-// Global style constants (matching Step1/Step2 macro style)
+// Global style constants
 // ============================================================================
-static const int kFont = 42;        // Helvetica
-static const double kTitSz = 0.045; // axis title size
-static const double kLabSz = 0.040; // axis label size
-static const double kTitOff = 1.3;  // X-axis title offset
-static const double kTitOffY = 1.2; // Y-axis title offset
+static const int kFont = 42;
+static const double kTitSz = 0.045;
+static const double kLabSz = 0.040;
+static const double kTitOff = 1.3;
+static const double kTitOffY = 1.2;
 
-// ============================================================================
-// Apply global gStyle (call once in main)
 // ============================================================================
 void ApplyStyle()
 {
@@ -54,8 +56,6 @@ void ApplyStyle()
 }
 
 // ============================================================================
-// Helper: apply standard canvas margins (matching Step1 draw2D)
-// ============================================================================
 void SetCanvasStyle(TCanvas* c, bool hasRightMargin = false)
 {
   c->SetLeftMargin(0.11);
@@ -65,8 +65,6 @@ void SetCanvasStyle(TCanvas* c, bool hasRightMargin = false)
   c->SetGrid();
 }
 
-// ============================================================================
-// Helper: apply standard axis style to a TH1
 // ============================================================================
 void StyleAxis(TH1* h, const char* xTitle, const char* yTitle)
 {
@@ -88,8 +86,6 @@ void StyleAxis(TH1* h, const char* xTitle, const char* yTitle)
 }
 
 // ============================================================================
-// Helper: draw a TLatex label block (upper-right corner, like Step1)
-// ============================================================================
 void DrawInfoBlock(const char* titleLine,
                    double x = 0.55, double yStart = 0.86,
                    double dy = 0.055, double sz = 0.034,
@@ -107,10 +103,11 @@ void DrawInfoBlock(const char* titleLine,
 }
 
 // ============================================================================
-// Helper: fetch a histogram from the O2 task output directory.
+// Fetch a histogram from the unified UPCMuonAnalysis task output.
+// Task name changed from "upc-muon-efficiency" to "upc-muon-analysis".
 // ============================================================================
 TH1* GetHist(TFile* f, const char* histName,
-             const char* task = "upc-muon-efficiency",
+             const char* task = "upc-muon-analysis",
              const char* reg = "registry")
 {
   TString path = TString::Format("%s/%s/%s", task, reg, histName);
@@ -122,7 +119,7 @@ TH1* GetHist(TFile* f, const char* histName,
 }
 
 // ============================================================================
-// Helper: compute Eff = hReco / hMC (bin-by-bin, binomial error).
+// Compute Eff = hReco / hMC (bin-by-bin, binomial error)
 // ============================================================================
 TH1D* MakeEfficiency(TH1* hReco, TH1* hMC, const char* name, const char* title)
 {
@@ -151,8 +148,6 @@ TH1D* MakeEfficiency(TH1* hReco, TH1* hMC, const char* name, const char* title)
 }
 
 // ============================================================================
-// Build a single-histogram canvas (MC only or Reco only)
-// ============================================================================
 TCanvas* MakeSingleCanvas(const char* name, const char* canTitle,
                           TH1* h, int color,
                           const char* xTitle, const char* yTitle,
@@ -174,8 +169,6 @@ TCanvas* MakeSingleCanvas(const char* name, const char* canTitle,
   return c;
 }
 
-// ============================================================================
-// Build an overlay canvas (MC + Reco)
 // ============================================================================
 TCanvas* MakeOverlayCanvas(const char* name, const char* canTitle,
                            TH1* hMC, TH1* hReco,
@@ -204,7 +197,6 @@ TCanvas* MakeOverlayCanvas(const char* name, const char* canTitle,
     hReco->Draw("HIST SAME");
   }
 
-  // Legend
   TLegend* leg = new TLegend(0.13, 0.72, 0.42, 0.87);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
@@ -218,7 +210,6 @@ TCanvas* MakeOverlayCanvas(const char* name, const char* canTitle,
 
   DrawInfoBlock(plotLabel);
 
-  // Event counts for MC and Reco (drawn separately in respective colors)
   {
     TLatex tex;
     tex.SetNDC();
@@ -237,8 +228,6 @@ TCanvas* MakeOverlayCanvas(const char* name, const char* canTitle,
   return c;
 }
 
-// ============================================================================
-// Build an efficiency canvas (single panel)
 // ============================================================================
 TCanvas* MakeEffCanvas(const char* name, const char* canTitle,
                        TH1D* hEff,
@@ -261,7 +250,6 @@ TCanvas* MakeEffCanvas(const char* name, const char* canTitle,
   hEff->GetYaxis()->SetNdivisions(505);
   hEff->Draw("E1");
 
-  // Unity line
   TLine* line = new TLine(hEff->GetXaxis()->GetXmin(), 1.,
                           hEff->GetXaxis()->GetXmax(), 1.);
   line->SetLineStyle(2);
@@ -274,10 +262,11 @@ TCanvas* MakeEffCanvas(const char* name, const char* canTitle,
 }
 
 // ============================================================================
-// Helper: write a canvas to file and PDF
+// savePng: if true, also write a PNG file named <canvasName>.png into pngDir.
 // ============================================================================
 void SaveCanvas(TCanvas* c, TFile* fout, const char* pdfFile,
-                bool isFirst = false, bool isLast = false)
+                bool isFirst = false, bool isLast = false,
+                bool savePng = false, const char* pngDir = "png")
 {
   if (!c)
     return;
@@ -291,14 +280,22 @@ void SaveCanvas(TCanvas* c, TFile* fout, const char* pdfFile,
   else if (isLast)
     pdfArg = TString::Format("%s)", pdfFile);
   c->Print(pdfArg);
+
+  if (savePng) {
+    gSystem->mkdir(pngDir, /*recursive=*/true);
+    TString pngPath = TString::Format("%s/%s.png", pngDir, c->GetName());
+    c->Print(pngPath);
+    ::Info("SaveCanvas", "PNG saved: %s", pngPath.Data());
+  }
 }
 
 // ============================================================================
 // Main macro
 // ============================================================================
-void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Efficiency/040/Incoherent/jpsi-incoh.root",
-                       const char* outFile = "UPCMuonEfficiencyIncoherent.root",
-                       const char* pdfFile = "UPCMuonEfficiencyIncoherent.pdf")
+void UPCMuonEfficiency(const char* inFile = "jpsi-coh.root",
+                       const char* outFile = "jpsi-coh_Efficiency.root",
+                       const char* pdfFile = "jpsi-coh_Efficiency.pdf",
+                       const char* pngDir = "jpsi-coh_Efficiency_png")
 {
   ApplyStyle();
 
@@ -312,21 +309,34 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
 
   // =========================================================================
   // Fetch source histograms
+  // NOTE: Names updated to match the unified UPCMuonAnalysis task.
+  //       Single-track efficiency histograms are now prefixed "hEffTrk".
+  //       Pair efficiency histograms are now prefixed "hEffPair".
   // =========================================================================
-  TH1* hTrkPhiMC = GetHist(fin, "hTrkPhiMC");
-  TH1* hTrkPhiReco = GetHist(fin, "hTrkPhiReco");
-  TH1* hTrkEtaMC = GetHist(fin, "hTrkEtaMC");
-  TH1* hTrkEtaReco = GetHist(fin, "hTrkEtaReco");
-  TH1* hTrkPtMC = GetHist(fin, "hTrkPtMC");
-  TH1* hTrkPtReco = GetHist(fin, "hTrkPtReco");
 
-  TH1* hPairPhiMC = GetHist(fin, "hPairPhiMC");
-  TH1* hPairPhiReco = GetHist(fin, "hPairPhiReco");
-  TH1* hPairRapidityMC = GetHist(fin, "hPairRapidityMC");
-  TH1* hPairRapidityReco = GetHist(fin, "hPairRapidityReco");
-  TH1* hPairPtMC = GetHist(fin, "hPairPtMC");
-  TH1* hPairPtReco = GetHist(fin, "hPairPtReco");
+  // Single muon — MC truth
+  TH1* hTrkPhiMC = GetHist(fin, "hEffTrkPhiMC");
+  TH1* hTrkEtaMC = GetHist(fin, "hEffTrkEtaMC");
+  TH1* hTrkPtMC = GetHist(fin, "hEffTrkPtMC");
 
+  // Single muon — Reco
+  TH1* hTrkPhiReco = GetHist(fin, "hEffTrkPhiReco");
+  TH1* hTrkEtaReco = GetHist(fin, "hEffTrkEtaReco");
+  TH1* hTrkPtReco = GetHist(fin, "hEffTrkPtReco");
+
+  // Dimuon pair — MC truth
+  TH1* hPairPhiMC = GetHist(fin, "hEffPairPhiMC");
+  TH1* hPairRapidityMC = GetHist(fin, "hEffPairRapidityMC");
+  TH1* hPairPtMC = GetHist(fin, "hEffPairPtMC");
+  TH1* hPairPt2MC = GetHist(fin, "hEffPairPt2MC");
+
+  // Dimuon pair — Reco
+  TH1* hPairPhiReco = GetHist(fin, "hEffPairPhiReco");
+  TH1* hPairRapidityReco = GetHist(fin, "hEffPairRapidityReco");
+  TH1* hPairPtReco = GetHist(fin, "hEffPairPtReco");
+  TH1* hPairPt2Reco = GetHist(fin, "hEffPairPt2Reco");
+
+  // Cut-flow histograms (names unchanged)
   TH1* hCutFlowMC = GetHist(fin, "hCutFlowMC");
   TH1* hCutFlowReco = GetHist(fin, "hCutFlowReco");
 
@@ -339,6 +349,7 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
   TH1D* hEffPairPhi = MakeEfficiency(hPairPhiReco, hPairPhiMC, "hEffPairPhi", "Dimuon Pair Eff vs #phi");
   TH1D* hEffPairRap = MakeEfficiency(hPairRapidityReco, hPairRapidityMC, "hEffPairRap", "Dimuon Pair Eff vs y");
   TH1D* hEffPairPt = MakeEfficiency(hPairPtReco, hPairPtMC, "hEffPairPt", "Dimuon Pair Eff vs p_{T}");
+  TH1D* hEffPairPt2 = MakeEfficiency(hPairPt2Reco, hPairPt2MC, "hEffPairPt2", "Dimuon Pair Eff vs p_{T}^{2}");
 
   // =========================================================================
   // Open output ROOT file
@@ -352,10 +363,10 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
     TH1* hMC;
     TH1* hReco;
     TH1D* hEff;
-    const char* xTitle;    // axis X label
-    const char* yTitle;    // axis Y label ("Counts")
-    const char* plotLabel; // label shown via TLatex on the plot
-    const char* tag;       // short name for canvas naming
+    const char* xTitle;
+    const char* yTitle;
+    const char* plotLabel;
+    const char* tag;
   };
 
   VarEntry vars[] = {
@@ -371,8 +382,10 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
      "y", "Counts", "Dimuon Pair: y", "PairRap"},
     {hPairPtMC, hPairPtReco, hEffPairPt,
      "p_{T} (GeV/c)", "Counts", "Dimuon Pair: p_{T}", "PairPt"},
+    {hPairPt2MC, hPairPt2Reco, hEffPairPt2,
+     "p_{T}^{2} (GeV^{2}/c^{2})", "Counts", "Dimuon Pair: p_{T}^{2}", "PairPt2"},
   };
-  const int nVars = 6;
+  const int nVars = 7;
 
   // =========================================================================
   // Page 1: CutFlow (opens PDF)
@@ -459,7 +472,7 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
       v.hMC, v.hReco,
       v.xTitle, v.yTitle,
       v.plotLabel);
-    SaveCanvas(c, fout, pdfFile, false, false);
+    SaveCanvas(c, fout, pdfFile, false, false, /*savePng=*/true, pngDir);
     delete c;
   }
 
@@ -475,7 +488,7 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
       v.hEff,
       v.xTitle,
       Form("Efficiency:  %s", v.plotLabel));
-    SaveCanvas(c, fout, pdfFile, false, isLast);
+    SaveCanvas(c, fout, pdfFile, false, isLast, /*savePng=*/true, pngDir);
     delete c;
   }
 
@@ -485,7 +498,7 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
   if (fout && fout->IsOpen()) {
     fout->cd();
 
-    // Source histograms (12)
+    // Source histograms — written with original-style names for compatibility
     if (hTrkPhiMC)
       hTrkPhiMC->Write("hTrkPhiMC");
     if (hTrkPhiReco)
@@ -510,8 +523,12 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
       hPairPtMC->Write("hPairPtMC");
     if (hPairPtReco)
       hPairPtReco->Write("hPairPtReco");
+    if (hPairPt2MC)
+      hPairPt2MC->Write("hPairPt2MC");
+    if (hPairPt2Reco)
+      hPairPt2Reco->Write("hPairPt2Reco");
 
-    // Efficiency histograms (6)
+    // Efficiency histograms
     if (hEffTrkPhi)
       hEffTrkPhi->Write();
     if (hEffTrkEta)
@@ -524,8 +541,10 @@ void UPCMuonEfficiency(const char* inFile = "/media/takuma/ESD-EAWA/Data/UPCcand
       hEffPairRap->Write();
     if (hEffPairPt)
       hEffPairPt->Write();
+    if (hEffPairPt2)
+      hEffPairPt2->Write();
 
-    // CutFlow histograms (2)
+    // Cut-flow histograms
     if (hCutFlowMC)
       hCutFlowMC->Write("hCutFlowMC");
     if (hCutFlowReco)

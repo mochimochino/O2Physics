@@ -45,3 +45,8 @@ o2physics_add_dpl_workflow(my-upc-muon-efficiency
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
 
+o2physics_add_dpl_workflow(my-upc-muon-analysis-mc
+                           SOURCES UPCMuonAnalysisMC.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+

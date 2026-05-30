@@ -17,19 +17,20 @@ import sys
 INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_global0429test/"
 
 # 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Efficiency/035/Incoherent/" # Now testing
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/035/Coherent/test" # Now testing
 
 # 解析タスク名
 #TASK_CMD = "o2-analysis-my-upc-muon-pair-resolutioneta-global-muon"
-TASK_CMD = "o2-analysis-my-upc-muon-efficiency"
+#TASK_CMD = "o2-analysis-my-upc-muon-efficiency"
+TASK_CMD = "o2-analysis-my-upc-muon-analysis-mc"
 
 # 共有メモリサイズ
 SHM_SIZE = "10000000000"
 
 # サンプルリスト: (サブディレクトリ名, ファイルプレフィックス, 出力ファイル名)
 SAMPLES = [
-    #("jpsi-coh",       "jpsi-coh-*.root",        "jpsi-cohNul.root"),
-    ("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
+    ("jpsi-coh",       "jpsi-coh-*.root",        "jpsi-coh.root"),
+    #("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
     #("psi2s-coh",      "psi2s-coh-*.root",        "psi2s-coh.root"),
     #("psi2s-incoh",    "psi2s-incoh-*.root",      "psi2s-incoh.root"),
     #("psi2s-coh-fd",   "psi2s-coh-fd-*.root",     "psi2s-coh-fd.root"),

@@ -5,16 +5,16 @@ import subprocess
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # 1. 全体設定
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
 LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0429test")
-RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_Retry0429test") # 分割リストの保存先
-MAX_WORKERS = 20            # 並列実行数
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global16140V2test")
+RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_RetryPhitest") # 分割リストの保存先
+MAX_WORKERS = 15            # 並列実行数
 MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
 
 DATASET_MAP = {
-    "jpsi-coh": "jpsi-coh-conf.json",
-    "jpsi-incoh": "jpsi-incoh-conf.json"
+    "jpsi-coh": "jpsi-coh-conf16140.json",
+    #"jpsi-incoh": "jpsi-incoh-conf16140.json"
     #"mumu-high": "mumu-high-conf.json",
     #"mumu-low": "mumu-low-conf.json",
     #"mumu-mid": "mumu-mid-conf.json",
@@ -42,7 +42,7 @@ def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):
             json.dump(base_conf, f, indent=4)
 
         cmd = [
-            "o2-analysis-ud-upc-cand-producer-global-muon",
+            "o2-analysis-ud-upc-cand-producer-global-muonv2",
             "--configuration", f"json://{temp_json_path}",
             "--aod-writer-keep", "dangling",
             "--aod-writer-resfile", task_basename,

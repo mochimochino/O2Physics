@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/jpsi-coh.root")
+void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/jpsi-coh.root")
 {
   gStyle->SetOptStat(0);
 
@@ -27,7 +27,7 @@ void PlotMass(const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC
     std::cerr << "Error: " << filename << " can't open" << std::endl;
     return;
   }
-  TH2D* h2 = (TH2D*)f->Get("my-upc-muon-pair-resolution/registry/hPairMassResoVsMassMC");
+  TH2D* h2 = (TH2D*)f->Get("upc-muon-analysis/registry/hPairMassResoVsMassMC");
   if (!h2) {
     std::cerr << "Error: 2D histogram 'hMassVsRapidityUnlike' not found." << std::endl;
     return;

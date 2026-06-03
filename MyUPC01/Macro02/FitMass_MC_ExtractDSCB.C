@@ -45,10 +45,10 @@ double DSCB(double* x, double* p)
 void FitMass_MC_ExtractDSCB(
   // const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0508/jpsi-coh.root",
   // const char* histoPath = "my-upc-muon-pair-resolution-eta/registry/hPairMassReco_PostCut",
-  const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/jpsi-incoh.root",
-  const char* histoPath = "my-upc-muon-pair-resolution/registry/hPairMassReco_PostCut",
+  const char* filename = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140V2/debug/v2/jpsi-coh.root",
+  const char* histoPath = "upc-muon-alignment-debug/registry/hPairMassReco_PostCut",
   int rebin = 2,
-  const char* dataLabel = "J/#psi incoherent")
+  const char* dataLabel = "J/#psi coherent")
 {
   // デフォルトのStatsボックスとFitボックスを非表示にする
   gStyle->SetOptStat(0);

@@ -19,9 +19,9 @@ void Step1_MergeAndView2D()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/";
-  const TString taskReg = "upc-muon-analysis/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/040/Coherent/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140V2/debug/v2/";
+  const TString taskReg = "upc-muon-alignment-debug/registry/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140V2/debug/v2/";
 
   std::vector<TString> fileNames = {
     // dataDir + "jpsi-incoh.root",

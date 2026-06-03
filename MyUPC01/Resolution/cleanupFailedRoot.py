@@ -1,12 +1,12 @@
 import os
 
 # 1. パスの設定（前回の実行スクリプトに完全準拠）
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/"
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global0429test")
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global16140V2test")
 
 DATASETS = [
     "jpsi-coh",
-    "jpsi-incoh",
+    #"jpsi-incoh",
     #"mumu-high",
     #"mumu-low",
     #"mumu-mid",

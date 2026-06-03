@@ -76,6 +76,34 @@ o2physics_add_dpl_workflow(upc-cand-producer-global-muon
         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
         COMPONENT_NAME Analysis)
 
+# For ProducerCheking -------------------------
+o2physics_add_dpl_workflow(upc-cand-producer-global-muon15938
+        SOURCES upcCandProducerGlobalMuon15938.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
+        COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(upc-cand-producer-global-muon15900
+        SOURCES upcCandProducerGlobalMuon15900.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
+        COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(upc-cand-producer-global-muon15697
+        SOURCES upcCandProducerGlobalMuon15697.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
+        COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(upc-cand-producer-global-muon-phi
+        SOURCES upcCandProducerGlobalMuonMCHHelixPhi.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
+        COMPONENT_NAME Analysis)
+
+o2physics_add_dpl_workflow(upc-cand-producer-global-muonv2
+        SOURCES upcCandProducerGlobalMuon_v2.cxx
+        PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking
+        COMPONENT_NAME Analysis)
+
+# ====================
+
 o2physics_add_dpl_workflow(upc-cand-producer-semi-fwd
         SOURCES upcCandProducerSemiFwd.cxx
         PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore O2Physics::UPCCutparHolder O2::GlobalTracking

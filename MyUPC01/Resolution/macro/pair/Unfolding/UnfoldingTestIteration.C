@@ -76,7 +76,7 @@ void DrawUnfoldedResult(TVirtualPad* parentPad, int iter, TH1D* hGen, TH1D* hDat
   hGenDraw->GetYaxis()->SetLabelSize(0.04);
 
   double maxY = std::max({hGenDraw->GetMaximum(), hData->GetMaximum(), hUnfolded->GetMaximum()});
-  double minY = hGenDraw->GetMinimum();
+  double minY = hGenDraw->GetMinimum(0); // positive minimum for log scale
   if (minY <= 0)
     minY = 0.1;
 
@@ -151,18 +151,18 @@ void UnfoldingTestIteration()
   // Setting
   // ===========================
   // MC (Training for Response Matrix)
-  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/Step2_Rebinned.root";
+  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/flatstats/4bin02/Step2_Rebinned.root";
   const TString histNameGen = "hGenPt2_rebin";      // Needed to build Response object
   const TString histNameReco = "hRecoPt2_rebin";    // Needed to build Response object
   const TString histNameMatrix = "hResponseMatrix"; // Needed to build Response object
 
   // Test Data (Closure Test)
-  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/Step1_merged.root";
+  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/Step1_merged.root";
   const TString histNameDataFine = "hRecoPt2_Test"; // To be unfolded
   const TString histNameGenFine = "hGenPt2_Test";   // True distribution for evaluation
 
   // Output
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/0415/Coherent/constantdiff/5bin/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/flatstats/4bin02/";
   const TString outFileName = "Step3_1_4Pads_Comparison.png";
 
   const std::vector<int> iters = {1, 3, 5, 7};
@@ -256,4 +256,30 @@ void UnfoldingTestIteration()
   // =============================
   c1->SaveAs(outDir + outFileName);
   std::cout << "[Done] Plot saved to:" << outDir + outFileName << std::endl;
+
+  // =============================
+  // All Iterations 1-7
+  // =============================
+  const std::vector<int> iters_all = {1, 2, 3, 4, 5, 6, 7};
+  const TString outFileNameAll = "Step3_1_AllIterations_1to7.png";
+
+  int nPadsAll = (int)iters_all.size();
+  int colsAll = 2;
+  int rowsAll = (nPadsAll + colsAll - 1) / colsAll; // ceil(7/2) = 4
+
+  TCanvas* c2 = new TCanvas("c2", "Bayes Iteration Comparison (All 1-7)", colsAll * 600, rowsAll * 500);
+  c2->Divide(colsAll, rowsAll);
+
+  for (size_t i = 0; i < iters_all.size(); ++i) {
+    int iter = iters_all[i];
+    std::cout << "[INFO] Running Bayes Unfolding with Iteration = " << iter << " (all-iter canvas)" << std::endl;
+
+    RooUnfoldBayes unfoldBayes_all(&response, hDataTest, iter);
+    TH1D* hUnfolded_all = (TH1D*)unfoldBayes_all.Hreco()->Clone(Form("hUnfold_all_iter%d", iter));
+
+    DrawUnfoldedResult(c2->cd(i + 1), iter, hGenTest, hDataTest, hUnfolded_all);
+  }
+
+  c2->SaveAs(outDir + outFileNameAll);
+  std::cout << "[Done] Plot saved to:" << outDir + outFileNameAll << std::endl;
 }

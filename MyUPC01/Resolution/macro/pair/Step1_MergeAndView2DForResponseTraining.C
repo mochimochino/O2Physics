@@ -19,13 +19,13 @@ void Step1_MergeAndView2DForResponseTraining()
   // ----------------------------------------------------------
   // Settings
   // ----------------------------------------------------------
-  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/";
-  const TString taskReg = "my-upc-muon-pair-resolution/registry/";
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Resolution/0429test/Incoherent/";
+  const TString dataDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140V2/debug/v2/";
+  const TString taskReg = "upc-muon-alignment-debug/registry/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140V2/debug/v2/";
 
   std::vector<TString> fileNames = {
-    dataDir + "jpsi-incoh.root",
-    // dataDir + "jpsi-coh.root",
+    // dataDir + "jpsi-incoh.root",
+     dataDir + "jpsi-coh.root",
     // dataDir + "psi2s-incoh.root",
     // dataDir + "psi2s-coh.root",
     // dataDir + "psi2s-incoh-fd.root",
@@ -182,8 +182,8 @@ void Step1_MergeAndView2DForResponseTraining()
       draw2D(h2Pt2,
              "p_{T,#mu#mu}^{2,MC} (GeV^{2}/c^{2})",
              "p_{T,#mu#mu}^{2,reco} (GeV^{2}/c^{2})",
-             "Pair p_{T}^{2} Response (Zoom 0-0.005)",
-             0.0, 0.005, 0.0, 0.005,
+             "Pair p_{T}^{2} Response (Zoom 0-0.05)",
+             0.0, 0.05, 0.0, 0.05,
              "c_rmat_pt2_zoom",
              "Step1_ResponseMatrix_PairPt2_Zoom.png");
 

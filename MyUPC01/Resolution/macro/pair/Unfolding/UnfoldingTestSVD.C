@@ -164,24 +164,25 @@ void DrawDVector(TCanvas* c, TH1D* hDvec)
   hD->SetMarkerColor(kBlue + 1);
   hD->SetMarkerStyle(20);
   hD->SetMarkerSize(1.3);
-  hD->GetXaxis()->SetTitle("Component index  i");
+  hD->GetXaxis()->SetTitle("i");
   hD->GetXaxis()->SetTitleSize(0.05);
   hD->GetXaxis()->SetLabelSize(0.04);
   hD->GetYaxis()->SetTitle("|d_{i}|");
   hD->GetYaxis()->SetTitleSize(0.05);
   hD->GetYaxis()->SetLabelSize(0.04);
   hD->GetYaxis()->SetTitleOffset(1.4);
-  hD->Draw("PE");
+  hD->Draw("HIST L");
+  hD->Draw("PE SAME");
 
   TLatex lat;
   lat.SetNDC();
   lat.SetTextSize(0.038);
-  lat.DrawLatex(0.16, 0.92, "#bf{SVD d-vector}  (choose k where |d_{i}| drops to noise level)");
+  lat.DrawLatex(0.16, 0.94, "#bf{SVD d-vector}");
 
   lat.SetTextSize(0.033);
   lat.SetTextColor(kGray + 2);
-  lat.DrawLatex(0.16, 0.85, "Small k  #rightarrow  over-smoothing (bias)");
-  lat.DrawLatex(0.16, 0.80, "Large k  #rightarrow  under-smoothing (variance)");
+  // lat.DrawLatex(0.16, 0.85, "Small k  #rightarrow  over-smoothing (bias)");
+  // lat.DrawLatex(0.16, 0.80, "Large k  #rightarrow  under-smoothing (variance)");
 }
 
 // =====================
@@ -193,18 +194,18 @@ void UnfoldingTestSVD()
   // Settings
   // ===========================
   // MC (Training for Response Matrix)
-  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/flatstats/5bin/Step2_Rebinned.root";
+  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/flatstats/15bin/Step2_Rebinned.root";
   const TString histNameGen = "hGenPt2_rebin";
   const TString histNameReco = "hRecoPt2_rebin";
   const TString histNameMatrix = "hResponseMatrix";
 
   // Test Data (Closure Test)
-  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/Step1_merged.root";
+  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/Step1_merged.root";
   const TString histNameDataFine = "hRecoPt2_Test";
   const TString histNameGenFine = "hGenPt2_Test";
 
   // Output
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Coherent/flatstats/5bin/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/flatstats/15bin/";
 
   // Selected k values for c1 (adjust after checking nBins and the d-vector plot)
   const std::vector<int> kSelected = {2, 3, 4, 5};
@@ -344,4 +345,5 @@ void UnfoldingTestSVD()
   DrawDVector(c3, hDvec);
   c3->SaveAs(outDir + "Step3_2_SVD_Dvector.png");
   std::cout << "[Done] Saved: Step3_2_SVD_Dvector.png" << std::endl;
+  // Thanks to RooUnfold package
 }

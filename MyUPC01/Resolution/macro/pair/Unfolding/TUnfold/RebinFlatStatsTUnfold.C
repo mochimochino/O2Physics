@@ -58,8 +58,8 @@ std::vector<double> CalculateFlatStatsBins(TH1D* h, int nTargetBins, double xMin
 }
 
 void RebinFlatStatsTUnfold(
-  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/035/Coherent/test/Step1_merged.root",
-  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/035/Coherent/test/Step2_Rebinned.root",
+  const TString inputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/Coherent/Step1_merged.root",
+  const TString outputFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/Coherent/flatstats/mn/4bin/Step2_Rebinned.root",
   int nGenTargetBins = 4,
   double xMin = 0.0,
   double xMax = 0.065)

@@ -7,7 +7,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 # 1. 全体設定
 BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
 LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global16140V2test")
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltestPR0606")
 RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_RetryPhitest") # 分割リストの保存先
 MAX_WORKERS = 15            # 並列実行数
 MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
@@ -42,7 +42,7 @@ def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):
             json.dump(base_conf, f, indent=4)
 
         cmd = [
-            "o2-analysis-ud-upc-cand-producer-global-muonv2",
+            "o2-analysis-ud-upc-cand-producer-global-muon",
             "--configuration", f"json://{temp_json_path}",
             "--aod-writer-keep", "dangling",
             "--aod-writer-resfile", task_basename,

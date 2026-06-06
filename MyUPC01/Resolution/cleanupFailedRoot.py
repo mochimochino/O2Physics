@@ -2,7 +2,7 @@ import os
 
 # 1. パスの設定（前回の実行スクリプトに完全準拠）
 BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_global16140V2test")
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltestPR0606")
 
 DATASETS = [
     "jpsi-coh",

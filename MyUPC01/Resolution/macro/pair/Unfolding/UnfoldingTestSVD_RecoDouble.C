@@ -1,11 +1,13 @@
 // ===========================================================
-// UnfoldingTestSVD.C
-// SVD Unfolding (Hoecker & Kartvelishvili method)
+// UnfoldingTestSVD_RecoDouble.C
+// SVD Unfolding for non-square response matrix
+//   Truth (Gen) : N bins
+//   Measured (Reco) : 2N bins
 //
 // Outputs:
-//   Step3_2_SVD_SelectedK.png  -- selected k values (2x2 canvas)
-//   Step3_2_SVD_AllK_1toN.png  -- all k from 1 to nBins
-//   Step3_2_SVD_Dvector.png    -- d-vector diagnostic for k selection
+//   Step3_2_SVD_RecoDouble_SelectedK.png  -- selected k values
+//   Step3_2_SVD_RecoDouble_AllK_1toN.png  -- all k from 1 to nGenBins
+//   Step3_2_SVD_RecoDouble_Dvector.png    -- d-vector diagnostic
 // ===========================================================
 #include "TCanvas.h"
 #include "TFile.h"
@@ -54,23 +56,35 @@ T* LoadHistogram(TFile* file, const TString& histName)
   return hClone;
 }
 
+// Extract bin edges from a histogram into a vector
+std::vector<double> GetBinEdges_SVD(const TH1D* h)
+{
+  int n = h->GetNbinsX();
+  std::vector<double> edges(n + 1);
+  for (int i = 1; i <= n + 1; ++i)
+    edges[i - 1] = h->GetXaxis()->GetBinLowEdge(i);
+  return edges;
+}
+
 // ---------------------------------
 // Draw unfolding result for a given k
 // (top: Truth / Measured / Unfolded,  bottom: Unfolded/Truth ratio)
+// Truth and Unfolded are both in Gen (coarse) binning.
+// Measured is shown in Reco (fine) binning on the same plot.
 // ---------------------------------
-void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D* hUnfolded)
+void DrawSVDResult_RD(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D* hUnfolded)
 {
   parentPad->cd();
 
   // ---- Top Pad ----
-  TPad* padTop = new TPad(Form("padTopSVD_k%d", k), "padTop", 0.0, 0.3, 1.0, 1.0);
+  TPad* padTop = new TPad(Form("padTopSVD_RD_k%d", k), "padTop", 0.0, 0.3, 1.0, 1.0);
   padTop->SetBottomMargin(0.02);
   padTop->SetLeftMargin(0.12);
   padTop->SetLogy();
   padTop->Draw();
   padTop->cd();
 
-  TH1D* hGenDraw = (TH1D*)hGen->Clone(Form("hGenDrawSVD_k%d", k));
+  TH1D* hGenDraw = (TH1D*)hGen->Clone(Form("hGenDrawSVD_RD_k%d", k));
   hGenDraw->SetTitle(Form("SVD Unfolding (k = %d)", k));
   hGenDraw->SetLineColor(kBlack);
   hGenDraw->SetLineWidth(2);
@@ -80,8 +94,15 @@ void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D*
   hGenDraw->GetYaxis()->SetTitleSize(0.04);
   hGenDraw->GetYaxis()->SetLabelSize(0.04);
 
-  double maxY = std::max({hGenDraw->GetMaximum(), hData->GetMaximum(), hUnfolded->GetMaximum()});
-  double minY = hGenDraw->GetMinimum(0); // positive minimum for log scale
+  // Rebin hData (2N Reco bins) into Gen (N) binning for display
+  int nGenB = hGen->GetNbinsX();
+  std::vector<double> genEdgesDraw(nGenB + 1);
+  for (int i = 1; i <= nGenB + 1; ++i)
+    genEdgesDraw[i - 1] = hGen->GetXaxis()->GetBinLowEdge(i);
+  TH1D* hDataDraw = (TH1D*)hData->Rebin(nGenB, Form("hDataDrawSVD_RD_k%d", k), genEdgesDraw.data());
+
+  double maxY = std::max({hGenDraw->GetMaximum(), hDataDraw->GetMaximum(), hUnfolded->GetMaximum()});
+  double minY = hGenDraw->GetMinimum(0);
   if (minY <= 0)
     minY = 0.1;
 
@@ -89,7 +110,6 @@ void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D*
   hGenDraw->SetMinimum(minY * 0.1);
   hGenDraw->Draw("HIST");
 
-  TH1D* hDataDraw = (TH1D*)hData->Clone(Form("hDataDrawSVD_k%d", k));
   hDataDraw->SetLineColor(kBlue + 1);
   hDataDraw->SetMarkerColor(kBlue + 1);
   hDataDraw->SetMarkerStyle(24);
@@ -109,9 +129,9 @@ void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D*
   leg->AddEntry(hUnfolded, Form("Unfolded (k=%d)", k), "pe");
   leg->Draw();
 
-  // ---- Bottom Pad (ratio) ----
+  // ---- Bottom Pad (ratio: Unfolded / Truth, both in Gen binning) ----
   parentPad->cd();
-  TPad* padBot = new TPad(Form("padBotSVD_k%d", k), "padBot", 0.0, 0.0, 1.0, 0.3);
+  TPad* padBot = new TPad(Form("padBotSVD_RD_k%d", k), "padBot", 0.0, 0.0, 1.0, 0.3);
   padBot->SetTopMargin(0.02);
   padBot->SetBottomMargin(0.35);
   padBot->SetLeftMargin(0.12);
@@ -119,7 +139,7 @@ void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D*
   padBot->Draw();
   padBot->cd();
 
-  TH1D* hRatio = (TH1D*)hUnfolded->Clone(Form("hRatioSVD_k%d", k));
+  TH1D* hRatio = (TH1D*)hUnfolded->Clone(Form("hRatioSVD_RD_k%d", k));
   hRatio->Divide(hGen);
   hRatio->SetTitle("");
   hRatio->GetYaxis()->SetTitle("Unfolded / Truth");
@@ -142,14 +162,8 @@ void DrawSVDResult(TVirtualPad* parentPad, int k, TH1D* hGen, TH1D* hData, TH1D*
 
 // ---------------------------------
 // Draw d-vector diagnostic plot
-//
-// The d-vector d_i = (U^T b)_i is the measured data
-// projected onto the singular vector basis.
-// |d_i| is large for small i (signal) and falls to
-// the noise floor for large i.
-// Choose k at the index where the drop-off begins.
 // ---------------------------------
-void DrawDVector(TCanvas* c, TH1D* hDvec)
+void DrawDVector_RD(TCanvas* c, TH1D* hDvec)
 {
   c->cd();
   c->SetLogy();
@@ -158,57 +172,51 @@ void DrawDVector(TCanvas* c, TH1D* hDvec)
   c->SetRightMargin(0.06);
   c->SetTopMargin(0.08);
 
-  TH1D* hD = (TH1D*)hDvec->Clone("hDvec_draw");
+  TH1D* hD = (TH1D*)hDvec->Clone("hDvec_draw_rd");
   hD->SetTitle("");
   hD->SetLineColor(kBlue + 1);
   hD->SetMarkerColor(kBlue + 1);
   hD->SetMarkerStyle(20);
   hD->SetMarkerSize(1.3);
-  hD->GetXaxis()->SetTitle("i");
+  hD->GetXaxis()->SetTitle("Component index  i");
   hD->GetXaxis()->SetTitleSize(0.05);
   hD->GetXaxis()->SetLabelSize(0.04);
   hD->GetYaxis()->SetTitle("|d_{i}|");
   hD->GetYaxis()->SetTitleSize(0.05);
   hD->GetYaxis()->SetLabelSize(0.04);
   hD->GetYaxis()->SetTitleOffset(1.4);
-  hD->Draw("HIST L");
-  hD->Draw("PE SAME");
+  hD->Draw("PE");
 
   TLatex lat;
   lat.SetNDC();
   lat.SetTextSize(0.038);
-  lat.DrawLatex(0.16, 0.94, "#bf{SVD d-vector}");
-
-  lat.SetTextSize(0.033);
-  lat.SetTextColor(kGray + 2);
-  // lat.DrawLatex(0.16, 0.85, "Small k  #rightarrow  over-smoothing (bias)");
-  // lat.DrawLatex(0.16, 0.80, "Large k  #rightarrow  under-smoothing (variance)");
+  lat.DrawLatex(0.16, 0.92, "#bf{SVD d-vector}  (choose k where |d_{i}| drops to noise level)");
 }
 
 // =====================
 // Main
 // =====================
-void UnfoldingTestSVD()
+void UnfoldingTestSVD_RecoDouble()
 {
   // ===========================
   // Settings
   // ===========================
-  // MC (Training for Response Matrix)
-  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/flatstats/15bin/Step2_Rebinned.root";
-  const TString histNameGen = "hGenPt2_rebin";
-  const TString histNameReco = "hRecoPt2_rebin";
+  // MC (Training for Response Matrix) — built with RebinFlatStats_RecoDouble
+  const TString mcFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/Coherent/flatstats/5bin/Step2_Rebinned_RecoDouble.root";
+  const TString histNameGen = "hGenPt2_rebin";    // nGenBins bins (truth axis)
+  const TString histNameReco = "hRecoPt2_rebin";  // 2*nGenBins bins (measured axis)
   const TString histNameMatrix = "hResponseMatrix";
 
-  // Test Data (Closure Test)
-  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/Step1_merged.root";
+  // Test Data (Closure Test) — fine-binned MC from same production
+  const TString dataFile = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/Coherent/Step1_merged.root";
   const TString histNameDataFine = "hRecoPt2_Test";
   const TString histNameGenFine = "hGenPt2_Test";
 
   // Output
-  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16140/Incoherent/flatstats/15bin/";
+  const TString outDir = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/15697/Coherent/flatstats/5bin/";
 
-  // Selected k values for c1 (adjust after checking nBins and the d-vector plot)
-  const std::vector<int> kSelected = {2, 3, 4, 5};
+  // Selected k values (k <= nGenBins; adjust after checking the d-vector plot)
+  const std::vector<int> kSelected = {1, 2, 3, 4};
 
   // ===========================
   // Initialization
@@ -232,6 +240,16 @@ void UnfoldingTestSVD()
     return;
   }
 
+  int nGenBins = hGenTrain->GetNbinsX();
+  int nRecoBins = hRecoTrain->GetNbinsX();
+
+  std::cout << "[INFO] Gen (Truth) bins : " << nGenBins << std::endl;
+  std::cout << "[INFO] Reco (Measured) bins: " << nRecoBins << std::endl;
+  if (nRecoBins != 2 * nGenBins) {
+    std::cerr << "[WARN] Expected nRecoBins == 2 * nGenBins, but got "
+              << nRecoBins << " vs 2*" << nGenBins << "=" << 2 * nGenBins << std::endl;
+  }
+
   // --- Load Test Data ---
   TFile* fData = TFile::Open(dataFile, "READ");
   if (!fData || fData->IsZombie()) {
@@ -248,31 +266,25 @@ void UnfoldingTestSVD()
   }
 
   // ===========================
-  // Data Rebin (Applying MC Bins to Test Data)
+  // Rebin Test Data (Reco bins) and Test Truth (Gen bins) separately
   // ===========================
-  int nBins = hRecoTrain->GetNbinsX();
-  double* binEdges = new double[nBins + 1];
+  std::vector<double> genEdges = GetBinEdges_SVD(hGenTrain);
+  std::vector<double> recoEdges = GetBinEdges_SVD(hRecoTrain);
 
-  if (hRecoTrain->GetXaxis()->GetXbins()->GetSize() > 0) {
-    const double* arr = hRecoTrain->GetXaxis()->GetXbins()->GetArray();
-    std::copy(arr, arr + nBins + 1, binEdges);
-  } else {
-    for (int i = 1; i <= nBins + 1; ++i) {
-      binEdges[i - 1] = hRecoTrain->GetXaxis()->GetBinLowEdge(i);
-    }
-  }
+  // Test truth → Gen (coarse) binning
+  TH1D* hGenTest = (TH1D*)hGenTestFine->Rebin(nGenBins, "hGenTest_Rebinned", genEdges.data());
 
-  TH1D* hDataTest = (TH1D*)hDataFine->Rebin(nBins, "hDataTest_Rebinned", binEdges);
-  TH1D* hGenTest = (TH1D*)hGenTestFine->Rebin(nBins, "hGenTest_Rebinned", binEdges);
-  delete[] binEdges;
+  // Test data → Reco (fine) binning
+  TH1D* hDataTest = (TH1D*)hDataFine->Rebin(nRecoBins, "hDataTest_Rebinned", recoEdges.data());
 
-  std::cout << "[INFO] Rebinned Test Data & Test Truth into " << nBins << " bins." << std::endl;
-  std::cout << "[INFO] Valid k range: [1, " << nBins << "]" << std::endl;
+  std::cout << "[INFO] Test Truth rebinned into " << nGenBins << " Gen bins." << std::endl;
+  std::cout << "[INFO] Test Data  rebinned into " << nRecoBins << " Reco bins." << std::endl;
+  std::cout << "[INFO] Valid k range: [1, " << nGenBins << "]" << std::endl;
 
   // ===========================
-  // RooUnfolding: Build Response
+  // RooUnfolding: Build Response (non-square: Reco=2N, Gen=N)
   // ===========================
-  std::cout << "[INFO] Constructing RooUnfoldResponse with Training MC" << std::endl;
+  std::cout << "[INFO] Constructing RooUnfoldResponse (non-square)" << std::endl;
   RooUnfoldResponse response(hRecoTrain, hGenTrain, hMat);
 
   // ===========================
@@ -282,68 +294,60 @@ void UnfoldingTestSVD()
   int cols1 = (nPads > 2) ? 2 : nPads;
   int rows1 = (nPads > 2) ? 2 : 1;
 
-  TCanvas* c1 = new TCanvas("c1", "SVD Unfolding - Selected k", cols1 * 600, rows1 * 500);
+  TCanvas* c1 = new TCanvas("c1_rd", "SVD Unfolding (RecoDouble) - Selected k", cols1 * 600, rows1 * 500);
   c1->Divide(cols1, rows1);
 
   for (size_t i = 0; i < kSelected.size(); ++i) {
     int k = kSelected[i];
-    if (k < 1 || k > nBins) {
-      std::cerr << "[WARN] k=" << k << " out of valid range [1," << nBins << "], skipping." << std::endl;
+    if (k < 1 || k > nGenBins) {
+      std::cerr << "[WARN] k=" << k << " out of valid range [1," << nGenBins << "], skipping." << std::endl;
       continue;
     }
     std::cout << "[INFO] SVD Unfolding k=" << k << std::endl;
 
     RooUnfoldSvd unfoldSvd(&response, hDataTest, k);
-    TH1D* hUnfolded = (TH1D*)unfoldSvd.Hreco()->Clone(Form("hUnfoldSVD_k%d", k));
+    TH1D* hUnfolded = (TH1D*)unfoldSvd.Hreco()->Clone(Form("hUnfoldSVD_RD_k%d", k));
 
-    DrawSVDResult(c1->cd(i + 1), k, hGenTest, hDataTest, hUnfolded);
+    // Unfolded result is in Gen binning — compare directly with hGenTest
+    DrawSVDResult_RD(c1->cd(i + 1), k, hGenTest, hDataTest, hUnfolded);
   }
 
-  c1->SaveAs(outDir + "Step3_2_SVD_SelectedK.png");
-  std::cout << "[Done] Saved: Step3_2_SVD_SelectedK.png" << std::endl;
+  c1->SaveAs(outDir + "Step3_2_SVD_RecoDouble_SelectedK.png");
+  std::cout << "[Done] Saved: Step3_2_SVD_RecoDouble_SelectedK.png" << std::endl;
 
   // ===========================
-  // Canvas 2: All k from 1 to nBins
+  // Canvas 2: All k from 1 to nGenBins
   // ===========================
   int colsAll = 2;
-  int rowsAll = (nBins + colsAll - 1) / colsAll; // ceil(nBins / 2)
+  int rowsAll = (nGenBins + colsAll - 1) / colsAll;
 
-  TCanvas* c2 = new TCanvas("c2", "SVD Unfolding - All k (1 to N)", colsAll * 600, rowsAll * 500);
+  TCanvas* c2 = new TCanvas("c2_rd", "SVD Unfolding (RecoDouble) - All k", colsAll * 600, rowsAll * 500);
   c2->Divide(colsAll, rowsAll);
 
-  for (int k = 1; k <= nBins; ++k) {
+  for (int k = 1; k <= nGenBins; ++k) {
     std::cout << "[INFO] SVD Unfolding k=" << k << " (all-k canvas)" << std::endl;
 
     RooUnfoldSvd unfoldSvd_all(&response, hDataTest, k);
-    TH1D* hUnfolded_all = (TH1D*)unfoldSvd_all.Hreco()->Clone(Form("hUnfoldSVD_all_k%d", k));
+    TH1D* hUnfolded_all = (TH1D*)unfoldSvd_all.Hreco()->Clone(Form("hUnfoldSVD_RD_all_k%d", k));
 
-    DrawSVDResult(c2->cd(k), k, hGenTest, hDataTest, hUnfolded_all);
+    DrawSVDResult_RD(c2->cd(k), k, hGenTest, hDataTest, hUnfolded_all);
   }
 
-  c2->SaveAs(outDir + "Step3_2_SVD_AllK_1toN.png");
-  std::cout << "[Done] Saved: Step3_2_SVD_AllK_1toN.png" << std::endl;
+  c2->SaveAs(outDir + "Step3_2_SVD_RecoDouble_AllK_1toN.png");
+  std::cout << "[Done] Saved: Step3_2_SVD_RecoDouble_AllK_1toN.png" << std::endl;
 
   // ===========================
   // Canvas 3: d-vector diagnostic
-  //
-  // Run SVD with k=nBins to access all singular value components.
-  // The d-vector |d_i| = |(U^T b)_i| represents the measured data
-  // in the singular vector basis.  Large values at small i indicate
-  // signal; where |d_i| flattens to the noise floor, set k.
-  //
-  // API note: Impl() returns the underlying TSVDUnfold* object.
-  // If compilation fails, check your RooUnfold version -- some versions
-  // expose this via Svd() instead of Impl().
+  // Run with k=nGenBins to access all singular value components.
   // ===========================
-  RooUnfoldSvd unfoldSvdFull(&response, hDataTest, nBins);
-  unfoldSvdFull.Hreco(); // trigger internal SVD decomposition
+  RooUnfoldSvd unfoldSvdFull(&response, hDataTest, nGenBins);
+  unfoldSvdFull.Hreco();
 
-  TH1D* hDvec = (TH1D*)unfoldSvdFull.Impl()->GetD()->Clone("hDvec");
+  TH1D* hDvec = (TH1D*)unfoldSvdFull.Impl()->GetD()->Clone("hDvec_rd");
   hDvec->SetDirectory(nullptr);
 
-  TCanvas* c3 = new TCanvas("c3", "SVD d-vector diagnostic", 800, 600);
-  DrawDVector(c3, hDvec);
-  c3->SaveAs(outDir + "Step3_2_SVD_Dvector.png");
-  std::cout << "[Done] Saved: Step3_2_SVD_Dvector.png" << std::endl;
-  // Thanks to RooUnfold package
+  TCanvas* c3 = new TCanvas("c3_rd", "SVD d-vector diagnostic (RecoDouble)", 800, 600);
+  DrawDVector_RD(c3, hDvec);
+  c3->SaveAs(outDir + "Step3_2_SVD_RecoDouble_Dvector.png");
+  std::cout << "[Done] Saved: Step3_2_SVD_RecoDouble_Dvector.png" << std::endl;
 }

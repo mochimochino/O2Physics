@@ -400,7 +400,6 @@ struct UpcCandProducerGlobalMuon {
     track.setZ(muon.z());
     track.setCovariances(tcovs);
     auto mchTrack = fMatching.FwdtoMCH(track);
-    // Propagate through absorber, stopping at targetZ (MFT plane, ~-46 to -77 cm).
     // extrapToVertex handles absorber material effects; zVtx=targetZ sets the stopping point. (set MFT z point)
     o2::mch::TrackExtrap::extrapToVertex(mchTrack, 0., 0., targetZ, 0., 0.);
     auto proptrack = fMatching.MCHtoFwd(mchTrack);
@@ -411,10 +410,6 @@ struct UpcCandProducerGlobalMuon {
     return result;
   }
 
-  // Step 3 of global muon refit:
-  // Extrapolates a GlobalFwdTrack (already at z_MFT, past the absorber) to z=0 using
-  // field-only propagation. No absorber material corrections are applied because the
-  // track is in the region between the absorber exit (~-90 cm) and the IP (z=0).
   auto propagateGlobalFwdToZero(const o2::dataformats::GlobalFwdTrack& globalTrack)
   {
     auto mchTrack = fMatching.FwdtoMCH(globalTrack);
@@ -462,7 +457,7 @@ struct UpcCandProducerGlobalMuon {
         o2::track::TrackParCovFwd mft{zMFT, tpars, tcovs, mfttrack.chi2()};
         auto refittedAtMFT = o2::aod::fwdtrackutils::refitGlobalMuonCov(propMuonAtMFT, mft);
 
-        // Step 3: Propagate refitted global track from z_MFT to vertex (z=0)
+        // Propagate refitted global track from z_MFT to vertex (z=0)
         pft = propagateGlobalFwdToZero(refittedAtMFT);
       } else {
         pft = propagateToZero(track);

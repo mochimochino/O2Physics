@@ -4,10 +4,10 @@ import glob
 import subprocess
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# 1. 全体設定
+# Settings
 BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
-LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリを変更
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltestPR0606")
+LIST_BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/List/"  # リストのベースディレクトリ
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltest0608")
 RETRY_LIST_DIR = os.path.join(BASE_DIR, "List_RetryPhitest") # 分割リストの保存先
 MAX_WORKERS = 15            # 並列実行数
 MAX_FILES_PER_RETRY = 2     # 再実行時の1リストあたりの最大ファイル数
@@ -31,6 +31,9 @@ def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):
     os.makedirs(output_dir, exist_ok=True)
     
     temp_json_path = os.path.join(output_dir, f"conf_{task_basename}.json")
+    
+    # 出力されるROOTファイルのパスを定義
+    root_file_path = os.path.join(output_dir, f"{task_basename}.root")
 
     try:
         with open(template_json_path, 'r') as f:
@@ -59,31 +62,34 @@ def run_o2_task(dataset_name, conf_filename, list_filepath, task_basename):
         )
         
         os.remove(temp_json_path)
-        return True, task_basename, None
+        # 成功時は ROOT ファイルのパスを返す
+        return True, task_basename, None, root_file_path
         
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr.decode('utf-8') if e.stderr else str(e)
         if os.path.exists(temp_json_path):
             os.remove(temp_json_path)
-        return False, task_basename, error_msg
+        # 失敗時はパスとして None を返す
+        return False, task_basename, error_msg, None
     except Exception as e:
         if os.path.exists(temp_json_path):
             os.remove(temp_json_path)
-        return False, task_basename, str(e)
+        return False, task_basename, str(e), None
 
 
 def main():
     failed_log_path = os.path.join(BASE_DIR, "failed_tasks.log")
     retry_failed_log_path = os.path.join(BASE_DIR, "failed_tasks_retry.log")
+    successful_list_path = os.path.join(BASE_DIR, "successful_root_files.txt")
     
     tasks_to_run = []
     failed_tasks_info = []
+    successful_root_files = [] # 成功したROOTファイルのパスを保存するリスト
 
     # ==========================================
     # フェーズ1: 初回並列実行
     # ==========================================
     for dataset, conf_file in DATASET_MAP.items():
-        # リストの取得元を LIST_BASE_DIR に変更
         list_dir = os.path.join(LIST_BASE_DIR, dataset)
         list_files = glob.glob(os.path.join(list_dir, "*.txt"))
         
@@ -104,10 +110,11 @@ def main():
         
         for future in as_completed(futures):
             original_task_info = futures[future] 
-            success, task_basename, error_msg = future.result()
+            success, task_basename, error_msg, root_file_path = future.result()
             
             if success:
                 print(f"[完了] {original_task_info[0]} / {task_basename}")
+                successful_root_files.append(root_file_path) # 成功したパスを追加
             else:
                 print(f"[エラー] {original_task_info[0]} / {task_basename} がクラッシュしました。")
                 failed_tasks_info.append(original_task_info)
@@ -118,6 +125,11 @@ def main():
                 f.write(f"{task[3]}\n")
     else:
         print("すべてのタスクが正常に完了しました。再実行フェーズはスキップします。")
+        # 再実行がない場合でも、成功リストを出力して終了
+        with open(successful_list_path, 'w') as f:
+            for path in successful_root_files:
+                f.write(path + "\n")
+        print(f"成功したROOTファイルのパスを '{successful_list_path}' に保存しました。")
         return
 
     # ==========================================
@@ -159,10 +171,11 @@ def main():
         
         for future in as_completed(futures):
             original_task_info = futures[future]
-            success, task_basename, error_msg = future.result()
+            success, task_basename, error_msg, root_file_path = future.result()
             
             if success:
                 print(f"[再実行-完了] {original_task_info[0]} / {task_basename}")
+                successful_root_files.append(root_file_path) # 再実行で成功したパスも追加
             else:
                 print(f"[再実行-エラー] {original_task_info[0]} / {task_basename} が再度クラッシュしました。")
                 final_failed_tasks.append((task_basename, error_msg))
@@ -171,6 +184,14 @@ def main():
     # 最終結果の出力
     # ==========================================
     print("\n--- 全プロセスの実行が終了しました ---")
+    
+    # 成功したROOTファイルのリストをテキストファイルに書き込む
+    if successful_root_files:
+        with open(successful_list_path, 'w') as f:
+            for path in successful_root_files:
+                f.write(path + "\n")
+        print(f"成功したROOTファイルのパスを '{successful_list_path}' に保存しました。")
+    
     if final_failed_tasks:
         print(f"警告: 再実行でも {len(final_failed_tasks)} 件のサブタスクが失敗しました。")
         with open(retry_failed_log_path, 'w') as f:

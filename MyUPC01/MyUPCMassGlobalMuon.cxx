@@ -137,10 +137,11 @@ struct MyUPCMassGlobalMuonTask {
     const AxisSpec axisPt{nBinsPt, 0., ptAxisMax, "#it{p}_{T,#mu#mu} (GeV/#it{c})"};
     const AxisSpec axisPt2{nBinsPt2, 0., pt2AxisMax, "#it{p}_{T,#mu#mu}^{2} (GeV^{2}/#it{c}^{2})"};
 
-    // --- Mandatory histograms (unlike-sign pairs only, by construction) ---
-    registry.add("hMassUnlike", "Invariant mass, unlike-sign pairs;;#counts", kTH1D, {axisMass});
-    registry.add("hPtUnlike", "Pair #it{p}_{T}, unlike-sign pairs;;#counts", kTH1D, {axisPt});
-    registry.add("hPt2Unlike", "Pair #it{p}_{T}^{2}, unlike-sign pairs;;#counts", kTH1D, {axisPt2});
+    // --- Mandatory histograms (unlike-sign pairs only, by construction)
+    //     Full mass range: all kinematic cuts except the pair mass cut applied ---
+    registry.add("hMassUnlike", "Invariant mass, unlike-sign pairs (full mass range);;#counts", kTH1D, {axisMass});
+    registry.add("hPtUnlike", "Pair #it{p}_{T}, unlike-sign pairs (full mass range);;#counts", kTH1D, {axisPt});
+    registry.add("hPt2Unlike", "Pair #it{p}_{T}^{2}, unlike-sign pairs (full mass range);;#counts", kTH1D, {axisPt2});
 
     // --- MC-truth counterparts (filled by processMcTruth only) ---
     registry.add("hMassTruth", "Invariant mass, MC truth unlike-sign pairs;;#counts", kTH1D, {axisMass});
@@ -188,10 +189,18 @@ struct MyUPCMassGlobalMuonTask {
     registry.add("hPhiMuon", "Single muon #phi;;#counts", kTH1F, {axisPhi});
     registry.add("hPtMuon", "Single muon #it{p}_{T};;#counts", kTH1F, {axisPtMuon});
 
-    // --- Pair kinematics QA ---
+    // --- Pair kinematics QA (full mass range) ---
     const AxisSpec axisRapidityPair{nBinsEtaQA, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}"};
-    registry.add("hRapidityPair", "Pair rapidity;;#counts", kTH1F, {axisRapidityPair});
-    registry.add("hPhiPair", "Pair #phi;;#counts", kTH1F, {axisPhi});
+    registry.add("hRapidityPair", "Pair rapidity (full mass range);;#counts", kTH1F, {axisRapidityPair});
+    registry.add("hPhiPair", "Pair #phi (full mass range);;#counts", kTH1F, {axisPhi});
+
+    // --- Mass/pT/pT2/phi/rapidity restricted to the configured mass window [pairMassMin, pairMassMax] ---
+    const AxisSpec axisMassInRange{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
+    registry.add("hMassInMassRange", "Invariant mass, unlike-sign pairs (in mass range);;#counts", kTH1D, {axisMassInRange});
+    registry.add("hPtInMassRange", "Pair #it{p}_{T}, unlike-sign pairs (in mass range);;#counts", kTH1D, {axisPt});
+    registry.add("hPt2InMassRange", "Pair #it{p}_{T}^{2}, unlike-sign pairs (in mass range);;#counts", kTH1D, {axisPt2});
+    registry.add("hRapidityPairInMassRange", "Pair rapidity (in mass range);;#counts", kTH1F, {axisRapidityPair});
+    registry.add("hPhiPairInMassRange", "Pair #phi (in mass range);;#counts", kTH1F, {axisPhi});
 
     // --- V0A QA ---
     registry.add("hV0AAmp", "Max V0A amplitude in same BC;Amplitude (a.u.);#counts", kTH1D, {{500, 0., 500.}});
@@ -363,9 +372,6 @@ struct MyUPCMassGlobalMuonTask {
     TLorentzVector p = p1 + p2;
     float pt2 = p.Pt() * p.Pt();
 
-    registry.fill(HIST("hRapidityPair"), p.Rapidity());
-    registry.fill(HIST("hPhiPair"), p.Phi());
-
     if (p.Pt() >= pairPtMax) {
       return;
     }
@@ -376,15 +382,25 @@ struct MyUPCMassGlobalMuonTask {
     }
     registry.fill(HIST("hCutFlow"), 10); // Pair_RapidityCut
 
+    // --- Full mass-range histograms (all cuts except the pair mass cut applied) ---
+    registry.fill(HIST("hMassUnlike"), p.M());
+    registry.fill(HIST("hPtUnlike"), p.Pt());
+    registry.fill(HIST("hPt2Unlike"), pt2);
+    registry.fill(HIST("hRapidityPair"), p.Rapidity());
+    registry.fill(HIST("hPhiPair"), p.Phi());
+
     if (p.M() <= pairMassMin || p.M() >= pairMassMax) {
       return;
     }
     registry.fill(HIST("hCutFlow"), 11); // Pair_MassCut
-
     registry.fill(HIST("hCutFlow"), 12); // Filled
-    registry.fill(HIST("hMassUnlike"), p.M());
-    registry.fill(HIST("hPtUnlike"), p.Pt());
-    registry.fill(HIST("hPt2Unlike"), pt2);
+
+    // --- Histograms restricted to the configured mass window [pairMassMin, pairMassMax] ---
+    registry.fill(HIST("hMassInMassRange"), p.M());
+    registry.fill(HIST("hPtInMassRange"), p.Pt());
+    registry.fill(HIST("hPt2InMassRange"), pt2);
+    registry.fill(HIST("hRapidityPairInMassRange"), p.Rapidity());
+    registry.fill(HIST("hPhiPairInMassRange"), p.Phi());
   }
 
   // Common candidate loop, shared between processData and processMcReco.

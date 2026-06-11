@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-runBatch.py
-AnalysisResults.root を指定の出力ディレクトリに <sample>.root としてコピーする。
-"""
 import os
 import glob
 import shutil
@@ -10,27 +6,23 @@ import subprocess
 import sys
 
 # ============================================================
-# ★ 設定ここから ★
+# Configuration
 # ============================================================
 
-# 入力データの親ディレクトリ（各サンプルのサブディレクトリが入っている場所）
-INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/Output_global0429test/"
+INPUT_BASE = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16549/Output_globaltest16549/"
 
-# 出力先ディレクトリ（AnalysisResults.root の保存先）
-OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/test/efficiency/0527/Unfold/Bayes/035/Coherent/test" # Now testing
+OUTPUT_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16549/Incoherent/" # Now testing
 
-# 解析タスク名
 #TASK_CMD = "o2-analysis-my-upc-muon-pair-resolutioneta-global-muon"
 #TASK_CMD = "o2-analysis-my-upc-muon-efficiency"
 TASK_CMD = "o2-analysis-my-upc-muon-analysis-mc"
 
-# 共有メモリサイズ
+
 SHM_SIZE = "10000000000"
 
-# サンプルリスト: (サブディレクトリ名, ファイルプレフィックス, 出力ファイル名)
 SAMPLES = [
-    ("jpsi-coh",       "jpsi-coh-*.root",        "jpsi-coh.root"),
-    #("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
+    #("jpsi-coh",       "jpsi-coh-*.root",        "jpsi-coh.root"),
+    ("jpsi-incoh",     "jpsi-incoh-*.root",       "jpsi-incoh.root"),
     #("psi2s-coh",      "psi2s-coh-*.root",        "psi2s-coh.root"),
     #("psi2s-incoh",    "psi2s-incoh-*.root",      "psi2s-incoh.root"),
     #("psi2s-coh-fd",   "psi2s-coh-fd-*.root",     "psi2s-coh-fd.root"),
@@ -40,9 +32,7 @@ SAMPLES = [
     #("mumu-high",      "mumu-high-*.root",        "mumu-high.root"),
 ]
 
-# ============================================================
-# ★ 設定ここまで ★
-# ============================================================
+
 
 LIST_FILENAME = "skimmed_aod_list.txt"
 

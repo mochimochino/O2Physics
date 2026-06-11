@@ -1,12 +1,12 @@
 import os
 
 # 1. パスの設定（前回の実行スクリプトに完全準拠）
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/"
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltest0608")
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16549/"
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltest16549")
 
 DATASETS = [
     "jpsi-coh",
-    #"jpsi-incoh",
+    "jpsi-incoh",
     #"mumu-high",
     #"mumu-low",
     #"mumu-mid",
@@ -16,14 +16,12 @@ DATASETS = [
     #"psi2s-incoh-fd"
 ]
 
-# ログファイルはBASE_DIR直下にあるため、パスを結合
 LOG_FILES = [
     os.path.join(BASE_DIR, "failed_tasks.log"),
     os.path.join(BASE_DIR, "failed_tasks_retry.log")
 ]
 
 def parse_failed_tasks(log_path):
-    """ログファイルから失敗したタスクのベース名(basename)のみを抽出する"""
     basenames = set()
     with open(log_path, 'r') as f:
         for line in f:

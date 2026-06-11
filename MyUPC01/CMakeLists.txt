@@ -49,4 +49,9 @@ o2physics_add_dpl_workflow(my-upc-mass-02
                            PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
                            COMPONENT_NAME Analysis)
 
+o2physics_add_dpl_workflow(my-upc-mass-global-muon
+                           SOURCES MyUPCMassGlobalMuon.cxx
+                           PUBLIC_LINK_LIBRARIES O2::Framework O2Physics::AnalysisCore
+                           COMPONENT_NAME Analysis)
+
 add_subdirectory(Resolution)

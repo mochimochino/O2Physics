@@ -1,15 +1,15 @@
 import os
 
 # 1. パスの設定（前回の実行スクリプトに完全準拠）
-BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16549/"
-OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltest16549")
+BASE_DIR = "/media/takuma/ESD-EAWA/Data/UPCcandMuon/MC/GlobalMuon/ResolutionAndEfficiency/16549/templatefit/"
+OUTPUT_BASE_DIR = os.path.join(BASE_DIR, "Output_globaltest16549Template")
 
 DATASETS = [
-    "jpsi-coh",
-    "jpsi-incoh",
-    #"mumu-high",
-    #"mumu-low",
-    #"mumu-mid",
+    #"jpsi-coh",
+    #"jpsi-incoh",
+    "mumu-high",
+    "mumu-low",
+    "mumu-mid",
     #"psi2s-coh",
     #"psi2s-coh-fd",
     #"psi2s-incoh",

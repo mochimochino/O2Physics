@@ -86,6 +86,12 @@ struct UPCMuonAnalysisMC {
   Configurable<float> pairMassMin{"pairMassMin", 1.0f, "Minimum dimuon pair mass [GeV/c^2]"};
   Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
 
+  // --- J/psi rapidity window for Acc x Eff denominator ---
+  Configurable<float> jpsiRapMin{"jpsiRapMin", -4.5f,
+                                 "Min J/psi rapidity for Acc x Eff denominator"};
+  Configurable<float> jpsiRapMax{"jpsiRapMax", -2.0f,
+                                 "Max J/psi rapidity for Acc x Eff denominator"};
+
   // --- Histogram binning: pair pT / pT^2 ---
   Configurable<int> nBinsPt{"nBinsPt", 1000, "Number of bins on pair pT axis"};
   Configurable<float> ptMax{"ptMax", 0.5f, "Upper edge of pair pT axis [GeV/c]"};
@@ -106,6 +112,7 @@ struct UPCMuonAnalysisMC {
   Configurable<float> pxpyTrackMax{"pxpyTrackMax", 10.0f, "Upper edge of track px/py axis [GeV/c]"};
 
   static constexpr int kMuonPDG = 13;
+  static constexpr int kJpsiPDG = 443;
   float mMu = 0.0f;
 
   // ===========================================================================
@@ -180,7 +187,7 @@ struct UPCMuonAnalysisMC {
   }
 
   // ---------------------------------------------------------------------------
-  // Efficiency histograms — single track
+  // Efficiency histograms — single track (Dont use Acceptance efficiency denominator, this histograms are required to muon goes detector, not Jpsi)
   // ---------------------------------------------------------------------------
   void initEfficiencySingleTrackHistograms()
   {
@@ -191,50 +198,41 @@ struct UPCMuonAnalysisMC {
     const AxisSpec axPhiMCAll{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{MC All} (rad)"};
     const AxisSpec axPhiMC{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{MC} (rad)"};
     const AxisSpec axPhiReco{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{reco} (rad)"};
-    const AxisSpec axPhiEff{120, 0.f, 1.2f, "Efficiency"};
 
     const AxisSpec axEtaMCAll{nBinsEta, -10.f, 10.f, "#eta^{MC All}"};
     const AxisSpec axEtaMC{nBinsEta, etaMin, etaMax, "#eta^{MC}"};
     const AxisSpec axEtaReco{nBinsEta, etaMin, etaMax, "#eta^{reco}"};
-    const AxisSpec axEtaEff{120, 0.f, 1.2f, "Efficiency"};
 
     const AxisSpec axPtMCAll{nBinsP, 0.f, 10.f, "#it{p}_{T}^{MC All} (GeV/#it{c})"};
     const AxisSpec axPtMC{nBinsP, pTmin, ptTrackMax, "#it{p}_{T}^{MC} (GeV/#it{c})"};
     const AxisSpec axPtReco{nBinsP, pTmin, ptTrackMax, "#it{p}_{T}^{reco} (GeV/#it{c})"};
-    const AxisSpec axPtEff{120, 0.f, 1.2f, "Efficiency"};
 
     registry.add("hEffTrkPhiMCAll", "Single track #phi MC All (eff)", kTH1F, {axPhiMCAll});
     registry.add("hEffTrkPhiMC", "Single track #phi MC (eff)", kTH1F, {axPhiMC});
     registry.add("hEffTrkPhiReco", "Single track #phi reco (eff)", kTH1F, {axPhiReco});
-    registry.add("hEffTrkPhiEff", "Single track #phi efficiency", kTH1F, {axPhiEff});
 
     registry.add("hEffTrkEtaMCAll", "Single track #eta MC All (eff)", kTH1F, {axEtaMCAll});
     registry.add("hEffTrkEtaMC", "Single track #eta MC (eff)", kTH1F, {axEtaMC});
     registry.add("hEffTrkEtaReco", "Single track #eta reco (eff)", kTH1F, {axEtaReco});
-    registry.add("hEffTrkEtaEff", "Single track #eta efficiency", kTH1F, {axEtaEff});
 
     registry.add("hEffTrkPtMCAll", "Single track #it{p}_{T} MC All (eff)", kTH1F, {axPtMCAll});
     registry.add("hEffTrkPtMC", "Single track #it{p}_{T} MC (eff)", kTH1F, {axPtMC});
     registry.add("hEffTrkPtReco", "Single track #it{p}_{T} reco (eff)", kTH1F, {axPtReco});
-    registry.add("hEffTrkPtEff", "Single track #it{p}_{T} efficiency", kTH1F, {axPtEff});
   }
 
   // ---------------------------------------------------------------------------
-  // Efficiency histograms — dimuon pair
+  // Efficiency histograms — dimuon pair 
   // ---------------------------------------------------------------------------
   void initEfficiencyPairHistograms()
   {
     const AxisSpec axPairPhiMC{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{pair,MC} (rad)"};
     const AxisSpec axPairPhiReco{nBinsPhi, -TMath::Pi(), TMath::Pi(), "#phi^{pair,reco} (rad)"};
-    const AxisSpec axPairPhiEff{120, 0.f, 1.2f, "Efficiency"};
 
     const AxisSpec axPairRapMC{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}^{pair,MC}"};
     const AxisSpec axPairRapReco{nBinsEta, pairRapidityMin, pairRapidityMax, "#it{y}^{pair,reco}"};
-    const AxisSpec axPairRapEff{120, 0.f, 1.2f, "Efficiency"};
 
     const AxisSpec axPairPtMC{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{pair,MC} (GeV/#it{c})"};
     const AxisSpec axPairPtReco{nBinsPt, 0.f, ptMax, "#it{p}_{T}^{pair,reco} (GeV/#it{c})"};
-    const AxisSpec axPairPtEff{120, 0.f, 1.2f, "Efficiency"};
 
     const AxisSpec axPairPt2MC{nBinsPt2, 0.f, pt2Max, "#it{p}_{T}^{2,pair,MC} (GeV^{2}/#it{c}^{2})"};
     const AxisSpec axPairPt2Reco{nBinsPt2, 0.f, pt2Max, "#it{p}_{T}^{2,pair,reco} (GeV^{2}/#it{c}^{2})"};
@@ -242,23 +240,38 @@ struct UPCMuonAnalysisMC {
     const AxisSpec axPairMassMC{nBinsMass, massAxisMin, massAxisMax, "#it{M}^{pair,MC} (GeV/#it{c}^{2})"};
     const AxisSpec axPairMassReco{nBinsMass, massAxisMin, massAxisMax, "#it{M}^{pair,reco} (GeV/#it{c}^{2})"};
 
+    // Dont use Acceptance efficiency denominator, this histograms are required to both muons goes detector, not Jpsi
     registry.add("hEffPairPhiMC", "Pair #phi MC (eff)", kTH1F, {axPairPhiMC});
     registry.add("hEffPairPhiReco", "Pair #phi reco (eff)", kTH1F, {axPairPhiReco});
-    registry.add("hEffPairPhiEff", "Pair #phi efficiency", kTH1F, {axPairPhiEff});
 
     registry.add("hEffPairRapidityMC", "Pair rapidity MC (eff)", kTH1F, {axPairRapMC});
     registry.add("hEffPairRapidityReco", "Pair rapidity reco (eff)", kTH1F, {axPairRapReco});
-    registry.add("hEffPairRapidityEff", "Pair rapidity efficiency", kTH1F, {axPairRapEff});
 
     registry.add("hEffPairPtMC", "Pair #it{p}_{T} MC (eff)", kTH1F, {axPairPtMC});
     registry.add("hEffPairPtReco", "Pair #it{p}_{T} reco (eff)", kTH1F, {axPairPtReco});
-    registry.add("hEffPairPtEff", "Pair #it{p}_{T} efficiency", kTH1F, {axPairPtEff});
 
     registry.add("hEffPairPt2MC", "Pair #it{p}_{T}^{2} MC (eff)", kTH1F, {axPairPt2MC});
     registry.add("hEffPairPt2Reco", "Pair #it{p}_{T}^{2} reco (eff)", kTH1F, {axPairPt2Reco});
 
     registry.add("hEffPairMassMC", "Pair mass MC (eff)", kTH1F, {axPairMassMC});
     registry.add("hEffPairMassReco", "Pair mass reco (eff)", kTH1F, {axPairMassReco});
+
+    // --- Acc x Eff denominator: J/psi parent particle ---
+    // Rapidity axis covers the wider generator window (jpsiRapMin to jpsiRapMax)
+    const AxisSpec axJpsiRap{nBinsEta, jpsiRapMin, jpsiRapMax,
+                             "#it{y}_{J/#psi}^{MC}"};
+    // pT axis is intentionally identical to hEffPairPtReco for bin-by-bin division
+    const AxisSpec axJpsiPt{nBinsPt, 0.f, ptMax,
+                            "#it{p}_{T,J/#psi}^{MC} (GeV/#it{c})"};
+    const AxisSpec axJpsiMass{200, 2.5f, 3.7f,
+                              "#it{M}_{J/#psi}^{MC} (GeV/#it{c}^{2})"};
+
+    registry.add("hAccEffDenomJpsiRap",  "J/#psi rapidity (Acc#timesEff denom)",
+                 kTH1F, {axJpsiRap});
+    registry.add("hAccEffDenomJpsiPt",   "J/#psi #it{p}_{T} (Acc#timesEff denom)",
+                 kTH1F, {axJpsiPt});
+    registry.add("hAccEffDenomJpsiMass", "J/#psi mass sanity check",
+                 kTH1F, {axJpsiMass});
   }
 
   // ---------------------------------------------------------------------------
@@ -565,6 +578,8 @@ struct UPCMuonAnalysisMC {
                      o2::aod::UDMcParticles const& mcParticles)
   {
     std::unordered_map<int32_t, std::vector<int32_t>> muonsPerMcColl;
+    // All muons with no η cut — used to build the Acc×Eff denominator
+    std::unordered_map<int32_t, std::vector<int32_t>> allMuonsPerMcColl;
 
     for (const auto& mc : mcParticles) {
       registry.fill(HIST("hCutFlowMC"), 0);
@@ -579,6 +594,9 @@ struct UPCMuonAnalysisMC {
       registry.fill(HIST("hEffTrkPhiMCAll"), v.Phi());
       registry.fill(HIST("hEffTrkEtaMCAll"), v.Eta());
       registry.fill(HIST("hEffTrkPtMCAll"), v.Pt());
+
+      // Collect all muons before acceptance cuts for Acc×Eff denominator
+      allMuonsPerMcColl[mc.udMcCollisionId()].push_back(mc.globalIndex());
 
       if (v.Eta() <= etaMin || v.Eta() >= etaMax)
         continue;
@@ -635,6 +653,32 @@ struct UPCMuonAnalysisMC {
           registry.fill(HIST("hEffPairPtMC"), pair.Pt());
           registry.fill(HIST("hEffPairPt2MC"), pair.Pt() * pair.Pt());
           registry.fill(HIST("hEffPairMassMC"), pair.M());
+        }
+      }
+    }
+
+    // --- Acc x Eff denominator: J/ψ reconstructed from MC muon daughters (no η cut) ---
+    // J/ψ (PDG=443) may not be stored as a particle in UDMcParticles, so we
+    // reconstruct it from all opposite-sign muon pairs in each MC collision.
+    for (const auto& item : allMuonsPerMcColl) {
+      const auto& ids = item.second;
+      for (size_t i = 0; i < ids.size(); ++i) {
+        auto mc1 = mcParticles.iteratorAt(ids[i]);
+        TLorentzVector v1;
+        v1.SetXYZM(mc1.px(), mc1.py(), mc1.pz(), mMu);
+        for (size_t j = i + 1; j < ids.size(); ++j) {
+          auto mc2 = mcParticles.iteratorAt(ids[j]);
+          if (mc1.pdgCode() * mc2.pdgCode() >= 0)
+            continue; // require opposite charge (μ⁺μ⁻)
+          TLorentzVector v2;
+          v2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
+          TLorentzVector vJpsi = v1 + v2;
+          float y = vJpsi.Rapidity();
+          if (y <= jpsiRapMin || y >= jpsiRapMax)
+            continue;
+          registry.fill(HIST("hAccEffDenomJpsiRap"),  y);
+          registry.fill(HIST("hAccEffDenomJpsiPt"),   vJpsi.Pt());
+          registry.fill(HIST("hAccEffDenomJpsiMass"), vJpsi.M());
         }
       }
     }

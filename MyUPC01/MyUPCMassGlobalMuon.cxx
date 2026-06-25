@@ -112,6 +112,14 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<int> nBinsPtMuon{"nBinsPtMuon", 250, "Number of bins on single-muon pT axis (QA)"};
   Configurable<float> ptMuonAxisMax{"ptMuonAxisMax", 5.0f, "Upper edge of single-muon pT axis (QA) [GeV/c]"};
 
+  // --- 3D histogram binning (Mass x Rapidity x pT, filled before pair kinematic cuts) ---
+  Configurable<int> nBinsMass3D{"nBinsMass3D", 200, "Mass bins for 3D histogram"};
+  Configurable<int> nBinsRap3D{"nBinsRap3D", 50, "Rapidity bins for 3D histogram"};
+  Configurable<float> rapMin3D{"rapMin3D", -5.0f, "Min rapidity for 3D histogram"};
+  Configurable<float> rapMax3D{"rapMax3D", 0.0f, "Max rapidity for 3D histogram"};
+  Configurable<int> nBinsPt3D{"nBinsPt3D", 100, "pT bins for 3D histogram"};
+  Configurable<float> ptMax3D{"ptMax3D", 1.0f, "Upper edge of pair pT axis for 3D histogram [GeV/c]"};
+
   float mMu = 0.0f;
 
   // ===========================================================================
@@ -193,6 +201,13 @@ struct MyUPCMassGlobalMuonTask {
     const AxisSpec axisRapidityPair{nBinsEtaQA, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}"};
     registry.add("hRapidityPair", "Pair rapidity (full mass range);;#counts", kTH1F, {axisRapidityPair});
     registry.add("hPhiPair", "Pair #phi (full mass range);;#counts", kTH1F, {axisPhi});
+
+    // --- 3D histogram: Mass x Rapidity x pT (before pair kinematic cuts, for macro-level slicing) ---
+    const AxisSpec axisMass3D{nBinsMass3D, massAxisMin, massAxisMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
+    const AxisSpec axisRap3D{nBinsRap3D, rapMin3D, rapMax3D, "#it{y}_{#mu#mu}"};
+    const AxisSpec axisPt3D{nBinsPt3D, 0.f, ptMax3D, "#it{p}_{T,#mu#mu} (GeV/#it{c})"};
+    registry.add("hMassRapPt3D", "Mass vs rapidity vs pair pT (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+    registry.add("hMassRapPt3DTruth", "Mass vs rapidity vs pair pT, MC truth (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
 
     // --- Mass/pT/pT2/phi/rapidity restricted to the configured mass window [pairMassMin, pairMassMax] ---
     const AxisSpec axisMassInRange{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
@@ -372,6 +387,10 @@ struct MyUPCMassGlobalMuonTask {
     TLorentzVector p = p1 + p2;
     float pt2 = p.Pt() * p.Pt();
 
+    // Fill 3D histogram before any pair-level kinematic cuts so the macro
+    // can slice any mass / rapidity / pT region afterwards.
+    registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
+
     if (p.Pt() >= pairPtMax) {
       return;
     }
@@ -542,6 +561,8 @@ struct MyUPCMassGlobalMuonTask {
           TLorentzVector v2;
           v2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
           TLorentzVector p = v1 + v2;
+
+          registry.fill(HIST("hMassRapPt3DTruth"), p.M(), p.Rapidity(), p.Pt());
 
           if (p.Pt() >= pairPtMax) {
             continue;

@@ -658,8 +658,6 @@ struct UPCMuonAnalysisMC {
     }
 
     // --- Acc x Eff denominator: J/ψ reconstructed from MC muon daughters (no η cut) ---
-    // J/ψ (PDG=443) may not be stored as a particle in UDMcParticles, so we
-    // reconstruct it from all opposite-sign muon pairs in each MC collision.
     for (const auto& item : allMuonsPerMcColl) {
       const auto& ids = item.second;
       for (size_t i = 0; i < ids.size(); ++i) {

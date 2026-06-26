@@ -111,6 +111,14 @@ struct UPCMuonAnalysisMC {
   Configurable<float> ptTrackMax{"ptTrackMax", 10.0f, "Upper edge of track pT axis [GeV/c]"};
   Configurable<float> pxpyTrackMax{"pxpyTrackMax", 10.0f, "Upper edge of track px/py axis [GeV/c]"};
 
+  // --- 3D histogram binning (Mass x Rapidity x pT, filled before pair kinematic cuts) ---
+  Configurable<int> nBinsMass3D{"nBinsMass3D", 200, "Mass bins for 3D histogram"};
+  Configurable<int> nBinsRap3D{"nBinsRap3D", 50, "Rapidity bins for 3D histogram"};
+  Configurable<float> rapMin3D{"rapMin3D", -5.0f, "Min rapidity for 3D histogram"};
+  Configurable<float> rapMax3D{"rapMax3D", 0.0f, "Max rapidity for 3D histogram"};
+  Configurable<int> nBinsPt3D{"nBinsPt3D", 100, "pT bins for 3D histogram"};
+  Configurable<float> ptMax3D{"ptMax3D", 1.0f, "Upper edge of pair pT axis for 3D histogram [GeV/c]"};
+
   static constexpr int kMuonPDG = 13;
   static constexpr int kJpsiPDG = 443;
   float mMu = 0.0f;
@@ -126,6 +134,7 @@ struct UPCMuonAnalysisMC {
     initControlHistograms();
     initEfficiencySingleTrackHistograms();
     initEfficiencyPairHistograms();
+    initPairMassRapPt3DHistograms();
     initResolutionSingleTrackHistograms();
     initResolutionPairHistograms();
   }
@@ -272,6 +281,19 @@ struct UPCMuonAnalysisMC {
                  kTH1F, {axJpsiPt});
     registry.add("hAccEffDenomJpsiMass", "J/#psi mass sanity check",
                  kTH1F, {axJpsiMass});
+  }
+
+  // ---------------------------------------------------------------------------
+  // 3D histogram: Mass x Rapidity x pT (filled before pair kinematic cuts)
+  // ---------------------------------------------------------------------------
+  void initPairMassRapPt3DHistograms()
+  {
+    const AxisSpec axisMass3D{nBinsMass3D, pairMassMin, pairMassMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
+    const AxisSpec axisRap3D{nBinsRap3D, rapMin3D, rapMax3D, "#it{y}_{#mu#mu}"};
+    const AxisSpec axisPt3D{nBinsPt3D, 0.f, ptMax3D, "#it{p}_{T,#mu#mu} (GeV/#it{c})"};
+
+    registry.add("hMassRapPt3DMC", "Mass vs rapidity vs pair pT, MC (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+    registry.add("hMassRapPt3DReco", "Mass vs rapidity vs pair pT, reco (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
   }
 
   // ---------------------------------------------------------------------------
@@ -519,6 +541,8 @@ struct UPCMuonAnalysisMC {
     registry.fill(HIST("hPairPt2MC_PreCut"), pairPt2MC);
     registry.fill(HIST("hPairPt2Reco_PreCut"), pairPt2Reco);
 
+    registry.fill(HIST("hMassRapPt3DReco"), pairMassReco, pairRapReco, pairPtReco);
+
     if (pairReco.Pt() >= pairPtMax)
       return;
     registry.fill(HIST("hCutFlowReco"), 14); // 14: Pair Pass Pt
@@ -635,6 +659,8 @@ struct UPCMuonAnalysisMC {
           registry.fill(HIST("hCutFlowMC"), 13);
 
           TLorentzVector pair = v1 + v2;
+
+          registry.fill(HIST("hMassRapPt3DMC"), pair.M(), pair.Rapidity(), pair.Pt());
 
           if (pair.Pt() >= pairPtMax)
             continue;

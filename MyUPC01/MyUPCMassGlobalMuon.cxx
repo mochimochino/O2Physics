@@ -232,6 +232,11 @@ struct MyUPCMassGlobalMuonTask {
       for (int i = 0; i < 4; ++i) {
         hTopologyCounter->GetXaxis()->SetBinLabel(i + 1, topologyClasses[i].Data());
       }
+      // --- ZDC and FV0 histograms restricted to pair-selected events ---
+      registry.add("hZNAvsZNC_PairSelected", "ZNA vs ZNC energy, pair-selected events;E_{ZNC} (TeV);E_{ZNA} (TeV)", kTH2D, {axisZDCEnergy, axisZDCEnergy});
+      const AxisSpec axisFV0Amp{100, 0., 500., "FV0A amplitude (a.u.)"};
+      registry.add("hFV0AmpVsZNA", "FV0A amplitude vs ZNA energy;E_{ZNA} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
+      registry.add("hFV0AmpVsZNC", "FV0A amplitude vs ZNC energy;E_{ZNC} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
     }
   }
 
@@ -253,8 +258,9 @@ struct MyUPCMassGlobalMuonTask {
 
   // V0A same-BC amplitude veto. Always fills the QA histogram; the cut itself (Table producer do same cut)
   // is applied only if useV0ACut == true.
+  // Returns {pass, maxAmpV0A} so the amplitude is available for FV0 vs ZDC correlation histograms.
   template <typename TCand>
-  bool passV0ACut(TCand const& cand)
+  std::pair<bool, float> passV0ACut(TCand const& cand)
   {
     const auto& ampsV0A = cand.amplitudesV0A();
     const auto& ampsRelBCsV0A = cand.ampRelBCsV0A();
@@ -267,7 +273,7 @@ struct MyUPCMassGlobalMuonTask {
     }
     registry.fill(HIST("hV0AAmp"), maxAmpV0A);
 
-    return maxAmpV0A < cutV0AAmp;
+    return {maxAmpV0A < cutV0AAmp, maxAmpV0A};
   }
 
   // Builds a per-candidate ZDC info map from the ZDC table (data only).
@@ -360,8 +366,10 @@ struct MyUPCMassGlobalMuonTask {
   // Shared between processData and processMcReco. The pair is guaranteed to
   // be unlike-sign (one mu+ and one mu-) by the HasTwoGoodTracks selection
   // in processCandidates.
+  // Returns true if the pair passed the individual-muon cuts and the 3D histogram was filled.
+  // The caller uses this to gate ZDC/FV0 correlation fills for pair-selected events.
   template <typename TTrack>
-  void fillPairHistograms(TTrack const& tr1, TTrack const& tr2)
+  bool fillPairHistograms(TTrack const& tr1, TTrack const& tr2)
   {
     TLorentzVector p1, p2;
     p1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
@@ -375,12 +383,12 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPtMuon"), p2.Pt());
 
     if (p1.Eta() <= etaMin || p1.Eta() >= etaMax || p2.Eta() <= etaMin || p2.Eta() >= etaMax) {
-      return;
+      return false;
     }
     registry.fill(HIST("hCutFlow"), 7); // Pair_EtaCut
 
     if (p1.Pt() < pTmin || p2.Pt() < pTmin) {
-      return;
+      return false;
     }
     registry.fill(HIST("hCutFlow"), 8); // Pair_PtCutMuon
 
@@ -392,12 +400,12 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
 
     if (p.Pt() >= pairPtMax) {
-      return;
+      return true;
     }
     registry.fill(HIST("hCutFlow"), 9); // Pair_PtCut
 
     if (p.Rapidity() <= pairRapidityMin || p.Rapidity() >= pairRapidityMax) {
-      return;
+      return true;
     }
     registry.fill(HIST("hCutFlow"), 10); // Pair_RapidityCut
 
@@ -409,7 +417,7 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPhiPair"), p.Phi());
 
     if (p.M() <= pairMassMin || p.M() >= pairMassMax) {
-      return;
+      return true;
     }
     registry.fill(HIST("hCutFlow"), 11); // Pair_MassCut
     registry.fill(HIST("hCutFlow"), 12); // Filled
@@ -420,6 +428,7 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPt2InMassRange"), pt2);
     registry.fill(HIST("hRapidityPairInMassRange"), p.Rapidity());
     registry.fill(HIST("hPhiPairInMassRange"), p.Phi());
+    return true;
   }
 
   // Common candidate loop, shared between processData and processMcReco.
@@ -443,13 +452,14 @@ struct MyUPCMassGlobalMuonTask {
       auto cand = eventCandidates.iteratorAt(candID);
       registry.fill(HIST("hNumContrib"), cand.numContrib());
 
-      if (useV0ACut && !passV0ACut(cand)) {
+      auto [v0Pass, fv0Amp] = passV0ACut(cand);
+      if (useV0ACut && !v0Pass) {
         continue;
       }
       registry.fill(HIST("hCutFlow"), 1); // V0A_pass
 
+      ZDCinfo zdc;
       if (applyZdc) {
-        ZDCinfo zdc;
         auto it = zdcMap.find(candID);
         if (it != zdcMap.end()) {
           zdc = it->second;
@@ -479,7 +489,13 @@ struct MyUPCMassGlobalMuonTask {
       }
       registry.fill(HIST("hCutFlow"), 6); // HasTwoGoodTracks
 
-      fillPairHistograms(tr1, tr2);
+      bool pairOk = fillPairHistograms(tr1, tr2);
+
+      if (applyZdc && pairOk) {
+        registry.fill(HIST("hZNAvsZNC_PairSelected"), zdc.enC, zdc.enA);
+        registry.fill(HIST("hFV0AmpVsZNA"), zdc.enA, fv0Amp);
+        registry.fill(HIST("hFV0AmpVsZNC"), zdc.enC, fv0Amp);
+      }
     }
   }
 

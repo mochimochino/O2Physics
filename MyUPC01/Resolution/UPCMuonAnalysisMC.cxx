@@ -35,6 +35,7 @@
 #include "TString.h"
 #include "TVector2.h"
 
+#include <algorithm>
 #include <cmath>
 #include <unordered_map>
 #include <vector>
@@ -294,6 +295,14 @@ struct UPCMuonAnalysisMC {
 
     registry.add("hMassRapPt3DMC", "Mass vs rapidity vs pair pT, MC (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
     registry.add("hMassRapPt3DReco", "Mass vs rapidity vs pair pT, reco (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+
+    // --- Mass vs eta vs p (acceptance-edge check), filled before any single-muon cuts ---
+    const AxisSpec axisEtaMuonQA{nBinsEta, etaMin, etaMax, "#eta_{#mu}"};
+    const AxisSpec axisPMuonQA{nBinsP, 0.f, pTrackMax, "#it{p}_{#mu} (GeV/#it{c})"};
+    registry.add("hMassEtaPMuon", "Pair mass vs single muon #eta vs #it{p} (both legs, reco);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisEtaMuonQA, axisPMuonQA});
+    // Per pair, only the leg closer to either acceptance edge (etaMin/etaMax) is filled here,
+    // to check whether one decay lepton is piling up against the detector acceptance boundary.
+    registry.add("hMassEtaPMuonEdge", "Pair mass vs single muon #eta vs #it{p}, leg closest to acceptance edge (reco);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisEtaMuonQA, axisPMuonQA});
   }
 
   // ---------------------------------------------------------------------------
@@ -522,6 +531,19 @@ struct UPCMuonAnalysisMC {
 
     TLorentzVector pairReco = recoVec1 + recoVec2;
     TLorentzVector pairMC = mcVec1 + mcVec2;
+
+    registry.fill(HIST("hMassEtaPMuon"), pairReco.M(), recoVec1.Eta(), recoVec1.P());
+    registry.fill(HIST("hMassEtaPMuon"), pairReco.M(), recoVec2.Eta(), recoVec2.P());
+
+    // Fill only the leg closer to either acceptance edge (etaMin/etaMax),
+    // to check whether one decay lepton is piling up against the boundary.
+    float distToEdge1 = std::min(recoVec1.Eta() - etaMin, etaMax - recoVec1.Eta());
+    float distToEdge2 = std::min(recoVec2.Eta() - etaMin, etaMax - recoVec2.Eta());
+    if (distToEdge1 <= distToEdge2) {
+      registry.fill(HIST("hMassEtaPMuonEdge"), pairReco.M(), recoVec1.Eta(), recoVec1.P());
+    } else {
+      registry.fill(HIST("hMassEtaPMuonEdge"), pairReco.M(), recoVec2.Eta(), recoVec2.P());
+    }
 
     const float pairPtMC = pairMC.Pt();
     const float pairPtReco = pairReco.Pt();

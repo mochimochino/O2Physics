@@ -35,6 +35,7 @@
 #include "TMath.h"
 #include "TString.h"
 
+#include <algorithm>
 #include <cmath>
 #include <unordered_map>
 #include <vector>
@@ -111,6 +112,8 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<int> nBinsEtaQA{"nBinsEtaQA", 80, "Number of bins on eta/rapidity axes (QA)"};
   Configurable<int> nBinsPtMuon{"nBinsPtMuon", 250, "Number of bins on single-muon pT axis (QA)"};
   Configurable<float> ptMuonAxisMax{"ptMuonAxisMax", 5.0f, "Upper edge of single-muon pT axis (QA) [GeV/c]"};
+  Configurable<int> nBinsPMuon{"nBinsPMuon", 250, "Number of bins on single-muon total-momentum axis (QA)"};
+  Configurable<float> pMuonAxisMax{"pMuonAxisMax", 200.0f, "Upper edge of single-muon total-momentum axis (QA) [GeV/c]"};
 
   // --- 3D histogram binning (Mass x Rapidity x pT, filled before pair kinematic cuts) ---
   Configurable<int> nBinsMass3D{"nBinsMass3D", 200, "Mass bins for 3D histogram"};
@@ -196,6 +199,13 @@ struct MyUPCMassGlobalMuonTask {
     registry.add("hEtaMuon", "Single muon #eta;;#counts", kTH1F, {axisEtaMuon});
     registry.add("hPhiMuon", "Single muon #phi;;#counts", kTH1F, {axisPhi});
     registry.add("hPtMuon", "Single muon #it{p}_{T};;#counts", kTH1F, {axisPtMuon});
+
+    // --- eta vs p (acceptance-edge check), filled before any single-muon cuts ---
+    const AxisSpec axisPMuon{nBinsPMuon, 0., pMuonAxisMax, "#it{p}_{#mu} (GeV/#it{c})"};
+    registry.add("hEtaVsPMuon", "Single muon #eta vs #it{p} (both legs);#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH2F, {axisEtaMuon, axisPMuon});
+    // Per pair, only the leg closer to either acceptance edge (etaMin/etaMax) is filled here,
+    // to check whether one decay lepton is piling up against the detector acceptance boundary.
+    registry.add("hEtaVsPMuonEdge", "Single muon #eta vs #it{p}, leg closest to acceptance edge;#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH2F, {axisEtaMuon, axisPMuon});
 
     // --- Pair kinematics QA (full mass range) ---
     const AxisSpec axisRapidityPair{nBinsEtaQA, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}"};
@@ -381,6 +391,19 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPhiMuon"), p2.Phi());
     registry.fill(HIST("hPtMuon"), p1.Pt());
     registry.fill(HIST("hPtMuon"), p2.Pt());
+
+    registry.fill(HIST("hEtaVsPMuon"), p1.Eta(), p1.P());
+    registry.fill(HIST("hEtaVsPMuon"), p2.Eta(), p2.P());
+
+    // Fill only the leg closer to either acceptance edge (etaMin/etaMax),
+    // to check whether one decay lepton is piling up against the boundary.
+    float distToEdge1 = std::min(p1.Eta() - etaMin, etaMax - p1.Eta());
+    float distToEdge2 = std::min(p2.Eta() - etaMin, etaMax - p2.Eta());
+    if (distToEdge1 <= distToEdge2) {
+      registry.fill(HIST("hEtaVsPMuonEdge"), p1.Eta(), p1.P());
+    } else {
+      registry.fill(HIST("hEtaVsPMuonEdge"), p2.Eta(), p2.P());
+    }
 
     if (p1.Eta() <= etaMin || p1.Eta() >= etaMax || p2.Eta() <= etaMin || p2.Eta() >= etaMax) {
       return false;

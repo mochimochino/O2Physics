@@ -17,6 +17,10 @@
 ///             single tracks and dimuon pairs.
 ///           - Efficiency: 1D MC-truth and reco histograms (phi, eta, pT) for single
 ///             tracks and dimuon pairs; ratio (eff) histograms.
+///           - High-pT tail diagnostics (run separately on Coherent/Incoherent MC
+///             samples and compared offline): pair Delta-pT (reco-MC) vs reco mass,
+///             |Delta-phi| between the two reco muons vs pair reco pT, and single-track
+///             eta/phi residual vs MC p (MFT-MCH matching bias).
 ///         The MC-reco processing loop is shared between both analyses.
 /// \author Takuma Matsumoto
 
@@ -119,6 +123,14 @@ struct UPCMuonAnalysisMC {
   Configurable<float> rapMax3D{"rapMax3D", 0.0f, "Max rapidity for 3D histogram"};
   Configurable<int> nBinsPt3D{"nBinsPt3D", 100, "pT bins for 3D histogram"};
   Configurable<float> ptMax3D{"ptMax3D", 1.0f, "Upper edge of pair pT axis for 3D histogram [GeV/c]"};
+
+  // --- High-pT tail diagnostics (coherent pT mismeasurement tail / Delta-phi edge / MFT-MCH matching bias) ---
+  // All filled before the pair pT/rapidity/mass cuts so the full high-pT tail is visible.
+  Configurable<int> nBinsDeltaPt{"nBinsDeltaPt", 200, "Bins on pair #Delta#it{p}_{T} (reco - MC) axis"};
+  Configurable<float> deltaPtMax{"deltaPtMax", 2.0f, "Max |#Delta#it{p}_{T}| for the coherent high-#it{p}_{T} tail check [GeV/c]"};
+  Configurable<int> nBinsPtTail{"nBinsPtTail", 200, "Bins on pair #it{p}_{T} axis used for the Delta-phi tail check"};
+  Configurable<float> ptTailMax{"ptTailMax", 2.0f, "Upper edge of pair #it{p}_{T} axis used for the Delta-phi tail check [GeV/c]"};
+  Configurable<int> nBinsDeltaPhi{"nBinsDeltaPhi", 180, "Bins on |#Delta#phi| axis between the two reco muons"};
 
   static constexpr int kMuonPDG = 13;
   static constexpr int kJpsiPDG = 443;
@@ -303,6 +315,20 @@ struct UPCMuonAnalysisMC {
     // Per pair, only the leg closer to either acceptance edge (etaMin/etaMax) is filled here,
     // to check whether one decay lepton is piling up against the detector acceptance boundary.
     registry.add("hMassEtaPMuonEdge", "Pair mass vs single muon #eta vs #it{p}, leg closest to acceptance edge (reco);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisEtaMuonQA, axisPMuonQA});
+
+    // --- Coherent high-pT tail check: pair Delta-pT (reco - MC) vs reco mass, before pair cuts.
+    // Run separately on Coherent and Incoherent MC samples; a diagonal mass-vs-pT tail here
+    // signals a mismeasured leg dragging the pair pT up while the mass drops.
+    const AxisSpec axisDeltaPt{nBinsDeltaPt, -deltaPtMax, deltaPtMax, "#it{p}_{T,#mu#mu}^{reco} - #it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
+    registry.add("hDeltaPtVsMassReco", "Pair #Delta#it{p}_{T} (reco-MC) vs reco mass (before pair cuts);#it{p}_{T,#mu#mu}^{reco} - #it{p}_{T,#mu#mu}^{MC} (GeV/#it{c});#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})", kTH2F, {axisDeltaPt, axisMass3D});
+
+    // --- Delta-phi between the two reco muons vs pair reco pT, before pair cuts.
+    // Compare the high-pT slice of this histogram between Coherent and Incoherent samples:
+    // an unnaturally sharp edge near pi in the Coherent high-pT tail indicates pair-pT smearing
+    // artificially squeezing the two legs together/apart in phi.
+    const AxisSpec axisPtTail{nBinsPtTail, 0.f, ptTailMax, "#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c})"};
+    const AxisSpec axisDeltaPhi{nBinsDeltaPhi, 0.f, TMath::Pi(), "|#Delta#phi^{reco}_{#mu#mu}| (rad)"};
+    registry.add("hDeltaPhiVsPairPtReco", "|#Delta#phi| between reco muons vs pair #it{p}_{T} (before pair cuts);#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c});|#Delta#phi^{reco}_{#mu#mu}| (rad)", kTH2F, {axisPtTail, axisDeltaPhi});
   }
 
   // ---------------------------------------------------------------------------
@@ -330,15 +356,16 @@ struct UPCMuonAnalysisMC {
     const AxisSpec axPzReco{nBinsP, -pTrackMax, 0.f, "#it{p}_{z}^{reco} (GeV/#it{c})"};
     const AxisSpec axPRelRes{200, -0.5f, 0.5f, "(#it{p}^{reco} - #it{p}^{MC}) / #it{p}^{MC}"};
 
+    // Note: reco-side phi/eta/pT marginal distributions are not duplicated here —
+    // they are identical in content to hEffTrkPhiReco/hEffTrkEtaReco/hEffTrkPtReco
+    // (same selection, same fill value), so only the MC-side truth distributions
+    // of matched-and-reconstructed tracks are kept.
     registry.add("hResoTrkPhiMC", "Track #phi MC (reso)", kTH1F, {axPhiMC});
-    registry.add("hResoTrkPhiReco", "Track #phi Reco (reso)", kTH1F, {axPhiReco});
     registry.add("hResoTrkEtaMC", "Track #eta MC (reso)", kTH1F, {axEtaMC});
-    registry.add("hResoTrkEtaReco", "Track #eta Reco (reso)", kTH1F, {axEtaReco});
 
     registry.add("hResoTrkPMC", "Track #it{p} MC", kTH1F, {axPMC});
     registry.add("hResoTrkPReco", "Track #it{p} Reco", kTH1F, {axPReco});
     registry.add("hResoTrkPtMC", "Track #it{p}_{T} MC (reso)", kTH1F, {axPtMC});
-    registry.add("hResoTrkPtReco", "Track #it{p}_{T} Reco (reso)", kTH1F, {axPtReco});
     registry.add("hResoTrkPxMC", "Track #it{p}_{x} MC", kTH1F, {axPxMC});
     registry.add("hResoTrkPxReco", "Track #it{p}_{x} Reco", kTH1F, {axPxReco});
     registry.add("hResoTrkPyMC", "Track #it{p}_{y} MC", kTH1F, {axPyMC});
@@ -353,6 +380,11 @@ struct UPCMuonAnalysisMC {
     registry.add("hResoPx", "Track #it{p}_{x} Resolution", kTH2F, {axPxMC, axPRelRes});
     registry.add("hResoPy", "Track #it{p}_{y} Resolution", kTH2F, {axPyMC, axPRelRes});
     registry.add("hResoPz", "Track #it{p}_{z} Resolution", kTH2F, {axPzMC, axPRelRes});
+
+    // --- MFT-MCH matching bias check: eta/phi residual vs MC p, low-p region is where
+    // multiple-scattering-driven angle bias (track opening/closing) is expected to show up.
+    registry.add("hResoEtaVsP", "Track #eta Resolution vs #it{p}^{MC} (MFT-MCH matching bias)", kTH2F, {axPMC, axEtaRes});
+    registry.add("hResoPhiVsP", "Track #phi Resolution vs #it{p}^{MC} (MFT-MCH matching bias)", kTH2F, {axPMC, axPhiRes});
   }
 
   // ---------------------------------------------------------------------------
@@ -479,14 +511,11 @@ struct UPCMuonAnalysisMC {
     vMC.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
 
     registry.fill(HIST("hResoTrkPhiMC"), vMC.Phi());
-    registry.fill(HIST("hResoTrkPhiReco"), vReco.Phi());
     registry.fill(HIST("hResoTrkEtaMC"), vMC.Eta());
-    registry.fill(HIST("hResoTrkEtaReco"), vReco.Eta());
 
     registry.fill(HIST("hResoTrkPMC"), vMC.P());
     registry.fill(HIST("hResoTrkPReco"), vReco.P());
     registry.fill(HIST("hResoTrkPtMC"), vMC.Pt());
-    registry.fill(HIST("hResoTrkPtReco"), vReco.Pt());
     registry.fill(HIST("hResoTrkPxMC"), vMC.Px());
     registry.fill(HIST("hResoTrkPxReco"), vReco.Px());
     registry.fill(HIST("hResoTrkPyMC"), vMC.Py());
@@ -496,6 +525,10 @@ struct UPCMuonAnalysisMC {
 
     registry.fill(HIST("hResoPhi"), vMC.Phi(), TVector2::Phi_mpi_pi(vReco.Phi() - vMC.Phi()));
     registry.fill(HIST("hResoEta"), vMC.Eta(), vReco.Eta() - vMC.Eta());
+
+    // MFT-MCH matching bias: eta/phi residual vs MC p (low-p emphasises multiple-scattering bias)
+    registry.fill(HIST("hResoEtaVsP"), vMC.P(), vReco.Eta() - vMC.Eta());
+    registry.fill(HIST("hResoPhiVsP"), vMC.P(), TVector2::Phi_mpi_pi(vReco.Phi() - vMC.Phi()));
 
     if (vMC.P() > 0.f)
       registry.fill(HIST("hResoP"), vMC.P(), (vReco.P() - vMC.P()) / vMC.P());
@@ -564,6 +597,13 @@ struct UPCMuonAnalysisMC {
     registry.fill(HIST("hPairPt2Reco_PreCut"), pairPt2Reco);
 
     registry.fill(HIST("hMassRapPt3DReco"), pairMassReco, pairRapReco, pairPtReco);
+
+    // Coherent high-pT tail: Delta-pT (reco-MC) vs reco mass, before pair cuts.
+    registry.fill(HIST("hDeltaPtVsMassReco"), pairPtReco - pairPtMC, pairMassReco);
+
+    // Delta-phi between the two reco muons vs pair reco pT, before pair cuts.
+    float deltaPhiReco = std::abs(TVector2::Phi_mpi_pi(recoVec1.Phi() - recoVec2.Phi()));
+    registry.fill(HIST("hDeltaPhiVsPairPtReco"), pairPtReco, deltaPhiReco);
 
     if (pairReco.Pt() >= pairPtMax)
       return;

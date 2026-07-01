@@ -120,6 +120,12 @@ struct UPCMuonAnalysisAlignmentDebug {
   Configurable<float> ptTrackMax{"ptTrackMax", 10.0f, "Upper edge of track pT axis [GeV/c]"};
   Configurable<float> pxpyTrackMax{"pxpyTrackMax", 10.0f, "Upper edge of track px/py axis [GeV/c]"};
 
+  // --- [Debug-5] Pair resolution vs muon pT asymmetry ---
+  Configurable<int> nBinsDeltaPtMuons{"nBinsDeltaPtMuons", 200,
+                                      "Bins on (p_{T,mu+} - p_{T,mu-}) axis for the pair-resolution-vs-muon-pT-asymmetry check"};
+  Configurable<float> deltaPtMuonsMax{"deltaPtMuonsMax", 5.0f,
+                                      "Max |p_{T,mu+} - p_{T,mu-}| for the pair-resolution-vs-muon-pT-asymmetry check [GeV/c]"};
+
   static constexpr int kMuonPDG = 13;
   float mMu = 0.0f;
 
@@ -475,6 +481,60 @@ struct UPCMuonAnalysisAlignmentDebug {
     registry.add("hDebugDeltaDeltaPhiVsPtMCNeg",
                  "Debug #Delta(#Delta#phi) vs #it{p}_{T,#mu}^{MC} (pre-kin. cuts, negative only)",
                  kTH2F, {axSinglePtMCDbg, axDeltaDeltaPhi});
+
+    // --- [Debug-7] Plain reco #Delta#phi (mu+ - mu-) vs pair-level kinematics ---
+    // Unlike hDebugDeltaDeltaPhi (which uses the reco-MC residual to isolate a
+    // pure alignment rotation), this looks at the raw reco opening angle in
+    // phi directly, to check whether it correlates with the pair pT
+    // resolution, the absolute reco pair pT, or the reco pair mass.
+    const AxisSpec axDeltaPhiReco{nBinsPhi, -TMath::Pi(), TMath::Pi(),
+                                  "(#phi_{#mu^{+}}-#phi_{#mu^{-}})^{reco} (rad)"};
+    const AxisSpec axPairPtDeltaDbg{nBinsPt, -ptMax, ptMax,
+                                    "#it{p}_{T,#mu#mu}^{reco}-#it{p}_{T,#mu#mu}^{MC} (GeV/#it{c})"};
+    const AxisSpec axPairPtRecoDbg{nBinsPt, 0.f, ptMax,
+                                   "#it{p}_{T,#mu#mu}^{reco} (GeV/#it{c})"};
+    const AxisSpec axPairMassRecoDbg{nBinsMass, massAxisMin, massAxisMax,
+                                     "#it{M}_{#mu#mu}^{reco} (GeV/#it{c}^{2})"};
+
+    registry.add("hDebugDeltaPhiVsDeltaPairPt",
+                 "Debug #Delta#phi vs #it{p}_{T,#mu#mu}^{reco}-#it{p}_{T,#mu#mu}^{MC} (pre-kin. cuts)",
+                 kTH2F, {axPairPtDeltaDbg, axDeltaPhiReco});
+    registry.add("hDebugDeltaPhiVsPairPtReco",
+                 "Debug #Delta#phi vs #it{p}_{T,#mu#mu}^{reco} (pre-kin. cuts)",
+                 kTH2F, {axPairPtRecoDbg, axDeltaPhiReco});
+    registry.add("hDebugDeltaPhiVsPairMassReco",
+                 "Debug #Delta#phi vs #it{M}_{#mu#mu}^{reco} (pre-kin. cuts)",
+                 kTH2F, {axPairMassRecoDbg, axDeltaPhiReco});
+
+    // --- [Debug-5] Pair mass / pT resolution vs muon pT asymmetry ---
+    // A pT-dependent momentum-scale or material-budget bias affects the two
+    // legs differently when their pT split is very unequal; this can show up
+    // as a pair mass/pT resolution that shifts or widens with
+    // (p_{T,mu+} - p_{T,mu-})^{MC}. Filled post-cut, same population as the
+    // standard hPairMassResoVsMassMC / hPairPtResoVsPtMC histograms.
+    const AxisSpec axDeltaPtMuonsMC{nBinsDeltaPtMuons, -deltaPtMuonsMax, deltaPtMuonsMax,
+                                    "p_{T,#mu^{+}}^{MC} - p_{T,#mu^{-}}^{MC} (GeV/c)"};
+    const AxisSpec axPairMassResDbg{200, -0.5f, 0.5f,
+                                    "#it{M}_{#mu#mu}^{reco} - #it{M}_{#mu#mu}^{MC} (GeV/#it{c}^{2})"};
+    const AxisSpec axPairPtRelResDbg{200, -1.0f, 1.0f,
+                                     "(#it{p}_{T}^{reco} - #it{p}_{T}^{MC}) / #it{p}_{T}^{MC}"};
+
+    registry.add("hPairMassResoVsDeltaPtMuonsMC",
+                 "Debug pair mass resolution vs muon p_{T} asymmetry (post-cut)",
+                 kTH2F, {axDeltaPtMuonsMC, axPairMassResDbg});
+    registry.add("hPairPtResoVsDeltaPtMuonsMC",
+                 "Debug pair p_{T} resolution vs muon p_{T} asymmetry (post-cut)",
+                 kTH2F, {axDeltaPtMuonsMC, axPairPtRelResDbg});
+
+    // --- [Debug-6] Pair pT resolution vs softer-leg pT ---
+    // The softer (smaller-pT) leg generally has the worse single-track pT
+    // resolution (more affected by multiple scattering at low p), so it is
+    // likely to dominate the pair pT resolution. Binning by min(pT1,pT2)^MC
+    // tests this directly, independent of which leg carries which charge.
+    const AxisSpec axSoftMuonPtMC{nBinsP, 0.f, ptTrackMax, "min(p_{T,#mu1},p_{T,#mu2})^{MC} (GeV/c)"};
+    registry.add("hPairPtResoVsSoftMuonPtMC",
+                 "Debug pair p_{T} resolution vs softer-leg p_{T}^{MC} (post-cut)",
+                 kTH2F, {axSoftMuonPtMC, axPairPtRelResDbg});
   }
 
   // ===========================================================================
@@ -674,6 +734,11 @@ struct UPCMuonAnalysisAlignmentDebug {
                     TVector2::Phi_mpi_pi(deltaPhiReco - deltaPhiMC));
       registry.fill(HIST("hDebugDeltaDeltaPhiVsPtMCNeg"), PtMCNeg,
                     TVector2::Phi_mpi_pi(deltaPhiReco - deltaPhiMC));
+
+      // [Debug-7] plain reco Delta-phi vs pair-level kinematics
+      registry.fill(HIST("hDebugDeltaPhiVsDeltaPairPt"), pairPtReco - pairPtMC, deltaPhiReco);
+      registry.fill(HIST("hDebugDeltaPhiVsPairPtReco"), pairPtReco, deltaPhiReco);
+      registry.fill(HIST("hDebugDeltaPhiVsPairMassReco"), pairMassReco, deltaPhiReco);
     }
 
     if (pairReco.Pt() >= pairPtMax)
@@ -720,6 +785,18 @@ struct UPCMuonAnalysisAlignmentDebug {
     registry.fill(HIST("hResponseMatrixPairPt2"), pairPt2MC, pairPt2Reco);
     if (pairPt2MC > 0.f)
       registry.fill(HIST("hPairPt2ResoVsPt2MC"), pairPt2MC, (pairPt2Reco - pairPt2MC) / pairPt2MC);
+
+    // [Debug-5] Pair mass / pT resolution vs muon pT asymmetry (PtMCPos/PtMCNeg
+    // already identified above for the Delta(Delta-phi) check)
+    const float deltaPtMuonsMC = PtMCPos - PtMCNeg;
+    registry.fill(HIST("hPairMassResoVsDeltaPtMuonsMC"), deltaPtMuonsMC, pairMassReco - pairMassMC);
+    if (pairPtMC > 0.f)
+      registry.fill(HIST("hPairPtResoVsDeltaPtMuonsMC"), deltaPtMuonsMC, (pairPtReco - pairPtMC) / pairPtMC);
+
+    // [Debug-6] Pair pT resolution vs softer-leg pT
+    const float softMuonPtMC = (mcVec1.Pt() < mcVec2.Pt()) ? mcVec1.Pt() : mcVec2.Pt();
+    if (pairPtMC > 0.f)
+      registry.fill(HIST("hPairPtResoVsSoftMuonPtMC"), softMuonPtMC, (pairPtReco - pairPtMC) / pairPtMC);
 
     registry.fill(HIST("hEffPairPhiReco"), pairPhiReco);
     registry.fill(HIST("hEffPairRapidityReco"), pairRapReco);

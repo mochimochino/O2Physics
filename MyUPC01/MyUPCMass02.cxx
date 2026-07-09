@@ -183,6 +183,14 @@ struct MyUPCMass02 {
   Configurable<float> lowRapidity{"lowRapidity", -4.0f, "lower limit in rapidity histo"};
   Configurable<float> highRapidity{"highRapidity", -2.5f, "upper limit in rapidity histo"};
 
+  // --- 3D histogram binning (Mass x Rapidity x pT, filled before pair kinematic cuts) ---
+  Configurable<int> nBinsMass3D{"nBinsMass3D", 200, "Mass bins for 3D histogram"};
+  Configurable<int> nBinsRap3D{"nBinsRap3D", 50, "Rapidity bins for 3D histogram"};
+  Configurable<float> rapMin3D{"rapMin3D", -5.0f, "Min rapidity for 3D histogram"};
+  Configurable<float> rapMax3D{"rapMax3D", 0.0f, "Max rapidity for 3D histogram"};
+  Configurable<int> nBinsPt3D{"nBinsPt3D", 100, "pT bins for 3D histogram"};
+  Configurable<float> ptMax3D{"ptMax3D", 1.0f, "Upper edge of pair pT axis for 3D histogram [GeV/c]"};
+
   Configurable<int> myTrackType{"myTrackType", 3, "My track type (0 = MFT, 1 = MCH-MID)"};
   Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold [TeV]"};
   Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold [TeV]"};
@@ -195,6 +203,11 @@ struct MyUPCMass02 {
     const AxisSpec axisRapidity{nBinsRapidity, lowRapidity, highRapidity, "Rapidity"};
     const AxisSpec axisCounter{1, 0, +1, ""};
     const AxisSpec axisV0A{500, 0.0, 500.0, "Max V0A Amplitude (Same BC) [a.u.]"};
+
+    // --- 3D histogram: Mass x Rapidity x pT (before pair kinematic cuts, for macro-level slicing) ---
+    const AxisSpec axisMass3D{nBinsMass3D, lowMass, highMass, "m_{#mu#mu} GeV/#it{c}^{2}"};
+    const AxisSpec axisRap3D{nBinsRap3D, rapMin3D, rapMax3D, "Rapidity"};
+    const AxisSpec axisPt3D{nBinsPt3D, 0.f, ptMax3D, "#it{p}_{T} GeV/#it{c}"};
 
     // Add event counter
     registry.add("eventCounter", "Processed Events", kTH1F, {axisCounter});
@@ -218,8 +231,13 @@ struct MyUPCMass02 {
 
     registry.add("hMassVsRapidityUnlike", "Invariant mass vs Rapidity of Unlike-sign pairs;Rapidity;m_{#mu#mu} GeV/#it{c}^{2}", kTH2D, {axisRapidity, axisMass});
 
+    registry.add("hMassRapPt3D", "Mass vs rapidity vs pair pT, reco (before pair cuts);m_{#mu#mu} GeV/#it{c}^{2};Rapidity;#it{p}_{T} GeV/#it{c}", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+
     mcGenRegistry.add("hMass", "Invariant mass of muon pairs;;#counts", kTH1D, {axisMass});
     mcRecoRegistry.add("hMass", "Invariant mass of muon pairs;;#counts", kTH1D, {axisMass});
+
+    mcGenRegistry.add("hMassRapPt3D", "Mass vs rapidity vs pair pT, MC truth (before pair cuts);m_{#mu#mu} GeV/#it{c}^{2};Rapidity;#it{p}_{T} GeV/#it{c}", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+    mcRecoRegistry.add("hMassRapPt3D", "Mass vs rapidity vs pair pT, MC reco (before pair cuts);m_{#mu#mu} GeV/#it{c}^{2};Rapidity;#it{p}_{T} GeV/#it{c}", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
   }
 
   float particleMass(int pid) { return pdg->Mass(pid); }
@@ -349,10 +367,17 @@ struct MyUPCMass02 {
     p2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
     TLorentzVector p = p1 + p2;
 
+    bool isUnlikeSign = (tr1.sign() + tr2.sign()) == 0;
+
     if (p1.Eta() <= kEtaMinGeneral || p1.Eta() >= kEtaMaxGeneral ||
         p2.Eta() <= kEtaMinGeneral || p2.Eta() >= kEtaMaxGeneral)
       return;
     registry.fill(HIST("hSelectionCounter"), 7); // 7: EtaCut
+
+    // 3D histogram (Mass x Rapidity x pT), filled before pair pT/rapidity/mass cuts
+    if (isUnlikeSign) {
+      registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
+    }
 
     if (p.Pt() >= highPt)
       return;
@@ -366,7 +391,6 @@ struct MyUPCMass02 {
       return;
     registry.fill(HIST("hSelectionCounter"), 10); // 10: MassCut
 
-    bool isUnlikeSign = (tr1.sign() + tr2.sign()) == 0;
     if (isUnlikeSign) {
       registry.fill(HIST("hSelectionCounter"), 11); // 11: UnlikeSign
       registry.fill(HIST("hMassUnlike"), p.M());
@@ -484,6 +508,9 @@ struct MyUPCMass02 {
     p2.SetXYZM(McPart2.px(), McPart2.py(), McPart2.pz(), mMu);
     TLorentzVector p = p1 + p2;
 
+    // 3D histogram (Mass x Rapidity x pT), filled before pair pT/rapidity/mass cuts
+    mcGenRegistry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
+
     if (p.M() <= lowMass || p.M() >= highMass)
       return;
     if (p.Pt() >= highPt)
@@ -540,6 +567,9 @@ struct MyUPCMass02 {
     p1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
     p2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
     TLorentzVector p = p1 + p2;
+
+    // 3D histogram (Mass x Rapidity x pT), filled before pair pT/rapidity/mass cuts
+    mcRecoRegistry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
 
     if (p.M() <= lowMass || p.M() >= highMass)
       return;

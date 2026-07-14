@@ -240,6 +240,14 @@ struct UPCMuonAnalysisMC {
     registry.add("hEffTrkPtMCAll", "Single track #it{p}_{T} MC All (eff)", kTH1F, {axPtMCAll});
     registry.add("hEffTrkPtMC", "Single track #it{p}_{T} MC (eff)", kTH1F, {axPtMC});
     registry.add("hEffTrkPtReco", "Single track #it{p}_{T} reco (eff)", kTH1F, {axPtReco});
+
+    // (eta,phi) maps, used to build 2D (Acc x Eff) maps and compare
+    // Global-vs-Standalone track-type reconstruction locally in eta-phi space.
+    // hEffTrkEtaPhiMC uses the same acceptance-cut MC-truth population as
+    // hEffTrkEtaMC/hEffTrkPhiMC; hEffTrkEtaPhiReco uses the same reco-track
+    // population as hEffTrkEtaReco/hEffTrkPhiReco (single reqTrackType per run).
+    registry.add("hEffTrkEtaPhiMC", "Single track #eta vs #phi MC (eff)", kTH2F, {axEtaMC, axPhiMC});
+    registry.add("hEffTrkEtaPhiReco", "Single track #eta vs #phi reco (eff)", kTH2F, {axEtaReco, axPhiReco});
   }
 
   // ---------------------------------------------------------------------------
@@ -694,6 +702,7 @@ struct UPCMuonAnalysisMC {
 
       registry.fill(HIST("hEffTrkPhiMC"), v.Phi());
       registry.fill(HIST("hEffTrkEtaMC"), v.Eta());
+      registry.fill(HIST("hEffTrkEtaPhiMC"), v.Eta(), v.Phi());
       registry.fill(HIST("hEffTrkPtMC"), v.Pt());
 
       muonsPerMcColl[mc.udMcCollisionId()].push_back(mc.globalIndex());
@@ -843,6 +852,7 @@ struct UPCMuonAnalysisMC {
         vReco.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
         registry.fill(HIST("hEffTrkPhiReco"), vReco.Phi());
         registry.fill(HIST("hEffTrkEtaReco"), vReco.Eta());
+        registry.fill(HIST("hEffTrkEtaPhiReco"), vReco.Eta(), vReco.Phi());
         registry.fill(HIST("hEffTrkPtReco"), vReco.Pt());
 
         // Resolution: single-track histograms

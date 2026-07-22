@@ -207,6 +207,11 @@ struct MyUPCMassGlobalMuonTask {
     // to check whether one decay lepton is piling up against the detector acceptance boundary.
     registry.add("hEtaVsPMuonEdge", "Single muon #eta vs #it{p}, leg closest to acceptance edge;#eta_{#mu};#it{p}_{#mu} (GeV/#it{c})", kTH2F, {axisEtaMuon, axisPMuon});
 
+    // eta-phi acceptance map (both legs, before any single-muon cuts), filled identically
+    // for data and MC reco (shared fillPairHistograms) so the two can be overlaid to spot
+    // detector dead zones / acceptance holes not reproduced in the simulation geometry.
+    registry.add("hEtaPhiMuon", "Single muon #eta vs #phi (both legs, before cuts);#eta_{#mu};#phi (rad)", kTH2F, {axisEtaMuon, axisPhi});
+
     // --- Pair kinematics QA (full mass range) ---
     const AxisSpec axisRapidityPair{nBinsEtaQA, pairRapidityMin, pairRapidityMax, "#it{y}_{#mu#mu}"};
     registry.add("hRapidityPair", "Pair rapidity (full mass range);;#counts", kTH1F, {axisRapidityPair});
@@ -226,6 +231,9 @@ struct MyUPCMassGlobalMuonTask {
     registry.add("hPt2InMassRange", "Pair #it{p}_{T}^{2}, unlike-sign pairs (in mass range);;#counts", kTH1D, {axisPt2});
     registry.add("hRapidityPairInMassRange", "Pair rapidity (in mass range);;#counts", kTH1F, {axisRapidityPair});
     registry.add("hPhiPairInMassRange", "Pair #phi (in mass range);;#counts", kTH1F, {axisPhi});
+    // Single-muon MCH-MFT match chi2 for muons whose pair survives all cuts
+    // and is counted in the mass range above (both legs filled, GlobalMuon only).
+    registry.add("hChi2MatchMCHMFTInMassRange", "MCH-MFT match #chi^{2}, muons in selected pairs (in mass range);#chi^{2};#counts", kTH1F, {{220, -10., 200.}});
 
     // --- V0A QA ---
     registry.add("hV0AAmp", "Max V0A amplitude in same BC;Amplitude (a.u.);#counts", kTH1D, {{500, 0., 500.}});
@@ -395,6 +403,9 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hEtaVsPMuon"), p1.Eta(), p1.P());
     registry.fill(HIST("hEtaVsPMuon"), p2.Eta(), p2.P());
 
+    registry.fill(HIST("hEtaPhiMuon"), p1.Eta(), p1.Phi());
+    registry.fill(HIST("hEtaPhiMuon"), p2.Eta(), p2.Phi());
+
     // Fill only the leg closer to either acceptance edge (etaMin/etaMax),
     // to check whether one decay lepton is piling up against the boundary.
     float distToEdge1 = std::min(p1.Eta() - etaMin, etaMax - p1.Eta());
@@ -451,6 +462,12 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPt2InMassRange"), pt2);
     registry.fill(HIST("hRapidityPairInMassRange"), p.Rapidity());
     registry.fill(HIST("hPhiPairInMassRange"), p.Phi());
+
+    // MCH-MFT match chi2 is only meaningful for GlobalMuon tracks (undefined for MuonStandalone).
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      registry.fill(HIST("hChi2MatchMCHMFTInMassRange"), tr1.chi2MatchMCHMFT());
+      registry.fill(HIST("hChi2MatchMCHMFTInMassRange"), tr2.chi2MatchMCHMFT());
+    }
     return true;
   }
 

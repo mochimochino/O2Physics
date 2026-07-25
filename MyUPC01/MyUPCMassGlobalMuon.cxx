@@ -133,7 +133,9 @@ struct MyUPCMassGlobalMuonTask {
     float timeC = -999.f;
     float enA = -999.f;
     float enC = -999.f;
-    int znClass = -1; // 0=0n0n, 1=Xn0n, 2=0nXn, 3=XnXn, -1=unknown
+    bool isNeutronA = false; // ZNA signal within +/-kMaxZDCTime and above cutZNAEnergy
+    bool isNeutronC = false; // ZNC signal within +/-kMaxZDCTime and above cutZNCEnergy
+    bool hasZdcInfo = false; // true if this candidate has a row in the ZDC table (false: no ZDC info recorded at all)
   };
 
   // ===========================================================================
@@ -245,9 +247,27 @@ struct MyUPCMassGlobalMuonTask {
       registry.add("hEnergyZNA", "Common ZNA energy;;#counts", kTH1F, {axisZDCEnergy});
       registry.add("hEnergyZNC", "Common ZNC energy;;#counts", kTH1F, {axisZDCEnergy});
       registry.add("hEnergyZNAvsZNC", "ZNA vs ZNC energy;E_{ZNC};E_{ZNA}", kTH2D, {axisZDCEnergy, axisZDCEnergy});
-      auto hTopologyCounter = registry.add<TH1>("hTopologyCounter", "Neutron topology;;#counts", HistType::kTH1I, {{4, 0., 4.}});
-      TString topologyClasses[4] = {"0n0n", "Xn0n", "0nXn", "XnXn"};
-      for (int i = 0; i < 4; ++i) {
+
+      // --- Threshold-validation QA: raw ZDC time distributions, plus the common-energy
+      //     distribution split by whether the hit falls inside the +/-kMaxZDCTime window.
+      //     Used to locate the pedestal/1n-peak valley and set cutZNAEnergy/cutZNCEnergy,
+      //     and to check how much out-of-time (noise/afterpulse) contamination remains
+      //     at a given energy once only the timing cut is applied.
+      const AxisSpec axisTimeZN{200, -10., 10., "t_{ZN} (ns)"};
+      registry.add("hTimeZNA", "ZNA time;t_{ZNA} (ns);#counts", kTH1F, {axisTimeZN});
+      registry.add("hTimeZNC", "ZNC time;t_{ZNC} (ns);#counts", kTH1F, {axisTimeZN});
+      registry.add("hEnergyZNA_InTimeWindow", "ZNA common energy, |t_{ZNA}| < 2 ns;E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
+      registry.add("hEnergyZNA_OutTimeWindow", "ZNA common energy, |t_{ZNA}| >= 2 ns (out-of-time / noise);E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
+      registry.add("hEnergyZNC_InTimeWindow", "ZNC common energy, |t_{ZNC}| < 2 ns;E_{ZNC} (TeV);#counts", kTH1F, {axisZDCEnergy});
+      registry.add("hEnergyZNC_OutTimeWindow", "ZNC common energy, |t_{ZNC}| >= 2 ns (out-of-time / noise);E_{ZNC} (TeV);#counts", kTH1F, {axisZDCEnergy});
+
+      // 5th bin (NoZdcInfo) counts candidates with no row in the ZDC table at
+      // all (classifyZnTopology returns -1) -- these are otherwise silently
+      // dropped from hMassVsZnClass / hMassRapPt3D_<class>, so this bin lets
+      // that loss be measured directly against the ZDC-cut-free hMassRapPt3D.
+      auto hTopologyCounter = registry.add<TH1>("hTopologyCounter", "Neutron topology;;#counts", HistType::kTH1I, {{5, 0., 5.}});
+      TString topologyClasses[5] = {"0n0n", "Xn0n", "0nXn", "XnXn", "NoZdcInfo"};
+      for (int i = 0; i < 5; ++i) {
         hTopologyCounter->GetXaxis()->SetBinLabel(i + 1, topologyClasses[i].Data());
       }
       // --- ZDC and FV0 histograms restricted to pair-selected events ---
@@ -255,6 +275,21 @@ struct MyUPCMassGlobalMuonTask {
       const AxisSpec axisFV0Amp{100, 0., 500., "FV0A amplitude (a.u.)"};
       registry.add("hFV0AmpVsZNA", "FV0A amplitude vs ZNA energy;E_{ZNA} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
       registry.add("hFV0AmpVsZNC", "FV0A amplitude vs ZNC energy;E_{ZNC} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
+
+      // --- Mass vs neutron topology (before pair pT/rapidity cuts, mirrors hMassRapPt3D
+      //     so a downstream macro can slice out each of the 4 classes -- 0n0n/Xn0n/0nXn/XnXn --
+      //     from a single task run instead of re-running the task per targetTopology value) ---
+      registry.add("hMassVsZnClass", "Mass vs neutron topology (before pair pT/rapidity cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});znClass", kTH2D, {axisMass3D, axisTopology});
+
+      // --- Per-znClass copies of hMassRapPt3D (Mass x Rapidity x pT, same axes/binning),
+      //     one TH3D per neutron topology. Lets existing Rap/pT slicing macros
+      //     (e.g. SliceMassH3GlobalMuon.C, FitMassGlobalMuonYSlices_*.C) run unchanged
+      //     against each class by just pointing Config::h3Name at the matching name below,
+      //     all from a single task run (no need to re-run per targetTopology value). ---
+      registry.add("hMassRapPt3D_0n0n", "Mass vs rapidity vs pair pT, 0n0n (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+      registry.add("hMassRapPt3D_Xn0n", "Mass vs rapidity vs pair pT, Xn0n (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+      registry.add("hMassRapPt3D_0nXn", "Mass vs rapidity vs pair pT, 0nXn (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
+      registry.add("hMassRapPt3D_XnXn", "Mass vs rapidity vs pair pT, XnXn (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
     }
   }
 
@@ -305,6 +340,7 @@ struct MyUPCMassGlobalMuonTask {
       }
 
       ZDCinfo info;
+      info.hasZdcInfo = true;
       info.timeA = zdc.timeZNA();
       info.timeC = zdc.timeZNC();
       info.enA = zdc.energyCommonZNA();
@@ -312,16 +348,25 @@ struct MyUPCMassGlobalMuonTask {
 
       bool hasTimeA = (!std::isinf(info.timeA) && std::abs(info.timeA) < kMaxZDCTime);
       bool hasTimeC = (!std::isinf(info.timeC) && std::abs(info.timeC) < kMaxZDCTime);
-      bool isNeutronA = hasTimeA && (info.enA > cutZNAEnergy);
-      bool isNeutronC = hasTimeC && (info.enC > cutZNCEnergy);
+      info.isNeutronA = hasTimeA && (info.enA > cutZNAEnergy);
+      info.isNeutronC = hasTimeC && (info.enC > cutZNCEnergy);
 
-      info.znClass = 0; // 0n0n
-      if (isNeutronA && !isNeutronC) {
-        info.znClass = 1; // Xn0n
-      } else if (!isNeutronA && isNeutronC) {
-        info.znClass = 2; // 0nXn
-      } else if (isNeutronA && isNeutronC) {
-        info.znClass = 3; // XnXn
+      // --- Threshold-validation QA (raw, independent of cutZNAEnergy/cutZNCEnergy) ---
+      if (!std::isinf(info.timeA)) {
+        registry.fill(HIST("hTimeZNA"), info.timeA);
+      }
+      if (!std::isinf(info.timeC)) {
+        registry.fill(HIST("hTimeZNC"), info.timeC);
+      }
+      if (hasTimeA) {
+        registry.fill(HIST("hEnergyZNA_InTimeWindow"), info.enA);
+      } else {
+        registry.fill(HIST("hEnergyZNA_OutTimeWindow"), info.enA);
+      }
+      if (hasTimeC) {
+        registry.fill(HIST("hEnergyZNC_InTimeWindow"), info.enC);
+      } else {
+        registry.fill(HIST("hEnergyZNC_OutTimeWindow"), info.enC);
       }
 
       zdcMap[candId] = info;
@@ -329,9 +374,38 @@ struct MyUPCMassGlobalMuonTask {
     return zdcMap;
   }
 
+  // Classifies the neutron topology of a candidate from ZDC neutron tags alone
+  // (ZDCinfo::isNeutronA/C, i.e. ZDC timing + energy threshold).
+  // NOTE: an ADA/ADC (FDD) beam-beam veto on the neutron-less side was
+  // considered but is not applied here: the forward-muon UD table producers
+  // (upcCandProducerMuon/GlobalMuon/SemiFwd) do not fill UDCollisionsSels,
+  // so FDD beam-beam flags are not available in this task's input tables.
+  //   0n0n : neither side has a neutron tag (also covers candidates with no
+  //          row in the ZDC table at all -- ZDCinfo::isNeutronA/C default to
+  //          false, so a missing record is treated the same as a sub-threshold
+  //          energy measurement. This matches the observation that most
+  //          candidates have no ZDC row, consistent with clean/coherent
+  //          events producing no ZDC activity to reconstruct in the first
+  //          place -- see hTopologyCounter's NoZdcInfo bin for the size of
+  //          this population)
+  //   Xn0n : ZNA neutron tag only
+  //   0nXn : ZNC neutron tag only
+  //   XnXn : both sides have a neutron tag
+  int classifyZnTopology(ZDCinfo const& zdc)
+  {
+    if (!zdc.isNeutronA && !zdc.isNeutronC) {
+      return 0; // 0n0n
+    }
+    if (zdc.isNeutronA && !zdc.isNeutronC) {
+      return 1; // Xn0n
+    }
+    if (!zdc.isNeutronA && zdc.isNeutronC) {
+      return 2; // 0nXn
+    }
+    return 3; // XnXn
+  }
+
   // Selects tracks of the requested track type passing the single-track
-  // quality cuts (rAbs, pDCA, chi2, chi2MatchMCHMFT). Fills the corresponding
-  // QA / cut-flow histograms along the way.
   template <typename TTracks>
   std::vector<int32_t> selectGoodTracks(std::vector<int32_t> const& trkIds, TTracks const& tracks)
   {
@@ -379,15 +453,9 @@ struct MyUPCMassGlobalMuonTask {
     return good;
   }
 
-  // Fills the mandatory mass/pT/pT^2 histograms plus the pair-level QA
-  // histograms, applying the single-muon and pair kinematic cuts.
-  // Shared between processData and processMcReco. The pair is guaranteed to
-  // be unlike-sign (one mu+ and one mu-) by the HasTwoGoodTracks selection
-  // in processCandidates.
-  // Returns true if the pair passed the individual-muon cuts and the 3D histogram was filled.
-  // The caller uses this to gate ZDC/FV0 correlation fills for pair-selected events.
+
   template <typename TTrack>
-  bool fillPairHistograms(TTrack const& tr1, TTrack const& tr2)
+  bool fillPairHistograms(TTrack const& tr1, TTrack const& tr2, int znClass)
   {
     TLorentzVector p1, p2;
     p1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
@@ -406,8 +474,7 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hEtaPhiMuon"), p1.Eta(), p1.Phi());
     registry.fill(HIST("hEtaPhiMuon"), p2.Eta(), p2.Phi());
 
-    // Fill only the leg closer to either acceptance edge (etaMin/etaMax),
-    // to check whether one decay lepton is piling up against the boundary.
+    // Fill only the leg closer to either acceptance edge
     float distToEdge1 = std::min(p1.Eta() - etaMin, etaMax - p1.Eta());
     float distToEdge2 = std::min(p2.Eta() - etaMin, etaMax - p2.Eta());
     if (distToEdge1 <= distToEdge2) {
@@ -429,9 +496,28 @@ struct MyUPCMassGlobalMuonTask {
     TLorentzVector p = p1 + p2;
     float pt2 = p.Pt() * p.Pt();
 
-    // Fill 3D histogram before any pair-level kinematic cuts so the macro
-    // can slice any mass / rapidity / pT region afterwards.
+    // Fill 3D histogram before any pair-level kinematic cuts
     registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
+    if (znClass >= 0) {
+      registry.fill(HIST("hMassVsZnClass"), p.M(), znClass);
+      // znClass: 0=0n0n, 1=Xn0n, 2=0nXn, 3=XnXn 
+      switch (znClass) {
+        case 0:
+          registry.fill(HIST("hMassRapPt3D_0n0n"), p.M(), p.Rapidity(), p.Pt());
+          break;
+        case 1:
+          registry.fill(HIST("hMassRapPt3D_Xn0n"), p.M(), p.Rapidity(), p.Pt());
+          break;
+        case 2:
+          registry.fill(HIST("hMassRapPt3D_0nXn"), p.M(), p.Rapidity(), p.Pt());
+          break;
+        case 3:
+          registry.fill(HIST("hMassRapPt3D_XnXn"), p.M(), p.Rapidity(), p.Pt());
+          break;
+        default:
+          break;
+      }
+    }
 
     if (p.Pt() >= pairPtMax) {
       return true;
@@ -457,13 +543,14 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hCutFlow"), 12); // Filled
 
     // --- Histograms restricted to the configured mass window [pairMassMin, pairMassMax] ---
+    // 3D Hist is more usefull
     registry.fill(HIST("hMassInMassRange"), p.M());
     registry.fill(HIST("hPtInMassRange"), p.Pt());
     registry.fill(HIST("hPt2InMassRange"), pt2);
     registry.fill(HIST("hRapidityPairInMassRange"), p.Rapidity());
     registry.fill(HIST("hPhiPairInMassRange"), p.Phi());
 
-    // MCH-MFT match chi2 is only meaningful for GlobalMuon tracks (undefined for MuonStandalone).
+    // MCH-MFT match chi2 is only meaningful for GlobalMuon tracks
     if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
       registry.fill(HIST("hChi2MatchMCHMFTInMassRange"), tr1.chi2MatchMCHMFT());
       registry.fill(HIST("hChi2MatchMCHMFTInMassRange"), tr2.chi2MatchMCHMFT());
@@ -471,8 +558,6 @@ struct MyUPCMassGlobalMuonTask {
     return true;
   }
 
-  // Common candidate loop, shared between processData and processMcReco.
-  // `zdcMap`/`applyZdc` are no-ops unless useZDC == true (and applyZdc == true).
   template <typename TTracks>
   void processCandidates(CandidatesFwd const& eventCandidates, TTracks const& tracks,
                           std::unordered_map<int32_t, ZDCinfo> const& zdcMap, bool applyZdc)
@@ -499,6 +584,7 @@ struct MyUPCMassGlobalMuonTask {
       registry.fill(HIST("hCutFlow"), 1); // V0A_pass
 
       ZDCinfo zdc;
+      int znClass = -1; // -1 = no ZDC info / ZDC not in use for this process function
       if (applyZdc) {
         auto it = zdcMap.find(candID);
         if (it != zdcMap.end()) {
@@ -507,10 +593,12 @@ struct MyUPCMassGlobalMuonTask {
         registry.fill(HIST("hEnergyZNA"), zdc.enA);
         registry.fill(HIST("hEnergyZNC"), zdc.enC);
         registry.fill(HIST("hEnergyZNAvsZNC"), zdc.enC, zdc.enA);
-        if (zdc.znClass >= 0) {
-          registry.fill(HIST("hTopologyCounter"), zdc.znClass);
+        znClass = classifyZnTopology(zdc);
+        registry.fill(HIST("hTopologyCounter"), znClass); // always 0-3 (0n0n/Xn0n/0nXn/XnXn)
+        if (!zdc.hasZdcInfo) {
+          registry.fill(HIST("hTopologyCounter"), 4); // NoZdcInfo
         }
-        if (targetTopology > -1 && zdc.znClass != targetTopology) {
+        if (targetTopology > -1 && znClass != targetTopology) {
           continue;
         }
       }
@@ -529,7 +617,7 @@ struct MyUPCMassGlobalMuonTask {
       }
       registry.fill(HIST("hCutFlow"), 6); // HasTwoGoodTracks
 
-      bool pairOk = fillPairHistograms(tr1, tr2);
+      bool pairOk = fillPairHistograms(tr1, tr2, znClass);
 
       if (applyZdc && pairOk) {
         registry.fill(HIST("hZNAvsZNC_PairSelected"), zdc.enC, zdc.enA);

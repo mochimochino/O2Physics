@@ -9,20 +9,8 @@
 // granted to it by virtue of its status as an Intergovernmental Organization
 // or submit itself to any jurisdiction.
 
-/// \file   UPCMuonAnalysisMC.cxx
-/// \brief  Unified resolution and efficiency analysis for dimuon pairs and single muons
-///         in UPC photoproduction.
-///         Produces:
-///           - Resolution: 1D Pair pT, pT^2; 2D response matrices and residuals for
-///             single tracks and dimuon pairs.
-///           - Efficiency: 1D MC-truth and reco histograms (phi, eta, pT) for single
-///             tracks and dimuon pairs; ratio (eff) histograms.
-///           - High-pT tail diagnostics (run separately on Coherent/Incoherent MC
-///             samples and compared offline): pair Delta-pT (reco-MC) vs reco mass,
-///             |Delta-phi| between the two reco muons vs pair reco pT, and single-track
-///             eta/phi residual vs MC p (MFT-MCH matching bias).
-///         The MC-reco processing loop is shared between both analyses.
-/// \author Takuma Matsumoto
+//    UPCMuonAnalysisMC.cxx
+// Takuma Matsumoto
 
 #include "PWGUD/DataModel/UDTables.h"
 
@@ -37,6 +25,7 @@
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
+#include "TTree.h"
 #include "TVector2.h"
 
 #include <algorithm>
@@ -136,6 +125,14 @@ struct UPCMuonAnalysisMC {
   static constexpr int kJpsiPDG = 443;
   float mMu = 0.0f;
 
+  // --- OmniFold event-level pair tuple output (Phase 1) ---
+  OutputObj<TTree> omniFoldTree{"omniFoldPairTuple", OutputObjHandlingPolicy::AnalysisObject};
+  float oPairPt2MC = 0.f, oPairPt2Reco = -1.f;
+  float oPairMassMC = 0.f, oPairMassReco = -1.f;
+  float oPairRapMC = 0.f, oPairRapReco = -1.f;
+  bool oPassRecoFlag = false;
+  bool oIsFake = false;
+
   // ===========================================================================
   // Initialization
   // ===========================================================================
@@ -150,6 +147,24 @@ struct UPCMuonAnalysisMC {
     initPairMassRapPt3DHistograms();
     initResolutionSingleTrackHistograms();
     initResolutionPairHistograms();
+    initOmniFoldTupleOutput();
+  }
+
+  // ---------------------------------------------------------------------------
+  // OmniFold event-level pair tuple output (Phase 1)
+  // ---------------------------------------------------------------------------
+  void initOmniFoldTupleOutput()
+  {
+    omniFoldTree.setObject(new TTree("omniFoldPairTuple",
+                                     "Event-level dimuon pair tuple (gen + matched reco) for OmniFold"));
+    omniFoldTree->Branch("pairPt2MC", &oPairPt2MC);
+    omniFoldTree->Branch("pairPt2Reco", &oPairPt2Reco);
+    omniFoldTree->Branch("pairMassMC", &oPairMassMC);
+    omniFoldTree->Branch("pairMassReco", &oPairMassReco);
+    omniFoldTree->Branch("pairRapMC", &oPairRapMC);
+    omniFoldTree->Branch("pairRapReco", &oPairRapReco);
+    omniFoldTree->Branch("passRecoFlag", &oPassRecoFlag);
+    omniFoldTree->Branch("isFake", &oIsFake);
   }
 
   // ---------------------------------------------------------------------------
@@ -507,6 +522,39 @@ struct UPCMuonAnalysisMC {
     if (recoVec.Pt() < pTmin)
       return false;
     registry.fill(HIST("hCutFlowReco"), 10); // 10: Track Pass pT
+
+    return true;
+  }
+
+  // Same cuts as passRecoTrackCuts, but without the hCutFlowReco side-effect fills —
+  // used by processExportOmniFoldTuple so it does not perturb the existing cutflow
+  // histogram, which is scoped to the processMcReco loop.
+  template <typename TTrack>
+  bool passRecoTrackCutsQuiet(const TTrack& tr)
+  {
+    float rAbs = tr.rAtAbsorberEnd();
+    if (rAbs < rAbsMin || rAbs > rAbsMax)
+      return false;
+
+    float pDcaMax = (rAbs < 26.5f) ? 350.0f : 200.0f;
+    if (tr.pDca() > pDcaMax)
+      return false;
+
+    if (tr.chi2() > maxChi2)
+      return false;
+
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      float chi2MFT = tr.chi2MatchMCHMFT();
+      if (chi2MFT < 0.f || chi2MFT > maxChi2MatchMCHMFT)
+        return false;
+    }
+
+    TLorentzVector recoVec;
+    recoVec.SetXYZM(tr.px(), tr.py(), tr.pz(), mMu);
+    if (recoVec.Eta() <= etaMin || recoVec.Eta() >= etaMax)
+      return false;
+    if (recoVec.Pt() < pTmin)
+      return false;
 
     return true;
   }
@@ -887,10 +935,105 @@ struct UPCMuonAnalysisMC {
     }
   }
 
+  // ===========================================================================
+  // Process: Export event-level dimuon pair tuple for OmniFold (Phase 1)
+  // ===========================================================================
+  void processExportOmniFoldTuple(o2::aod::UDMcCollisions const&,
+                                  o2::aod::UDMcParticles const& mcParticles,
+                                  CompleteFwdTracks const& fwdTracks)
+  {
+    // (a) MC particle global index -> matched reco track (global index), built once over
+    // the whole dataframe. tr.udMcParticleId() is already a plain global-index lookup into
+    // UDMcParticles with no collision-index constraint, so this needs no UD-collision <->
+    // MC-collision linkage at all (UDMcCollsLabels is not required and is in fact absent
+    // from some derived-data productions used for this analysis).
+    // First-match-wins in the (expected to be rare) case of an ambiguous double-match.
+    std::unordered_map<int32_t, int32_t> mcIdxToTrackIdx;
+    for (const auto& tr : fwdTracks) {
+      if (tr.trackType() != reqTrackType || !tr.has_udMcParticle())
+        continue;
+      mcIdxToTrackIdx.try_emplace(tr.udMcParticleId(), tr.globalIndex());
+    }
+
+    // (b) Truth muons grouped by MC collision, same acceptance definition as processMCTrue.
+    std::unordered_map<int32_t, std::vector<int32_t>> muonsPerMcColl;
+    for (const auto& mc : mcParticles) {
+      if (std::abs(mc.pdgCode()) != kMuonPDG)
+        continue;
+      TLorentzVector v;
+      v.SetXYZM(mc.px(), mc.py(), mc.pz(), mMu);
+      if (v.Eta() <= etaMin || v.Eta() >= etaMax)
+        continue;
+      if (v.Pt() < pTmin)
+        continue;
+      muonsPerMcColl[mc.udMcCollisionId()].push_back(mc.globalIndex());
+    }
+
+    // (c) One row per generator-level truth pair; attach matched reco kinematics if found.
+    for (const auto& item : muonsPerMcColl) {
+      const auto& ids = item.second;
+
+      for (size_t i = 0; i < ids.size(); ++i) {
+        auto mc1 = mcParticles.iteratorAt(ids[i]);
+        TLorentzVector v1;
+        v1.SetXYZM(mc1.px(), mc1.py(), mc1.pz(), mMu);
+
+        for (size_t j = i + 1; j < ids.size(); ++j) {
+          auto mc2 = mcParticles.iteratorAt(ids[j]);
+          if (mc1.pdgCode() * mc2.pdgCode() >= 0)
+            continue;
+
+          TLorentzVector v2;
+          v2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
+          TLorentzVector pairMC = v1 + v2;
+
+          // Same fiducial pair cuts as hEffPairPt2MC / hCutFlowMC bins 14-16.
+          if (pairMC.Pt() >= pairPtMax)
+            continue;
+          if (pairMC.Rapidity() <= pairRapidityMin || pairMC.Rapidity() >= pairRapidityMax)
+            continue;
+          if (pairMC.M() <= pairMassMin || pairMC.M() >= pairMassMax)
+            continue;
+
+          oPairPt2MC = pairMC.Pt() * pairMC.Pt();
+          oPairMassMC = pairMC.M();
+          oPairRapMC = pairMC.Rapidity();
+          oIsFake = false;
+          oPassRecoFlag = false;
+          oPairPt2Reco = -1.f;
+          oPairMassReco = -1.f;
+          oPairRapReco = -1.f;
+
+          auto it1 = mcIdxToTrackIdx.find(mc1.globalIndex());
+          auto it2 = mcIdxToTrackIdx.find(mc2.globalIndex());
+          if (it1 != mcIdxToTrackIdx.end() && it2 != mcIdxToTrackIdx.end()) {
+            auto tr1 = fwdTracks.iteratorAt(it1->second);
+            auto tr2 = fwdTracks.iteratorAt(it2->second);
+            if (tr1.sign() * tr2.sign() < 0 &&
+                passRecoTrackCutsQuiet(tr1) && passRecoTrackCutsQuiet(tr2)) {
+              TLorentzVector r1, r2;
+              r1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
+              r2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
+              TLorentzVector pairReco = r1 + r2;
+              oPairPt2Reco = pairReco.Pt() * pairReco.Pt();
+              oPairMassReco = pairReco.M();
+              oPairRapReco = pairReco.Rapidity();
+              oPassRecoFlag = true;
+            }
+          }
+
+          omniFoldTree->Fill();
+        }
+      }
+    }
+  }
+
   PROCESS_SWITCH(UPCMuonAnalysisMC, processMCTrue,
                  "Fill MC-truth single-track and dimuon efficiency histograms", true);
   PROCESS_SWITCH(UPCMuonAnalysisMC, processMcReco,
                  "Fill reco single-track and dimuon resolution + efficiency histograms", true);
+  PROCESS_SWITCH(UPCMuonAnalysisMC, processExportOmniFoldTuple,
+                 "Export event-level dimuon pair tuple (gen + matched reco) for OmniFold", false);
 };
 
 // ============================================================================

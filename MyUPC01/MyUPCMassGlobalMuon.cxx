@@ -79,6 +79,11 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<float> maxChi2{"maxChi2", 100.f, "Maximum global-track chi2"};
   Configurable<float> maxChi2MatchMCHMFT{"maxChi2MatchMCHMFT", 100.f, "Maximum MCH-MFT match chi2 (GlobalMuon only)"};
 
+  // --- hMassVsChi2Match binning (chi2-cut scan diagnostic, GlobalMuon only) ---
+  Configurable<int> nBinsChi2MatchScan{"nBinsChi2MatchScan", 220, "Chi2 bins for hMassVsChi2Match"};
+  Configurable<float> chi2MatchScanAxisMin{"chi2MatchScanAxisMin", -10.f, "Lower edge of the hMassVsChi2Match chi2 axis"};
+  Configurable<float> chi2MatchScanAxisMax{"chi2MatchScanAxisMax", 200.f, "Upper edge of the hMassVsChi2Match chi2 axis"};
+
   // --- Single-track kinematic acceptance ---
   Configurable<float> etaMin{"etaMin", -3.5f, "Minimum single-muon pseudorapidity"};
   Configurable<float> etaMax{"etaMax", -2.5f, "Maximum single-muon pseudorapidity"};
@@ -226,6 +231,17 @@ struct MyUPCMassGlobalMuonTask {
     registry.add("hMassRapPt3D", "Mass vs rapidity vs pair pT (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
     registry.add("hMassRapPt3DTruth", "Mass vs rapidity vs pair pT, MC truth (before pair cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});#it{y}_{#mu#mu};#it{p}_{T,#mu#mu} (GeV/#it{c})", kTH3D, {axisMass3D, axisRap3D, axisPt3D});
 
+    // --- Mass vs pair MCH-MFT match chi2 (before pair pT/rapidity cuts), GlobalMuon only.
+    //     Filled with max(chi2_leg1, chi2_leg2) -- the worse of the two legs, i.e. the value
+    //     an equal per-leg threshold effectively cuts on. Lets a downstream macro slice this
+    //     histogram at many chi2 thresholds from a single run (mirrors hMassVsZnClass for ZDC
+    //     topology). NOTE: selectGoodTracks still applies maxChi2MatchMCHMFT per leg upstream,
+    //     so scanning above the configured cut requires re-running the task with a looser value.
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      const AxisSpec axisChi2MatchScan{nBinsChi2MatchScan, chi2MatchScanAxisMin, chi2MatchScanAxisMax, "max(#chi^{2}_{MCH-MFT})"};
+      registry.add("hMassVsChi2Match", "Mass vs pair MCH-MFT match #chi^{2} (before pair pT/rapidity cuts);#it{M}_{#mu#mu} (GeV/#it{c}^{2});max(#chi^{2}_{MCH-MFT})", kTH2D, {axisMass3D, axisChi2MatchScan});
+    }
+
     // --- Mass/pT/pT2/phi/rapidity restricted to the configured mass window [pairMassMin, pairMassMax] ---
     const AxisSpec axisMassInRange{nBinsMass, pairMassMin, pairMassMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
     registry.add("hMassInMassRange", "Invariant mass, unlike-sign pairs (in mass range);;#counts", kTH1D, {axisMassInRange});
@@ -253,9 +269,11 @@ struct MyUPCMassGlobalMuonTask {
       //     Used to locate the pedestal/1n-peak valley and set cutZNAEnergy/cutZNCEnergy,
       //     and to check how much out-of-time (noise/afterpulse) contamination remains
       //     at a given energy once only the timing cut is applied.
-      const AxisSpec axisTimeZN{200, -10., 10., "t_{ZN} (ns)"};
-      registry.add("hTimeZNA", "ZNA time;t_{ZNA} (ns);#counts", kTH1F, {axisTimeZN});
-      registry.add("hTimeZNC", "ZNC time;t_{ZNC} (ns);#counts", kTH1F, {axisTimeZN});
+      const AxisSpec axisTimeZNA{200, -20., 20., "t_{ZNA} (ns)"};
+      const AxisSpec axisTimeZNC{200, -20., 20., "t_{ZNC} (ns)"};
+      registry.add("hTimeZNA", "ZNA time;t_{ZNA} (ns);#counts", kTH1F, {axisTimeZNA});
+      registry.add("hTimeZNC", "ZNC time;t_{ZNC} (ns);#counts", kTH1F, {axisTimeZNC});
+      registry.add("hTimeZNAvsZNC", "ZNA vs ZNC time;t_{ZNC} (ns);t_{ZNA} (ns)", kTH2D, {axisTimeZNC, axisTimeZNA});
       registry.add("hEnergyZNA_InTimeWindow", "ZNA common energy, |t_{ZNA}| < 2 ns;E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
       registry.add("hEnergyZNA_OutTimeWindow", "ZNA common energy, |t_{ZNA}| >= 2 ns (out-of-time / noise);E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
       registry.add("hEnergyZNC_InTimeWindow", "ZNC common energy, |t_{ZNC}| < 2 ns;E_{ZNC} (TeV);#counts", kTH1F, {axisZDCEnergy});
@@ -272,6 +290,7 @@ struct MyUPCMassGlobalMuonTask {
       }
       // --- ZDC and FV0 histograms restricted to pair-selected events ---
       registry.add("hZNAvsZNC_PairSelected", "ZNA vs ZNC energy, pair-selected events;E_{ZNC} (TeV);E_{ZNA} (TeV)", kTH2D, {axisZDCEnergy, axisZDCEnergy});
+      registry.add("hTimeZNAvsZNC_PairSelected", "ZNA vs ZNC time, pair-selected events;t_{ZNC} (ns);t_{ZNA} (ns)", kTH2D, {axisTimeZNC, axisTimeZNA});
       const AxisSpec axisFV0Amp{100, 0., 500., "FV0A amplitude (a.u.)"};
       registry.add("hFV0AmpVsZNA", "FV0A amplitude vs ZNA energy;E_{ZNA} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
       registry.add("hFV0AmpVsZNC", "FV0A amplitude vs ZNC energy;E_{ZNC} (TeV);FV0A amplitude (a.u.)", kTH2D, {axisZDCEnergy, axisFV0Amp});
@@ -498,6 +517,13 @@ struct MyUPCMassGlobalMuonTask {
 
     // Fill 3D histogram before any pair-level kinematic cuts
     registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
+
+    // Mass vs pair matching chi2 (worse of the two legs), for downstream chi2-cut scans
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      float pairChi2Match = std::max(tr1.chi2MatchMCHMFT(), tr2.chi2MatchMCHMFT());
+      registry.fill(HIST("hMassVsChi2Match"), p.M(), pairChi2Match);
+    }
+
     if (znClass >= 0) {
       registry.fill(HIST("hMassVsZnClass"), p.M(), znClass);
       // znClass: 0=0n0n, 1=Xn0n, 2=0nXn, 3=XnXn 
@@ -593,6 +619,7 @@ struct MyUPCMassGlobalMuonTask {
         registry.fill(HIST("hEnergyZNA"), zdc.enA);
         registry.fill(HIST("hEnergyZNC"), zdc.enC);
         registry.fill(HIST("hEnergyZNAvsZNC"), zdc.enC, zdc.enA);
+        registry.fill(HIST("hTimeZNAvsZNC"), zdc.timeC, zdc.timeA);
         znClass = classifyZnTopology(zdc);
         registry.fill(HIST("hTopologyCounter"), znClass); // always 0-3 (0n0n/Xn0n/0nXn/XnXn)
         if (!zdc.hasZdcInfo) {
@@ -621,6 +648,7 @@ struct MyUPCMassGlobalMuonTask {
 
       if (applyZdc && pairOk) {
         registry.fill(HIST("hZNAvsZNC_PairSelected"), zdc.enC, zdc.enA);
+        registry.fill(HIST("hTimeZNAvsZNC_PairSelected"), zdc.timeC, zdc.timeA);
         registry.fill(HIST("hFV0AmpVsZNA"), zdc.enA, fv0Amp);
         registry.fill(HIST("hFV0AmpVsZNC"), zdc.enC, fv0Amp);
       }

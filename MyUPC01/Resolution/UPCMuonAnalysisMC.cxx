@@ -295,6 +295,13 @@ struct UPCMuonAnalysisMC {
     registry.add("hEffPairPtMC", "Pair #it{p}_{T} MC (eff)", kTH1F, {axPairPtMC});
     registry.add("hEffPairPtReco", "Pair #it{p}_{T} reco (eff)", kTH1F, {axPairPtReco});
 
+    // 2D (pT, rapidity) reco map — numerator for AccEff in an arbitrary joint
+    // pT x y window; paired with hAccEffDenomJpsiPtRap below. Binning differs from
+    // the denom's axJpsiPt/axJpsiRap (reco pair axes vs. J/psi MC axes), so a
+    // macro combining them must integrate each in physical units, not bin indices.
+    registry.add("hEffPairPtRapReco", "Pair #it{p}_{T} vs rapidity reco (eff)",
+                 kTH2F, {axPairPtReco, axPairRapReco});
+
     registry.add("hEffPairPt2MC", "Pair #it{p}_{T}^{2} MC (eff)", kTH1F, {axPairPt2MC});
     registry.add("hEffPairPt2Reco", "Pair #it{p}_{T}^{2} reco (eff)", kTH1F, {axPairPt2Reco});
 
@@ -317,6 +324,12 @@ struct UPCMuonAnalysisMC {
                  kTH1F, {axJpsiPt});
     registry.add("hAccEffDenomJpsiMass", "J/#psi mass sanity check",
                  kTH1F, {axJpsiMass});
+
+    // 2D (pT, rapidity) denominator — same no-eta-cut, jpsiRap-window population
+    // as hAccEffDenomJpsiPt/hAccEffDenomJpsiRap, kept jointly so an arbitrary
+    // pT x y rectangle can be integrated for AccEff (see hEffPairPtRapReco above).
+    registry.add("hAccEffDenomJpsiPtRap", "J/#psi #it{p}_{T} vs rapidity (Acc#timesEff denom)",
+                 kTH2F, {axJpsiPt, axJpsiRap});
   }
 
   // ---------------------------------------------------------------------------
@@ -711,6 +724,7 @@ struct UPCMuonAnalysisMC {
     registry.fill(HIST("hEffPairPtReco"), pairPtReco);
     registry.fill(HIST("hEffPairPt2Reco"), pairPt2Reco);
     registry.fill(HIST("hEffPairMassReco"), pairMassReco);
+    registry.fill(HIST("hEffPairPtRapReco"), pairPtReco, pairRapReco);
   }
 
   // ===========================================================================
@@ -822,6 +836,7 @@ struct UPCMuonAnalysisMC {
           registry.fill(HIST("hAccEffDenomJpsiRap"),  y);
           registry.fill(HIST("hAccEffDenomJpsiPt"),   vJpsi.Pt());
           registry.fill(HIST("hAccEffDenomJpsiMass"), vJpsi.M());
+          registry.fill(HIST("hAccEffDenomJpsiPtRap"), vJpsi.Pt(), y);
         }
       }
     }

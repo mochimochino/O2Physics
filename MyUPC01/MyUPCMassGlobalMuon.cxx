@@ -518,12 +518,6 @@ struct MyUPCMassGlobalMuonTask {
     // Fill 3D histogram before any pair-level kinematic cuts
     registry.fill(HIST("hMassRapPt3D"), p.M(), p.Rapidity(), p.Pt());
 
-    // Mass vs pair matching chi2 (worse of the two legs), for downstream chi2-cut scans
-    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
-      float pairChi2Match = std::max(tr1.chi2MatchMCHMFT(), tr2.chi2MatchMCHMFT());
-      registry.fill(HIST("hMassVsChi2Match"), p.M(), pairChi2Match);
-    }
-
     if (znClass >= 0) {
       registry.fill(HIST("hMassVsZnClass"), p.M(), znClass);
       // znClass: 0=0n0n, 1=Xn0n, 2=0nXn, 3=XnXn 
@@ -561,6 +555,13 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPt2Unlike"), pt2);
     registry.fill(HIST("hRapidityPair"), p.Rapidity());
     registry.fill(HIST("hPhiPair"), p.Phi());
+
+    // Mass vs pair matching chi2 (worse of the two legs), for downstream chi2-cut scans
+    // (filled after pair pT/rapidity cuts; mass axis kept full range for the scan)
+    if (reqTrackType == static_cast<int>(o2::aod::fwdtrack::ForwardTrackTypeEnum::GlobalMuonTrack)) {
+      float pairChi2Match = std::max(tr1.chi2MatchMCHMFT(), tr2.chi2MatchMCHMFT());
+      registry.fill(HIST("hMassVsChi2Match"), p.M(), pairChi2Match);
+    }
 
     if (p.M() <= pairMassMin || p.M() >= pairMassMax) {
       return true;

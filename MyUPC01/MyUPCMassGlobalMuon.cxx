@@ -34,6 +34,7 @@
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
+#include "TTree.h"
 
 #include <algorithm>
 #include <cmath>
@@ -54,7 +55,13 @@ struct MyUPCMassGlobalMuonTask {
 
   Service<o2::framework::O2DatabasePDG> pdg;
 
-  using CandidatesFwd = soa::Join<o2::aod::UDCollisions, o2::aod::UDCollisionsSelsFwd>;
+  // UDCollisions (alias for UDCollisions_001) requires tree "O2udcollision_001",
+  // which is absent in older Pass4 hyperloop AO2Ds (they only ship the
+  // unversioned "O2udcollision" = UDCollisions_000, without collision::Flags).
+  // Using UDCollisions_000 directly avoids the parent-file version lookup that
+  // fails with "while looking for tree O2udcollision_001 ... maximal allowed
+  // level 0" on those files.
+  using CandidatesFwd = soa::Join<o2::aod::UDCollisions_000, o2::aod::UDCollisionsSelsFwd>;
   using ForwardTracks = soa::Join<o2::aod::UDFwdTracks, o2::aod::UDFwdTracksExtra>;
   using CompleteFwdTracks = soa::Join<ForwardTracks, o2::aod::UDMcFwdTrackLabels>;
 
@@ -97,8 +104,9 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<float> pairMassMax{"pairMassMax", 10.0f, "Maximum dimuon pair mass [GeV/c^2]"};
 
   // --- ZDC neutron topology (processData, only used if useZDC == true) ---
-  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold for neutron tag [TeV]"};
-  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold for neutron tag [TeV]"};
+  Configurable<float> cutZNAEnergy{"cutZNAEnergy", 1.0f, "ZNA energy threshold for neutron tag [TeV] (used only if requireZnEnergyThreshold == true)"};
+  Configurable<float> cutZNCEnergy{"cutZNCEnergy", 1.0f, "ZNC energy threshold for neutron tag [TeV] (used only if requireZnEnergyThreshold == true)"};
+  Configurable<bool> requireZnEnergyThreshold{"requireZnEnergyThreshold", true, "If true (default), tag a ZN neutron only when common energy > cutZN*Energy. If false, tag a neutron whenever a ZDC hit is present in the +/-kMaxZDCTime window, regardless of energy sign/magnitude -- covers negative reconstructed energies from pedestal subtraction"};
   Configurable<int> targetTopology{"targetTopology", -1, "Required neutron topology (0=0n0n,1=Xn0n,2=0nXn,3=XnXn, -1=No Cut)"};
 
   // --- Mandatory histogram binning: mass / pT / pT^2 ---
@@ -128,6 +136,26 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<int> nBinsPt3D{"nBinsPt3D", 100, "pT bins for 3D histogram"};
   Configurable<float> ptMax3D{"ptMax3D", 1.0f, "Upper edge of pair pT axis for 3D histogram [GeV/c]"};
 
+  // --- Unbinned-fit event-level pair tuple (reco-level only, no MC truth involved) ---
+  // Filled at the same point as hMassUnlike/hPtUnlike/hPt2Unlike/hRapidityPair: mass axis kept
+  // at full range, all other pair cuts (eta/pT/pairPt/rapidity) already applied. Shared by
+  // processDataNoZdc/processDataWithZdc/processMcReco via fillPairHistograms.
+  Configurable<bool> fillUnbinnedFitTree{"fillUnbinnedFitTree", false, "Fill reco-level dimuon pair tuple (mass, pairPt, pairPt2, rapidity, znClass) for unbinned fits"};
+  // If true, the tuple is filled right after the single-muon eta/pT cuts, i.e. BEFORE the pair
+  // pT / rapidity cuts (needed for incoherent J/psi, pT > pairPtMax). pairPt/rapidity cuts are then
+  // applied offline. If false (default), keep the original fill point (after pair pT/rapidity cuts).
+  Configurable<bool> unbinnedTreeBeforePairCuts{"unbinnedTreeBeforePairCuts", false, "Fill unbinnedFitPairTuple before the pair pT/rapidity cuts (for ZN-efficiency / incoherent studies)"};
+  OutputObj<TTree> unbinnedFitTree{"unbinnedFitPairTuple", OutputObjHandlingPolicy::AnalysisObject};
+  float oMass = 0.f, oPairPt = 0.f, oPairPt2 = 0.f, oRapidity = 0.f;
+  // znClass: 0=0n0n, 1=Xn0n, 2=0nXn, 3=XnXn, -1=ZDC not in use / no ZDC info (processDataNoZdc, or no row in ZDC table)
+  int oZnClass = -1;
+  // Raw ZDC / FV0 information of the candidate, so ZN energy/time thresholds can be re-applied offline.
+  // Set per candidate in processCandidates before fillPairHistograms; -999 = no ZDC info / ZDC not in use.
+  float oEnZNA = -999.f, oEnZNC = -999.f, oTimeZNA = -999.f, oTimeZNC = -999.f;
+  bool oHasZdc = false;
+  float oFv0Amp = -999.f; // max FV0A amplitude in the same BC (see passV0ACut)
+  int oRunNumber = -1;    // run number of the candidate (for run-by-run pile-up / mu studies)
+
   float mMu = 0.0f;
 
   // ===========================================================================
@@ -138,8 +166,8 @@ struct MyUPCMassGlobalMuonTask {
     float timeC = -999.f;
     float enA = -999.f;
     float enC = -999.f;
-    bool isNeutronA = false; // ZNA signal within +/-kMaxZDCTime and above cutZNAEnergy
-    bool isNeutronC = false; // ZNC signal within +/-kMaxZDCTime and above cutZNCEnergy
+    bool isNeutronA = false; // ZNA signal within +/-kMaxZDCTime; also above cutZNAEnergy if requireZnEnergyThreshold
+    bool isNeutronC = false; // ZNC signal within +/-kMaxZDCTime; also above cutZNCEnergy if requireZnEnergyThreshold
     bool hasZdcInfo = false; // true if this candidate has a row in the ZDC table (false: no ZDC info recorded at all)
   };
 
@@ -256,13 +284,40 @@ struct MyUPCMassGlobalMuonTask {
     // --- V0A QA ---
     registry.add("hV0AAmp", "Max V0A amplitude in same BC;Amplitude (a.u.);#counts", kTH1D, {{500, 0., 500.}});
 
+    // --- Unbinned-fit ntuple (reco-level only, mass full range) ---
+    if (fillUnbinnedFitTree) {
+      unbinnedFitTree.setObject(new TTree("unbinnedFitPairTuple",
+                                          "Reco-level dimuon pair tuple for unbinned fit (mass, pairPt, pairPt2, rapidity, znClass, ZN energy/time, FV0A amp, runNumber)"));
+      unbinnedFitTree->Branch("mass", &oMass);
+      unbinnedFitTree->Branch("pairPt", &oPairPt);
+      unbinnedFitTree->Branch("pairPt2", &oPairPt2);
+      unbinnedFitTree->Branch("rapidity", &oRapidity);
+      unbinnedFitTree->Branch("znClass", &oZnClass);
+      unbinnedFitTree->Branch("enZNA", &oEnZNA);
+      unbinnedFitTree->Branch("enZNC", &oEnZNC);
+      unbinnedFitTree->Branch("timeZNA", &oTimeZNA);
+      unbinnedFitTree->Branch("timeZNC", &oTimeZNC);
+      unbinnedFitTree->Branch("hasZdc", &oHasZdc);
+      unbinnedFitTree->Branch("fv0Amp", &oFv0Amp);
+      unbinnedFitTree->Branch("runNumber", &oRunNumber);
+    }
+
     // --- ZDC QA (only if processDataWithZdc is enabled) ---
     if (doprocessDataWithZdc) {
-      const AxisSpec axisZDCEnergy{1000, -2.5, 199.5, "E_{ZN} (TeV)"};
+      // Lower bound widened from -10.5 to -110.5 TeV (2026-09-22): the 0n pedestal peak's
+      // core sits well below -10.5 TeV after common-PMT pedestal subtraction (confirmed via
+      // the old range's underflow bin holding O(10^5-10^8) entries), so the previous range
+      // cut off most of the pedestal population. Bin width kept close to the original 0.111 TeV.
+      const AxisSpec axisZDCEnergy{1900, -110.5, 100.5, "E_{ZN} (TeV)"};
       const AxisSpec axisTopology{4, -0.5, 3.5, "0n0n, Xn0n, 0nXn, XnXn"};
-      registry.add("hEnergyZNA", "Common ZNA energy;;#counts", kTH1F, {axisZDCEnergy});
-      registry.add("hEnergyZNC", "Common ZNC energy;;#counts", kTH1F, {axisZDCEnergy});
+      // kTH1D (not kTH1F, 2026-09-22 fix): with O(10^8) fills concentrated in a few bins
+      // (e.g. the pedestal peak), kTH1F's single-precision (24-bit mantissa) bin storage
+      // silently stops incrementing past 2^24 = 16,777,216 entries in a single bin, which
+      // was observed saturating the pedestal-region bins of these histograms in production.
+      registry.add("hEnergyZNA", "Common ZNA energy;;#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNC", "Common ZNC energy;;#counts", kTH1D, {axisZDCEnergy});
       registry.add("hEnergyZNAvsZNC", "ZNA vs ZNC energy;E_{ZNC};E_{ZNA}", kTH2D, {axisZDCEnergy, axisZDCEnergy});
+      registry.add("hEnergyZNAvsZNC_NeutronTagged", "ZNA vs ZNC energy, neutron-tagged side(s) only (isNeutronA||isNeutronC);E_{ZNC} (TeV);E_{ZNA} (TeV)", kTH2D, {axisZDCEnergy, axisZDCEnergy});
 
       // --- Threshold-validation QA: raw ZDC time distributions, plus the common-energy
       //     distribution split by whether the hit falls inside the +/-kMaxZDCTime window.
@@ -274,10 +329,21 @@ struct MyUPCMassGlobalMuonTask {
       registry.add("hTimeZNA", "ZNA time;t_{ZNA} (ns);#counts", kTH1F, {axisTimeZNA});
       registry.add("hTimeZNC", "ZNC time;t_{ZNC} (ns);#counts", kTH1F, {axisTimeZNC});
       registry.add("hTimeZNAvsZNC", "ZNA vs ZNC time;t_{ZNC} (ns);t_{ZNA} (ns)", kTH2D, {axisTimeZNC, axisTimeZNA});
-      registry.add("hEnergyZNA_InTimeWindow", "ZNA common energy, |t_{ZNA}| < 2 ns;E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
-      registry.add("hEnergyZNA_OutTimeWindow", "ZNA common energy, |t_{ZNA}| >= 2 ns (out-of-time / noise);E_{ZNA} (TeV);#counts", kTH1F, {axisZDCEnergy});
-      registry.add("hEnergyZNC_InTimeWindow", "ZNC common energy, |t_{ZNC}| < 2 ns;E_{ZNC} (TeV);#counts", kTH1F, {axisZDCEnergy});
-      registry.add("hEnergyZNC_OutTimeWindow", "ZNC common energy, |t_{ZNC}| >= 2 ns (out-of-time / noise);E_{ZNC} (TeV);#counts", kTH1F, {axisZDCEnergy});
+      registry.add("hEnergyZNA_InTimeWindow", "ZNA common energy, |t_{ZNA}| < 2 ns;E_{ZNA} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNA_OutTimeWindow", "ZNA common energy, |t_{ZNA}| >= 2 ns (out-of-time / noise);E_{ZNA} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNC_InTimeWindow", "ZNC common energy, |t_{ZNC}| < 2 ns;E_{ZNC} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNC_OutTimeWindow", "ZNC common energy, |t_{ZNC}| >= 2 ns (out-of-time / noise);E_{ZNC} (TeV);#counts", kTH1D, {axisZDCEnergy});
+
+      // Candidate-level counterparts of the 4 histograms above (2026-09-23): same
+      // in-time/out-of-time split, but filled only for actual pair candidates
+      // (track count >= 2, V0A cut passed -- see processCandidates()) instead of every
+      // raw ZDC record. Used to get a population free of the huge non-UPC (e.g. hadronic
+      // Pb-Pb) contamination seen in the unconditional hEnergyZN*_*TimeWindow histograms,
+      // for the ZN timing-efficiency Poisson-peak fit (macros/ZDC/efficiency/).
+      registry.add("hEnergyZNA_InTimeWindow_Cand", "ZNA common energy (pair candidates only), |t_{ZNA}| < 2 ns;E_{ZNA} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNA_OutTimeWindow_Cand", "ZNA common energy (pair candidates only), |t_{ZNA}| >= 2 ns;E_{ZNA} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNC_InTimeWindow_Cand", "ZNC common energy (pair candidates only), |t_{ZNC}| < 2 ns;E_{ZNC} (TeV);#counts", kTH1D, {axisZDCEnergy});
+      registry.add("hEnergyZNC_OutTimeWindow_Cand", "ZNC common energy (pair candidates only), |t_{ZNC}| >= 2 ns;E_{ZNC} (TeV);#counts", kTH1D, {axisZDCEnergy});
 
       // 5th bin (NoZdcInfo) counts candidates with no row in the ZDC table at
       // all (classifyZnTopology returns -1) -- these are otherwise silently
@@ -367,8 +433,23 @@ struct MyUPCMassGlobalMuonTask {
 
       bool hasTimeA = (!std::isinf(info.timeA) && std::abs(info.timeA) < kMaxZDCTime);
       bool hasTimeC = (!std::isinf(info.timeC) && std::abs(info.timeC) < kMaxZDCTime);
-      info.isNeutronA = hasTimeA && (info.enA > cutZNAEnergy);
-      info.isNeutronC = hasTimeC && (info.enC > cutZNCEnergy);
+      if (requireZnEnergyThreshold) {
+        info.isNeutronA = hasTimeA && (info.enA > cutZNAEnergy);
+        info.isNeutronC = hasTimeC && (info.enC > cutZNCEnergy);
+      } else {
+        // Signal-presence mode: any in-time ZDC hit counts as a neutron tag,
+        // even if the reconstructed common energy is <= 0 TeV (e.g. from
+        // pedestal subtraction near true zero signal).
+        info.isNeutronA = hasTimeA;
+        info.isNeutronC = hasTimeC;
+      }
+
+      // --- Neutron-tagged energy map: confirms which (enC, enA) pairs actually
+      //     drove the Xn tag, including negative-energy entries picked up when
+      //     requireZnEnergyThreshold == false.
+      if (info.isNeutronA || info.isNeutronC) {
+        registry.fill(HIST("hEnergyZNAvsZNC_NeutronTagged"), info.enC, info.enA);
+      }
 
       // --- Threshold-validation QA (raw, independent of cutZNAEnergy/cutZNCEnergy) ---
       if (!std::isinf(info.timeA)) {
@@ -394,7 +475,8 @@ struct MyUPCMassGlobalMuonTask {
   }
 
   // Classifies the neutron topology of a candidate from ZDC neutron tags alone
-  // (ZDCinfo::isNeutronA/C, i.e. ZDC timing + energy threshold).
+  // (ZDCinfo::isNeutronA/C, i.e. ZDC timing, plus an energy threshold unless
+  // requireZnEnergyThreshold == false, in which case timing alone tags a neutron).
   // NOTE: an ADA/ADC (FDD) beam-beam veto on the neutron-less side was
   // considered but is not applied here: the forward-muon UD table producers
   // (upcCandProducerMuon/GlobalMuon/SemiFwd) do not fill UDCollisionsSels,
@@ -473,6 +555,17 @@ struct MyUPCMassGlobalMuonTask {
   }
 
 
+  // ZDC/FV0 branches (oEnZNA, ..., oFv0Amp) are set per candidate in processCandidates.
+  void fillUnbinnedTuple(TLorentzVector const& p, int znClass)
+  {
+    oMass = p.M();
+    oPairPt = p.Pt();
+    oPairPt2 = p.Pt() * p.Pt();
+    oRapidity = p.Rapidity();
+    oZnClass = znClass;
+    unbinnedFitTree->Fill();
+  }
+
   template <typename TTrack>
   bool fillPairHistograms(TTrack const& tr1, TTrack const& tr2, int znClass)
   {
@@ -539,6 +632,11 @@ struct MyUPCMassGlobalMuonTask {
       }
     }
 
+    // --- Unbinned-fit ntuple, before pair pT/rapidity cuts (optional fill point) ---
+    if (fillUnbinnedFitTree && unbinnedTreeBeforePairCuts) {
+      fillUnbinnedTuple(p, znClass);
+    }
+
     if (p.Pt() >= pairPtMax) {
       return true;
     }
@@ -555,6 +653,11 @@ struct MyUPCMassGlobalMuonTask {
     registry.fill(HIST("hPt2Unlike"), pt2);
     registry.fill(HIST("hRapidityPair"), p.Rapidity());
     registry.fill(HIST("hPhiPair"), p.Phi());
+
+    // --- Unbinned-fit ntuple (reco-level only, mass full range) ---
+    if (fillUnbinnedFitTree && !unbinnedTreeBeforePairCuts) {
+      fillUnbinnedTuple(p, znClass);
+    }
 
     // Mass vs pair matching chi2 (worse of the two legs), for downstream chi2-cut scans
     // (filled after pair pT/rapidity cuts; mass axis kept full range for the scan)
@@ -621,6 +724,16 @@ struct MyUPCMassGlobalMuonTask {
         registry.fill(HIST("hEnergyZNC"), zdc.enC);
         registry.fill(HIST("hEnergyZNAvsZNC"), zdc.enC, zdc.enA);
         registry.fill(HIST("hTimeZNAvsZNC"), zdc.timeC, zdc.timeA);
+        if (std::abs(zdc.timeA) < kMaxZDCTime) {
+          registry.fill(HIST("hEnergyZNA_InTimeWindow_Cand"), zdc.enA);
+        } else {
+          registry.fill(HIST("hEnergyZNA_OutTimeWindow_Cand"), zdc.enA);
+        }
+        if (std::abs(zdc.timeC) < kMaxZDCTime) {
+          registry.fill(HIST("hEnergyZNC_InTimeWindow_Cand"), zdc.enC);
+        } else {
+          registry.fill(HIST("hEnergyZNC_OutTimeWindow_Cand"), zdc.enC);
+        }
         znClass = classifyZnTopology(zdc);
         registry.fill(HIST("hTopologyCounter"), znClass); // always 0-3 (0n0n/Xn0n/0nXn/XnXn)
         if (!zdc.hasZdcInfo) {
@@ -644,6 +757,14 @@ struct MyUPCMassGlobalMuonTask {
         continue; // require exactly one mu+ and one mu-
       }
       registry.fill(HIST("hCutFlow"), 6); // HasTwoGoodTracks
+
+      oEnZNA = zdc.enA;
+      oEnZNC = zdc.enC;
+      oTimeZNA = zdc.timeA;
+      oTimeZNC = zdc.timeC;
+      oHasZdc = zdc.hasZdcInfo;
+      oFv0Amp = fv0Amp;
+      oRunNumber = cand.runNumber();
 
       bool pairOk = fillPairHistograms(tr1, tr2, znClass);
 

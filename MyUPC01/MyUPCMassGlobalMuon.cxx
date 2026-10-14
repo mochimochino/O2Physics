@@ -117,6 +117,10 @@ struct MyUPCMassGlobalMuonTask {
   Configurable<int> nBinsPt{"nBinsPt", 500, "Number of bins on the pair pT axis"};
   Configurable<float> ptAxisMax{"ptAxisMax", 1.0f, "Upper edge of the pair pT axis [GeV/c]"};
 
+  Configurable<int> nBinsZDCEnergy{"nBinsZDCEnergy", 5000, "Number of bins on the ZN energy axis (ZDC QA)"};
+  Configurable<float> zdcEnergyAxisMin{"zdcEnergyAxisMin", -10.5f, "Lower edge of the ZN energy axis (ZDC QA) [TeV]"};
+  Configurable<float> zdcEnergyAxisMax{"zdcEnergyAxisMax", 10000.5f, "Upper edge of the ZN energy axis (ZDC QA) [TeV]"};
+
   Configurable<int> nBinsPt2{"nBinsPt2", 500, "Number of bins on the pair pT^2 axis"};
   Configurable<float> pt2AxisMax{"pt2AxisMax", 1.0f, "Upper edge of the pair pT^2 axis [GeV^2/c^2]"};
 
@@ -308,7 +312,7 @@ struct MyUPCMassGlobalMuonTask {
       // core sits well below -10.5 TeV after common-PMT pedestal subtraction (confirmed via
       // the old range's underflow bin holding O(10^5-10^8) entries), so the previous range
       // cut off most of the pedestal population. Bin width kept close to the original 0.111 TeV.
-      const AxisSpec axisZDCEnergy{1900, -110.5, 100.5, "E_{ZN} (TeV)"};
+      const AxisSpec axisZDCEnergy{nBinsZDCEnergy, zdcEnergyAxisMin, zdcEnergyAxisMax, "E_{ZN} (TeV)"};
       const AxisSpec axisTopology{4, -0.5, 3.5, "0n0n, Xn0n, 0nXn, XnXn"};
       // kTH1D (not kTH1F, 2026-09-22 fix): with O(10^8) fills concentrated in a few bins
       // (e.g. the pedestal peak), kTH1F's single-precision (24-bit mantissa) bin storage

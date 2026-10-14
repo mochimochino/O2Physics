@@ -132,6 +132,7 @@ struct UPCMuonAnalysisMC {
   float oPairRapMC = 0.f, oPairRapReco = -1.f;
   bool oPassRecoFlag = false;
   bool oIsFake = false;
+  OutputObj<TTree> omniFoldRecoOnlyTree{"omniFoldRecoOnlyTuple", OutputObjHandlingPolicy::AnalysisObject};
 
   // ===========================================================================
   // Initialization
@@ -165,6 +166,18 @@ struct UPCMuonAnalysisMC {
     omniFoldTree->Branch("pairRapReco", &oPairRapReco);
     omniFoldTree->Branch("passRecoFlag", &oPassRecoFlag);
     omniFoldTree->Branch("isFake", &oIsFake);
+
+    // Reco pairs that have NO row in omniFoldPairTuple: matched reco pairs whose truth muons are not both inside the gen acceptance
+    // (or whose truth pair fails the fiducial pair cuts), i.e. reconstructed through resolution smearing across the acceptance edge.
+    // omniFoldPairTuple + omniFoldRecoOnlyTuple together contain every matched reco pair that passes the track cuts.
+    omniFoldRecoOnlyTree.setObject(new TTree("omniFoldRecoOnlyTuple",
+                                             "Matched reco dimuon pairs whose truth pair is outside the gen acceptance (no row in omniFoldPairTuple)"));
+    omniFoldRecoOnlyTree->Branch("pairPt2MC", &oPairPt2MC);
+    omniFoldRecoOnlyTree->Branch("pairPt2Reco", &oPairPt2Reco);
+    omniFoldRecoOnlyTree->Branch("pairMassMC", &oPairMassMC);
+    omniFoldRecoOnlyTree->Branch("pairMassReco", &oPairMassReco);
+    omniFoldRecoOnlyTree->Branch("pairRapMC", &oPairRapMC);
+    omniFoldRecoOnlyTree->Branch("pairRapReco", &oPairRapReco);
   }
 
   // ---------------------------------------------------------------------------
@@ -1038,6 +1051,61 @@ struct UPCMuonAnalysisMC {
           }
 
           omniFoldTree->Fill();
+        }
+      }
+    }
+
+    // (d) Matched reco pairs without a row in (c): truth muons not both inside the gen acceptance, or truth pair failing the
+    // fiducial pair cuts of (c). Same track cuts / first-match as (c); no reco pair cut here (applied by the reader).
+    std::unordered_map<int32_t, std::vector<int32_t>> recoMuonsPerMcColl;
+    for (const auto& mc : mcParticles) {
+      if (std::abs(mc.pdgCode()) != kMuonPDG)
+        continue;
+      auto itTr = mcIdxToTrackIdx.find(mc.globalIndex());
+      if (itTr == mcIdxToTrackIdx.end())
+        continue;
+      if (!passRecoTrackCutsQuiet(fwdTracks.iteratorAt(itTr->second)))
+        continue;
+      recoMuonsPerMcColl[mc.udMcCollisionId()].push_back(mc.globalIndex());
+    }
+    for (const auto& item : recoMuonsPerMcColl) {
+      const auto& ids = item.second;
+      for (size_t i = 0; i < ids.size(); ++i) {
+        auto mc1 = mcParticles.iteratorAt(ids[i]);
+        TLorentzVector v1;
+        v1.SetXYZM(mc1.px(), mc1.py(), mc1.pz(), mMu);
+        for (size_t j = i + 1; j < ids.size(); ++j) {
+          auto mc2 = mcParticles.iteratorAt(ids[j]);
+          if (mc1.pdgCode() * mc2.pdgCode() >= 0)
+            continue;
+          TLorentzVector v2;
+          v2.SetXYZM(mc2.px(), mc2.py(), mc2.pz(), mMu);
+          TLorentzVector pairMC = v1 + v2;
+
+          const bool inAcc1 = v1.Eta() > etaMin && v1.Eta() < etaMax && v1.Pt() >= pTmin;
+          const bool inAcc2 = v2.Eta() > etaMin && v2.Eta() < etaMax && v2.Pt() >= pTmin;
+          const bool hasRow = inAcc1 && inAcc2 && pairMC.Pt() < pairPtMax &&
+                              pairMC.Rapidity() > pairRapidityMin && pairMC.Rapidity() < pairRapidityMax &&
+                              pairMC.M() > pairMassMin && pairMC.M() < pairMassMax;
+          if (hasRow)
+            continue; // already written in (c)
+
+          auto tr1 = fwdTracks.iteratorAt(mcIdxToTrackIdx.at(mc1.globalIndex()));
+          auto tr2 = fwdTracks.iteratorAt(mcIdxToTrackIdx.at(mc2.globalIndex()));
+          if (tr1.sign() * tr2.sign() >= 0)
+            continue;
+          TLorentzVector r1, r2;
+          r1.SetXYZM(tr1.px(), tr1.py(), tr1.pz(), mMu);
+          r2.SetXYZM(tr2.px(), tr2.py(), tr2.pz(), mMu);
+          TLorentzVector pairReco = r1 + r2;
+
+          oPairPt2MC = pairMC.Pt() * pairMC.Pt();
+          oPairMassMC = pairMC.M();
+          oPairRapMC = pairMC.Rapidity();
+          oPairPt2Reco = pairReco.Pt() * pairReco.Pt();
+          oPairMassReco = pairReco.M();
+          oPairRapReco = pairReco.Rapidity();
+          omniFoldRecoOnlyTree->Fill();
         }
       }
     }

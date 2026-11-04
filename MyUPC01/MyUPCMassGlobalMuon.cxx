@@ -61,7 +61,8 @@ struct MyUPCMassGlobalMuonTask {
   // Using UDCollisions_000 directly avoids the parent-file version lookup that
   // fails with "while looking for tree O2udcollision_001 ... maximal allowed
   // level 0" on those files.
-  using CandidatesFwd = soa::Join<o2::aod::UDCollisions_000, o2::aod::UDCollisionsSelsFwd>;
+  //using CandidatesFwd = soa::Join<o2::aod::UDCollisions_000, o2::aod::UDCollisionsSelsFwd>;
+  using CandidatesFwd = soa::Join<o2::aod::UDCollisions_001, o2::aod::UDCollisionsSelsFwd>;
   using ForwardTracks = soa::Join<o2::aod::UDFwdTracks, o2::aod::UDFwdTracksExtra>;
   using CompleteFwdTracks = soa::Join<ForwardTracks, o2::aod::UDMcFwdTrackLabels>;
 
@@ -160,6 +161,7 @@ struct MyUPCMassGlobalMuonTask {
   float oFv0Amp = -999.f; // max FV0A amplitude in the same BC (see passV0ACut)
   int oRunNumber = -1;    // run number of the candidate (for run-by-run pile-up / mu studies)
 
+  ULong64_t oGlobalBC = 0; // global BC of the candidate (orbit = globalBC / 3564, for time-dependent mu)
   float mMu = 0.0f;
 
   // ===========================================================================
@@ -304,6 +306,7 @@ struct MyUPCMassGlobalMuonTask {
       unbinnedFitTree->Branch("hasZdc", &oHasZdc);
       unbinnedFitTree->Branch("fv0Amp", &oFv0Amp);
       unbinnedFitTree->Branch("runNumber", &oRunNumber);
+      unbinnedFitTree->Branch("globalBC", &oGlobalBC);
     }
 
     // --- ZDC QA (only if processDataWithZdc is enabled) ---
@@ -769,6 +772,7 @@ struct MyUPCMassGlobalMuonTask {
       oHasZdc = zdc.hasZdcInfo;
       oFv0Amp = fv0Amp;
       oRunNumber = cand.runNumber();
+      oGlobalBC = cand.globalBC();
 
       bool pairOk = fillPairHistograms(tr1, tr2, znClass);
 

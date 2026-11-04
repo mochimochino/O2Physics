@@ -134,6 +134,10 @@ struct UPCMuonAnalysisMC {
   bool oIsFake = false;
   OutputObj<TTree> omniFoldRecoOnlyTree{"omniFoldRecoOnlyTuple", OutputObjHandlingPolicy::AnalysisObject};
 
+  // --- Generator-level J/psi tuple for the photon flux (same population as hAccEffDenomJpsiPtRap) ---
+  OutputObj<TTree> fluxTree{"fluxTuple", OutputObjHandlingPolicy::AnalysisObject};
+  float fPairPt2MC = 0.f, fPairMassMC = 0.f, fPairRapMC = 0.f;
+
   // ===========================================================================
   // Initialization
   // ===========================================================================
@@ -178,6 +182,12 @@ struct UPCMuonAnalysisMC {
     omniFoldRecoOnlyTree->Branch("pairMassReco", &oPairMassReco);
     omniFoldRecoOnlyTree->Branch("pairRapMC", &oPairRapMC);
     omniFoldRecoOnlyTree->Branch("pairRapReco", &oPairRapReco);
+
+    // All generated J/psi (mu+mu- from MC truth) in the jpsiRap window, no single-muon cut: the Acc x Eff denominator population.
+    fluxTree.setObject(new TTree("fluxTuple", "Generator-level J/psi (no single-muon cut, jpsiRap window) for the photon flux"));
+    fluxTree->Branch("pairPt2MC", &fPairPt2MC);
+    fluxTree->Branch("pairMassMC", &fPairMassMC);
+    fluxTree->Branch("pairRapMC", &fPairRapMC);
   }
 
   // ---------------------------------------------------------------------------
@@ -850,6 +860,11 @@ struct UPCMuonAnalysisMC {
           registry.fill(HIST("hAccEffDenomJpsiPt"),   vJpsi.Pt());
           registry.fill(HIST("hAccEffDenomJpsiMass"), vJpsi.M());
           registry.fill(HIST("hAccEffDenomJpsiPtRap"), vJpsi.Pt(), y);
+
+          fPairPt2MC = vJpsi.Pt() * vJpsi.Pt();
+          fPairMassMC = vJpsi.M();
+          fPairRapMC = y;
+          fluxTree->Fill();
         }
       }
     }

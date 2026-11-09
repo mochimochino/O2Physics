@@ -31,6 +31,11 @@
 #include "Framework/runDataProcessing.h"
 #include "ReconstructionDataFormats/TrackFwd.h"
 
+#include "Common/CCDB/ctpRateFetcher.h"
+#include <CCDB/BasicCCDBManager.h>
+#include <CommonConstants/LHCConstants.h>
+#include <DataFormatsParameters/GRPLHCIFData.h>
+
 #include "TLorentzVector.h"
 #include "TMath.h"
 #include "TString.h"
@@ -38,6 +43,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -164,6 +170,18 @@ struct MyUPCMassGlobalMuonTask {
   ULong64_t oGlobalBC = 0; // global BC of the candidate (orbit = globalBC / 3564, for time-dependent mu)
   float mMu = 0.0f;
 
+  // CCDB
+  Configurable<bool> fillMuFromCcdb{"fillMuFromCcdb", false, "Fill mu_ZNC and timestamp from the CTP scalers in CCDB (data only)"};
+  Configurable<std::string> ccdbUrl{"ccdbUrl", "http://alice-ccdb.cern.ch", "CCDB url"};
+  Service<o2::ccdb::BasicCCDBManager> ccdb;
+  o2::ctpRateFetcher mRateFetcher;
+  int mMuRun = -1;          // run for which mOrbitResetUs and mNBunches are valid
+  int64_t mOrbitResetUs = 0;
+  int mNBunches = 0;
+  float oMuZnc = -999.f;    // mean ZNC collisions per colliding BC at the candidate time, -999 = not filled
+  ULong64_t oTimestamp = 0; // candidate time [ms since epoch], 0 = not filled
+
+
   // ===========================================================================
   // ZDC helper
   // ===========================================================================
@@ -183,6 +201,12 @@ struct MyUPCMassGlobalMuonTask {
   void init(InitContext&)
   {
     mMu = pdg->Mass(kMuonPDG);
+    if (fillMuFromCcdb) {
+      ccdb->setURL(ccdbUrl.value);
+      // No cache: it is keyed by path only, so it can return the object of the previous run.
+      ccdb->setCaching(false);
+      mRateFetcher.setManualCleanup(true);
+    }
 
     // --- Mandatory axes: invariant mass, pair pT, pair pT^2 ---
     const AxisSpec axisMass{nBinsMass, massAxisMin, massAxisMax, "#it{M}_{#mu#mu} (GeV/#it{c}^{2})"};
@@ -307,6 +331,8 @@ struct MyUPCMassGlobalMuonTask {
       unbinnedFitTree->Branch("fv0Amp", &oFv0Amp);
       unbinnedFitTree->Branch("runNumber", &oRunNumber);
       unbinnedFitTree->Branch("globalBC", &oGlobalBC);
+      unbinnedFitTree->Branch("muZNC", &oMuZnc);
+      unbinnedFitTree->Branch("timestamp", &oTimestamp);
     }
 
     // --- ZDC QA (only if processDataWithZdc is enabled) ---
@@ -562,6 +588,26 @@ struct MyUPCMassGlobalMuonTask {
   }
 
 
+  // mu_ZNC at the candidate time, from the CTP scalers (about 10 s intervals).
+  // ctpRateFetcher assumes an orbit of 88 us, so mu is about 1.1% above the value from the true orbit period.
+  void updateMuFromCcdb()
+  {
+    if (oRunNumber != mMuRun) {
+      mMuRun = oRunNumber;
+      auto runDuration = ccdb->getRunDuration(mMuRun, true);
+      int64_t tsMid = runDuration.first / 2 + runDuration.second / 2;
+      // getSpecific resets the query metadata, which ctpRateFetcher leaves set to its runNumber
+      auto* orbitReset = ccdb->getSpecific<std::vector<int64_t>>("CTP/Calib/OrbitReset", tsMid);
+      mOrbitResetUs = (*orbitReset)[0];
+      delete orbitReset;
+      auto* grpLhcIf = ccdb->getSpecific<o2::parameters::GRPLHCIFData>("GLO/Config/GRPLHCIF", tsMid);
+      mNBunches = grpLhcIf->getBunchFilling().getNBunches();
+      delete grpLhcIf;
+    }
+    oTimestamp = static_cast<ULong64_t>((mOrbitResetUs + oGlobalBC * o2::constants::lhc::LHCBunchSpacingMUS) * 1.e-3);
+    oMuZnc = mRateFetcher.fetch(ccdb.service, oTimestamp, oRunNumber, "ZNC") / mNBunches / o2::constants::lhc::LHCRevFreq;
+  }
+
   // ZDC/FV0 branches (oEnZNA, ..., oFv0Amp) are set per candidate in processCandidates.
   void fillUnbinnedTuple(TLorentzVector const& p, int znClass)
   {
@@ -570,6 +616,9 @@ struct MyUPCMassGlobalMuonTask {
     oPairPt2 = p.Pt() * p.Pt();
     oRapidity = p.Rapidity();
     oZnClass = znClass;
+    if (fillMuFromCcdb) {
+      updateMuFromCcdb();
+    }
     unbinnedFitTree->Fill();
   }
 
